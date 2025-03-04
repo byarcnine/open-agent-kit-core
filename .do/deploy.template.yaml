@@ -1,0 +1,22 @@
+spec:
+  name: open-agent-kit
+  services:
+    - name: open-agent-kit
+      git:
+        branch: main
+        repo_clone_url: https://github.com/byarcnine/open-agent-kit.git
+      envs:
+        - key: DATABASE_URL
+          scope: RUN_TIME
+          value: ${oak-database.DATABASE_URL}
+        - key: APP_SECRET
+          type: SECRET
+          scope: RUN_TIME
+        - key: APP_URL
+          scope: RUN_TIME
+        - key: OPENAI_API_KEY
+          type: SECRET
+          scope: RUN_TIME
+  databases:
+    - name: oak-database
+      engine: PG

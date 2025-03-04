@@ -1,0 +1,32 @@
+steps:
+  # Build containers (these run in parallel by default)
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-oak"
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/open-agent-kit", "."]
+
+  # Push containers (each only waits for its own build)
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-oak"
+    args: ["push", "gcr.io/$PROJECT_ID/open-agent-kit"]
+    waitFor: ["build-oak"]
+
+  # Deploy services (each only waits for its own push)
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-api"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - open-agent-kit
+      - --image=gcr.io/$PROJECT_ID/open-agent-kit
+      - --region=europe-west4
+      - --platform=managed
+      - --allow-unauthenticated
+    waitFor: ["push-oak"]
+
+images:
+  - "gcr.io/$PROJECT_ID/open-agent-kit"
+
+options:
+  substitutionOption: ALLOW_LOOSE
+  logging: CLOUD_LOGGING_ONLY

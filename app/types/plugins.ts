@@ -1,0 +1,40 @@
+import type { Agent } from "@prisma/client";
+import type {
+  SyncKnowledgeFunctionParams,
+  SyncKnowledgeFunctionReturnParams,
+} from "./knowledgeProvider";
+import type { ToolConfig } from "./tools";
+import type { RouteConfigEntry } from "@react-router/dev/routes";
+
+export type MenuItem = {
+  label: string;
+  href: string;
+  icon: keyof typeof import("react-feather");
+};
+
+export type PluginType = {
+  name: string;
+  displayName: string;
+  description: string;
+  slug: string;
+  syncKnowledge?: (
+    params: SyncKnowledgeFunctionParams
+  ) => Promise<SyncKnowledgeFunctionReturnParams>;
+  routes?: RouteConfigEntry[];
+  menuItems?: MenuItem[];
+  tools?: ToolConfig[];
+};
+
+export type PluginConfig = Omit<PluginType, "name">;
+
+export type PluginWithAvailability = Omit<PluginType, "tools"> & {
+  isGlobal: boolean;
+  agents: Agent[];
+};
+
+export type PluginPackageJson = {
+  name: string;
+  displayName: string;
+  description: string;
+  slug: string;
+};

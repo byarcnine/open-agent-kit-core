@@ -1,0 +1,76 @@
+import { generateText, type CoreMessage } from "ai";
+// import { getConfig } from "../config/config";
+import { getSystemPrompt } from "./systemPrompts.server";
+import { getToolsForAgent } from "../tools/tools.server";
+import type { OAKConfig } from "~/types/config";
+import { getModelForAgent } from "./modelManager";
+
+export const generateSingleMessage =
+  (config: OAKConfig) =>
+  async (
+    prompt: string,
+    agentId: string,
+    systemPrompt?: string | null // system prompt override
+  ) => {
+    const system =
+      systemPrompt || (await getSystemPrompt("default", agentId)) || "";
+
+    const model = await getModelForAgent(agentId, config);
+    const tools = await getToolsForAgent(agentId).then(async (r) => {
+      // get tools ready
+      return Promise.all(
+        r.map(async (t) => {
+          return [
+            t.identifier,
+            await t.tool({
+              conversationId: "0",
+              agentId,
+              meta: {},
+            }),
+          ];
+        })
+      );
+    });
+    const messages: CoreMessage[] = [
+      {
+        role: "system",
+        content: system,
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ];
+    const completion = await generateText({
+      model,
+      messages,
+      tools: Object.fromEntries(tools),
+    });
+    return completion.text;
+  };
+
+export const generateConversation =
+  (config: OAKConfig) => async (agentId: string, messages: CoreMessage[]) => {
+    const model = await getModelForAgent(agentId, config);
+    const tools = await getToolsForAgent(agentId).then(async (r) => {
+      // get tools ready
+      return Promise.all(
+        r.map(async (t) => {
+          return [
+            t.identifier,
+            await t.tool({
+              conversationId: "0",
+              agentId,
+              meta: {},
+            }),
+          ];
+        })
+      );
+    });
+    const completion = await generateText({
+      model,
+      tools: Object.fromEntries(tools),
+      messages,
+    });
+    return completion.text;
+  };

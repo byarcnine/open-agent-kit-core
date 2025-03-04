@@ -1,0 +1,20 @@
+.knowledge-tool {
+  font-size: 0.875rem; /* text-sm */
+  color: var(--color-muted-foreground);
+  &__documents {
+    span {
+      padding-left: 0.5rem;
+    }
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background-color: #f3f4f6; /* bg-gray-200 */
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.5rem; /* p-2 */
+    li {
+      margin-left: 1rem;
+      list-style: "-";
+      border: none;
+    }
+  }
+}

@@ -1,0 +1,337 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+enum MessageAuthor {
+  AI
+  USER
+  TOOL
+}
+
+enum GlobalUserRole {
+  SUPER_ADMIN // can edit system settings
+  VIEW_ALL_AGENTS // can view all AGENTS
+  EDIT_ALL_AGENTS // can edit all AGENTS
+
+  VIEW_EDIT_ASSIGNED_AGENTS // can view assigned AGENTS
+}
+
+enum AgentUserRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum InvitationType {
+  AGENT
+  GLOBAL
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  content        String
+  author         MessageAuthor @default(USER)
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("message")
+}
+
+enum SignUpSource {
+  FORM
+  GOOGLE
+}
+
+enum KnowledgeSourceStatus {
+  PENDING
+  EMBEDDING
+  COMPLETED
+  FAILED
+}
+
+model Agent {
+  id                 String               @id @default(cuid())
+  name               String
+  description        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  isPublic           Boolean              @default(false)
+  allowedUrls        String[]             @default([])
+  chatSettings       Json?
+  modelSettings      Json?
+  conversations      Conversation[]
+  systemPrompts      SystemPrompt[]
+  knowledgeDocuments KnowledgeDocument[]
+  usage              Usage[]
+  agentUsers         AgentUser[]
+  invitation         Invitation[]
+  pluginAvailability PluginAvailability[]
+  PluginConfig       PluginConfig[]
+  AgentPluginData    AgentPluginData[]
+
+  @@map("agent")
+}
+
+model Conversation {
+  id               String     @id @default(cuid())
+  messages         Message[]
+  // A short description of the conversation for the conversion listing
+  tagline          String?
+  agentId          String
+  agent            Agent      @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  feedback         Feedback[]
+  // if the conversation is from a logged in user, we store the user id here
+  userId           String?
+  user             User?      @relation(fields: [userId], references: [id])
+  customIdentifier String?
+
+  @@map("conversation")
+}
+
+model SystemPrompt {
+  id        String   @id @default(cuid())
+  key       String
+  prompt    String
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_prompt")
+}
+
+model Feedback {
+  id             String       @id @default(cuid())
+  feedback       String
+  sentiment      String
+  feedbackType   String
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("feedback")
+}
+
+model KnowledgeDocument {
+  id         String                @id @default(cuid())
+  agentId    String
+  agent      Agent                 @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  name       String
+  metadata   Json?
+  provider   String                @default("")
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+  embeddings Embedding[]
+  status     KnowledgeSourceStatus @default(PENDING)
+
+  @@unique([agentId, name])
+  @@index([agentId])
+  @@map("knowledge_document")
+}
+
+model Embedding {
+  id                  String                 @id @default(cuid())
+  knowledgeDocumentId String
+  knowledgeDocument   KnowledgeDocument      @relation(fields: [knowledgeDocumentId], references: [id], onDelete: Cascade)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  content             String
+  vector              Unsupported("vector")?
+  dimensions          Int                    @default(1536)
+
+  @@map("embedding")
+}
+
+model Usage {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  year      Int
+  month     Int
+  day       Int
+  tokens    BigInt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agentId, year, month, day])
+  @@map("usage")
+}
+
+model AgentUser {
+  id      String        @id @default(cuid())
+  userId  String
+  agentId String
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent   Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  role    AgentUserRole @default(VIEWER)
+
+  @@unique([userId, agentId])
+  @@map("agent_user")
+}
+
+model Invitation {
+  id    String @id @default(cuid())
+  email String
+
+  type InvitationType @default(AGENT)
+
+  agentRole  AgentUserRole?  @default(VIEWER)
+  globalRole GlobalUserRole? @default(VIEW_EDIT_ASSIGNED_AGENTS)
+
+  agentId   String?
+  agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, agentId])
+  @@map("invitation")
+}
+
+model PluginAvailability {
+  id               String  @id @default(cuid())
+  pluginIdentifier String
+  agentId          String?
+  agent            Agent?  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  isEnabled        Boolean @default(false)
+  isGlobal         Boolean @default(false)
+
+  @@map("plugin_availability")
+}
+
+model PluginConfig {
+  id               String   @id @default(cuid())
+  pluginIdentifier String
+  agentId          String?
+  agent            Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  config           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([pluginIdentifier, agentId])
+  @@map("plugin_config")
+}
+
+model QueueJob {
+  id          BigInt    @id @default(autoincrement()) @db.BigInt
+  queue       String
+  key         String?
+  cron        String?
+  payload     Json?
+  result      Json?
+  error       Json?
+  progress    Int       @default(0)
+  priority    Int       @default(0)
+  attempts    Int       @default(0)
+  maxAttempts Int?
+  runAt       DateTime  @default(now())
+  notBefore   DateTime?
+  finishedAt  DateTime?
+  processedAt DateTime?
+  failedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([key, runAt])
+  @@index([queue, priority, runAt, finishedAt])
+  @@map("queue_job")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  userAgents    AgentUser[]
+  role          GlobalUserRole @default(VIEW_EDIT_ASSIGNED_AGENTS)
+  conversations Conversation[]
+  name          String
+  emailVerified Boolean
+  image         String?
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model GlobalConfig {
+  key       String   @id @default(cuid())
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("global_config")
+}
+
+model AgentPluginData {
+  agentId          String
+  agent            Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  identifier       String
+  pluginIdentifier String
+  data             Json
+
+  @@id([agentId, identifier, pluginIdentifier])
+  @@map("agent_plugin_data")
+}

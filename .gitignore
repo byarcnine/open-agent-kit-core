@@ -1,0 +1,13 @@
+node_modules
+/.cache
+/build
+.env
+dist
+.DS_Store
+.vercel
+embedScript/dist
+public/embed
+.react-router
+stats.html
+lib_dist
+chat_dist
