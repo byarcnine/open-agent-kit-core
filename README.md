@@ -58,7 +58,7 @@ use this option if you want to change the default model, install plugins, or cre
 1. Scaffold a new project
 
 ```bash
-npx @open-agent-kit/create-oak my-new-oak
+npx @open-agent-kit/cli create
 ```
 
 2. Set the environment variables in the `.env` file (use the `.env.example` file as a reference)

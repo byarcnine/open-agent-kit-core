@@ -34,7 +34,6 @@ export const checkLicenseStatusServer = async (
   licenseKey: string,
   meta?: LicenseRequestMeta
 ): Promise<{ valid: boolean; expires: Date | undefined }> => {
-  console.log("checking license status server", licenseKey);
   const response = await fetch("https://api.open-agent-kit.com/license", {
     method: "POST",
     body: JSON.stringify({ licenseKey, meta }),
@@ -88,9 +87,13 @@ const getMetaFromRequest = async (
   request: Request
 ): Promise<LicenseRequestMeta> => {
   const { userCount, agentCount, documentsCount } = await getUsageStats();
+
+  const originURL =
+    request.headers.get("origin") || request.headers.get("referer");
+
+  const originDomain = originURL ? new URL(originURL).hostname : "";
   const meta = {
-    originURL:
-      request.headers.get("origin") || request.headers.get("referer") || "",
+    originURL: originDomain,
     userCount,
     agentCount,
     documentsCount,
