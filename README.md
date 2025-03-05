@@ -8,7 +8,7 @@ Website: https://open-agent-kit.com
 ## Features
 
 - 🧠 Built-in knowledge base (upload PDFs, Word Docs, CSV, JSON, etc.)
-- 🐳 Deployable as a Docker container
+- 🐳 Deploy anywhere (Vercel, AWS, GCP, Azure, Netlify, Digital Ocean, etc.)
 - 🤖 Connect to any LLM (OpenAI, Anthropic, Google, Self-hosted, etc.)
 - 🔌 Plugin Ecosystem
 - 🛠️ Built-in tools
@@ -16,7 +16,7 @@ Website: https://open-agent-kit.com
 
 ## Deploy with ease
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbyarcnine%2Fopen-agent-kit&env=APP_SECRET,OPENAI_API_KEY,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASSWORD&envDescription=You%20can%20generate%20the%20secret%20with%20this%20link.&envLink=https%3A%2F%2Fdocs.open-agent-kit.com%2Fenvironment-variables&project-name=open-agent-kit&repository-name=open-agent-kit&integration-ids=oac_3sK3gnG06emjIEVL09jjntDD)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbyarcnine%2Fopen-agent-kit-core&env=APP_SECRET,OPENAI_API_KEY,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASSWORD&envDescription=You%20can%20generate%20the%20secret%20with%20this%20link.&envLink=https%3A%2F%2Fdocs.open-agent-kit.com%2Fenvironment-variables&project-name=open-agent-kit&repository-name=open-agent-kit&integration-ids=oac_3sK3gnG06emjIEVL09jjntDD)
 
 [![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/byarcnine/open-agent-kit/tree/main)
 
@@ -38,7 +38,7 @@ More guides are available [here](https://docs.open-agent-kit.com/guides/deployme
 
 use this option if you want to run the app locally without any changes.
 
-1. Get your OpenAI API key. You can get it from [here](https://platform.openai.com/api-keys)
+1. Get your OpenAI, Google, xAi or Anthropic API key (you can use many other models as well - go with the "advanced" option to use a different model)
 2. Run the following command to start the app
 
 ```bash
