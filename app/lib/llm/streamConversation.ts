@@ -94,24 +94,7 @@ export const streamConversation = async (
         isEnabled: false,
       },
       experimental_transform: smoothStream({ chunking: "word" }),
-      // onStepFinish: async (step) => {
-      //   for (const toolResult of step.toolResults) {
-      //     await prisma.message.create({
-      //       data: {
-      //         content: JSON.stringify(toolResult),
-      //         conversationId: conversation.id,
-      //         author: "TOOL",
-      //       },
-      //     });
-      //   }
-      // },
       onFinish: async (completion) => {
-        console.log(
-          "completion",
-          JSON.stringify(completion.response.messages, null, 2)
-        );
-        // const coreMessage = convertToCoreMessages(completion.response.messages);
-        // console.log("coreMessage", coreMessage);
         let usage = Number(completion.usage?.totalTokens ?? 0);
         if (isNaN(usage)) {
           usage = 0;
