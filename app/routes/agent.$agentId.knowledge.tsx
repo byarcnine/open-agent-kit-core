@@ -21,8 +21,6 @@ import {
 import { Toaster, toast } from "sonner";
 import { useEffect } from "react";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
-
-dayjs.extend(relativeTime);
 import { sessionStorage } from "~/lib/sessions.server";
 import { prisma } from "@db/db.server";
 import {
@@ -31,11 +29,13 @@ import {
   useLoaderData,
   useParams,
   type LoaderFunctionArgs,
+  redirect,
 } from "react-router";
 import { parseFile } from "~/lib/knowledge/parseFile.sever";
 import { createKnowledgeDocumentFromText } from "~/lib/knowledge/embedding.server";
 import { Trash2 } from "react-feather";
-import NoDataCard from "~/components/ui/no-data-card";
+
+dayjs.extend(relativeTime);
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const agentId = params.agentId as string;
@@ -78,24 +78,35 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     );
   };
 
-  await parseFormData(clonedRequest, uploadHandler);
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie")
   );
 
-  session.flash("message", {
-    heading: "File uploaded successfully",
-    type: "success",
-  });
-
-  return data(
-    { success: true },
-    {
-      headers: {
-        "Set-Cookie": await sessionStorage.commitSession(session),
-      },
+  try {
+    await parseFormData(clonedRequest, uploadHandler);
+    session.flash("message", {
+      heading: "File uploaded successfully",
+      type: "success",
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      session.flash("message", {
+        heading: error.message,
+        type: "error",
+      });
+    } else {
+      session.flash("message", {
+        heading: "Failed to upload",
+        type: "error",
+      });
     }
-  );
+  }
+
+  return redirect("/agent/" + agentId + "/knowledge", {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
+  });
 };
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
@@ -107,7 +118,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     request.headers.get("Cookie")
   );
   const message = session.get("message");
-
   return data(
     { files, message },
     {
@@ -122,22 +132,20 @@ const KnowledgeBaseView = () => {
   const loaderData = useLoaderData<typeof loader>();
   const { files = [], message } = loaderData;
   const { agentId } = useParams();
-
   useEffect(() => {
     if (message) {
-      toast.success(message.heading);
+      if (message.type === "success") {
+        toast.success(message.heading);
+      } else {
+        toast.error(message.heading);
+      }
     }
-  }, [message]);
+  }, [message, message?.heading, message?.type]);
 
   return (
     <div className="p-6 w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight my-8">Knowledge</h1>
-        {/* <Form method="post">
-            <input type="hidden" name="agentId" value={agentId as string} />
-            <input type="hidden" name="_action" value="sync_knowledge_base" />
-            <Button variant="default">Sync Now</Button>
-          </Form> */}
       </div>
       <ClientOnlyComponent>
         {Dropzone && <Dropzone agentId={agentId as string} />}
@@ -226,12 +234,6 @@ const KnowledgeBaseView = () => {
           </Table>
         </div>
       )}
-      {/* {files.length === 0 && (
-        <NoDataCard
-          headline="No documents found"
-          description="Upload a document to get started."
-        />
-      )} */}
       <Toaster expand={true} />
     </div>
   );

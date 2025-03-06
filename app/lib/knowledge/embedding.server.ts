@@ -71,6 +71,11 @@ export const createKnowledgeDocumentFromText = async (
   provider: string = "default"
 ) => {
   const embeddings = await embedText(text, agentId);
+  if (embeddings.length === 0) {
+    throw new Error(
+      "Could not embed text - perhaps the document doesn't contain any text? (Note: OCR documents are not supported yet)"
+    );
+  }
   const filename = path.parse(name).name;
   const extension = path.parse(name).ext;
   let nameToUse = name;

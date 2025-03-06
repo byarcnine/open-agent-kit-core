@@ -25,24 +25,17 @@ const Dropzone = ({ agentId }: { agentId: string }) => {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!formRef.current || acceptedFiles.length === 0) return;
     setUploading(true);
-    try {
-      // Just submit the form directly!
-      const formData = new FormData();
-      acceptedFiles.forEach((file) => {
-        formData.append("file", file);
-      });
-      toast.success("Progressing ... Please do not close this page");
-      await fetch(`/agent/${agentId}/knowledge`, {
-        method: "POST",
-        body: formData,
-      });
-      toast.success("Uploaded successfully");
-      setUploading(false);
-      // TODO: implement a cleaner way to reload the page
-      window.location.reload();
-    } finally {
-      setUploading(false);
+    // Just submit the form directly!
+    toast.success("Progressing ... Please do not close this page");
+    const input = formRef.current.querySelector(
+      "input[name='file']"
+    ) as HTMLInputElement;
+    if (input) {
+      const dataTransfer = new DataTransfer();
+      acceptedFiles.forEach((file) => dataTransfer.items.add(file));
+      input.files = dataTransfer.files;
     }
+    formRef.current.submit();
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
