@@ -28,6 +28,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
+import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -130,72 +131,14 @@ const Index = () => {
     agent.agentUsers[0]?.role === "OWNER" ||
     agent.agentUsers[0]?.role === "EDITOR";
 
-  const createAgentDialog = () => {
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Agent
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Agent</DialogTitle>
-          </DialogHeader>
-          <Form method="post" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Agent Name*</Label>
-              <Input
-                id="name"
-                name="name"
-                required
-                placeholder="Enter a unique name for your agent."
-              />
-              {actionData?.errors?.name && (
-                <p className="text-sm text-destructive">
-                  {actionData.errors.name[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Agent Slug*</Label>
-              <Input
-                id="slug"
-                name="slug"
-                required
-                pattern="^[a-z0-9-]+$"
-                placeholder="e.g., my-agent-name"
-              />
-              {actionData?.errors?.slug && (
-                <p className="text-sm text-destructive">
-                  {actionData.errors.slug[0]}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Optional agent description"
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Create Agent
-            </Button>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col h-full">
         <div className="flex flex-row flex-wrap items-center justify-between pb-8 gap-4">
           <h1 className="text-3xl font-bold">My Agents</h1>
-          {canEditAllAgents && createAgentDialog()}
+          {canEditAllAgents && (
+            <CreateAgentDialog errors={actionData?.errors} />
+          )}
         </div>
         <div className="flex-1 flex flex-col">
           {agents && agents.length === 0 ? (
@@ -204,7 +147,9 @@ const Index = () => {
               headline="No Agents found"
               description="Start and create your first agent!"
             >
-              {canEditAllAgents && createAgentDialog()}
+              {canEditAllAgents && (
+                <CreateAgentDialog errors={actionData?.errors} />
+              )}
             </NoDataCard>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 gap-4">
