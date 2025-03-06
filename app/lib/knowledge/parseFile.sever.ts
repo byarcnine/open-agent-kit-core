@@ -2,9 +2,6 @@ import { parse as csvParse } from "csv-parse/sync";
 import * as XLSX from "xlsx";
 import * as mammoth from "mammoth";
 import { parseString } from "xml2js";
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkStringify from "remark-stringify";
 import * as mime from "mime-types";
 import { PdfReader } from "pdfreader";
 
@@ -85,12 +82,10 @@ export async function parseFile(
 
       case "text/markdown":
         const mdText = new TextDecoder().decode(buffer);
-        const processor = unified().use(remarkParse).use(remarkStringify);
-        const mdAst = await processor.parse(mdText);
         return { content: mdText, format: "markdown" };
 
       default:
-        throw new Error(`Unsupported file format: ${mimeType}`);
+        throw new Error(`Unsupported file format: ${mimeType} - ${fileName}`);
     }
   } catch (error) {
     if (error instanceof Error) {

@@ -24,12 +24,22 @@ const Dropzone = ({ agentId }: { agentId: string }) => {
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!formRef.current || acceptedFiles.length === 0) return;
-
     setUploading(true);
     try {
       // Just submit the form directly!
-      formRef.current.submit();
+      const formData = new FormData();
+      acceptedFiles.forEach((file) => {
+        formData.append("file", file);
+      });
       toast.success("Progressing ... Please do not close this page");
+      await fetch(`/agent/${agentId}/knowledge`, {
+        method: "POST",
+        body: formData,
+      });
+      toast.success("Uploaded successfully");
+      setUploading(false);
+      // TODO: implement a cleaner way to reload the page
+      window.location.reload();
     } finally {
       setUploading(false);
     }
