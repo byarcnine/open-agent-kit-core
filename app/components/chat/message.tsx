@@ -40,7 +40,7 @@ const Message: React.FC<MessageProps> = React.memo(({ message, toolNames }) => (
             </div>
           );
         }
-        if (part.type === "text") {
+        if (part.type === "text" && part.text) {
           return (
             <div
               key={index}

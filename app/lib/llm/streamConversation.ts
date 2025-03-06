@@ -1,9 +1,16 @@
 import { prisma } from "@db/db.server";
 import { getSystemPrompt } from "./systemPrompts.server";
 import { getToolsForAgent } from "../tools/tools.server";
-import { smoothStream, streamText, type Message } from "ai";
+import {
+  appendResponseMessages,
+  convertToCoreMessages,
+  smoothStream,
+  streamText,
+  type Message,
+} from "ai";
 import { getConfig } from "../config/config";
 import { getModelForAgent } from "./modelManager";
+import { generateSingleMessage } from "./generate";
 
 export const streamConversation = async (
   conversationId: string,
@@ -27,11 +34,30 @@ export const streamConversation = async (
   // Add the user message to the conversation
   const createMessagePromise = prisma.message.create({
     data: {
-      content: messages[messages.length - 1].content,
+      content: JSON.parse(
+        JSON.stringify(
+          convertToCoreMessages([messages[messages.length - 1]])[0]
+        )
+      ),
       conversationId: conversation.id,
       author: "USER",
     },
   });
+
+  let tagLinePromise: Promise<void> | null = null;
+  if (!conversation.tagline) {
+    tagLinePromise = generateSingleMessage(config)(
+      `What is the main topic of the conversation with the initial message (3-4 words max): ${
+        messages[messages.length - 1].content
+      }`,
+      agentId
+    ).then(async (r) => {
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { tagline: r },
+      });
+    });
+  }
 
   const systemPromptPromise = getSystemPrompt("default", agentId);
   const toolsPromise = getToolsForAgent(agentId).then(async (r) => {
@@ -68,18 +94,24 @@ export const streamConversation = async (
         isEnabled: false,
       },
       experimental_transform: smoothStream({ chunking: "word" }),
-      onStepFinish: async (step) => {
-        for (const toolResult of step.toolResults) {
-          await prisma.message.create({
-            data: {
-              content: JSON.stringify(toolResult),
-              conversationId: conversation.id,
-              author: "TOOL",
-            },
-          });
-        }
-      },
+      // onStepFinish: async (step) => {
+      //   for (const toolResult of step.toolResults) {
+      //     await prisma.message.create({
+      //       data: {
+      //         content: JSON.stringify(toolResult),
+      //         conversationId: conversation.id,
+      //         author: "TOOL",
+      //       },
+      //     });
+      //   }
+      // },
       onFinish: async (completion) => {
+        console.log(
+          "completion",
+          JSON.stringify(completion.response.messages, null, 2)
+        );
+        // const coreMessage = convertToCoreMessages(completion.response.messages);
+        // console.log("coreMessage", coreMessage);
         let usage = Number(completion.usage?.totalTokens ?? 0);
         if (isNaN(usage)) {
           usage = 0;
@@ -110,13 +142,22 @@ export const streamConversation = async (
             },
           },
         });
+        const messagesToStore = appendResponseMessages({
+          responseMessages: completion.response.messages,
+          messages,
+        });
         await prisma.message.create({
           data: {
-            content: completion.text,
+            content: JSON.parse(
+              JSON.stringify(messagesToStore[messagesToStore.length - 1])
+            ),
             conversationId: conversation.id,
-            author: "AI",
+            author: "ASSISTANT",
           },
         });
+        if (tagLinePromise) {
+          await tagLinePromise;
+        }
       },
     }),
     conversationId: conversation.id,

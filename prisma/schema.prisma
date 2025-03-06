@@ -19,6 +19,7 @@ enum MessageAuthor {
   AI
   USER
   TOOL
+  ASSISTANT
 }
 
 enum GlobalUserRole {
@@ -42,7 +43,7 @@ enum InvitationType {
 
 model Message {
   id             String        @id @default(cuid())
-  content        String
+  content        Json?
   author         MessageAuthor @default(USER)
   conversationId String
   conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)

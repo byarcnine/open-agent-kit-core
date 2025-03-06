@@ -1,5 +1,5 @@
 import "./chat.scss";
-import { type Message, useChat } from "ai/react";
+import { useChat, type Message } from "@ai-sdk/react";
 import type { TextUIPart } from "@ai-sdk/ui-utils";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Textarea } from "../ui/textarea";
@@ -75,7 +75,9 @@ const Chat = ({
           }, remainingTime);
         })
         .catch((error) => {
-          throw new Error(`Failed to fetch chat settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`);
+          throw new Error(
+            `Failed to fetch chat settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`
+          );
         });
     }
   }, []);
@@ -97,7 +99,7 @@ const Chat = ({
         }
       },
     });
-
+  console.log("messages", messages);
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {

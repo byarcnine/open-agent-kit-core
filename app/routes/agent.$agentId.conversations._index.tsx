@@ -33,11 +33,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       customIdentifier: true,
       createdAt: true,
       updatedAt: true,
-      messages: {
-        take: 1,
-        orderBy: { createdAt: "asc" },
-        select: { content: true },
-      },
+      tagline: true,
     },
   });
   return { conversations };
@@ -81,7 +77,7 @@ const Conversations = () => {
                     {conversation.customIdentifier || "-"}
                   </TableCell>
                   <TableCell className="max-w-[300px] truncate">
-                    {conversation.messages[0]?.content || "No messages"}
+                    {conversation.tagline}
                   </TableCell>
                   <TableCell>
                     {dayjs(conversation.createdAt).fromNow()}
