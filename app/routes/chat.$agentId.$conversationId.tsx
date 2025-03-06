@@ -5,6 +5,7 @@ import { prisma } from "@db/db.server";
 import type { Message } from "ai";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import { PERMISSIONS } from "~/types/auth";
+import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
@@ -22,23 +23,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (conversation.userId !== user.id) {
     throw new Response("Unauthorized", { status: 403 });
   }
-  const initialMessages: Message[] = conversation.messages.map((message) => ({
-    id: message.id,
-    role: message.author === "USER" ? "user" : "assistant",
-    content: message.author !== "TOOL" ? message.content : "",
-    toolInvocations:
-      message.author === "TOOL" ? [JSON.parse(message.content)] : undefined,
-  }));
+  const initialMessages: Message[] = conversation.messages.map(
+    (message) => message.content as unknown as Message
+  );
+  const toolNames = toolNameIdentifierList();
   return {
     conversation,
     initialMessages,
     conversationId,
     agentId: agentId as string,
+    toolNames,
   };
 };
 
 export default function Index() {
-  const { initialMessages, conversationId, agentId } =
+  const { initialMessages, conversationId, agentId, toolNames } =
     useLoaderData<typeof loader>();
   return (
     <ClientOnlyComponent>
@@ -47,6 +46,7 @@ export default function Index() {
           initialConversationId={conversationId}
           initialMessages={initialMessages}
           agentId={agentId}
+          toolNamesList={toolNames}
         />
       )}
     </ClientOnlyComponent>

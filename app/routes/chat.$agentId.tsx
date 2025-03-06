@@ -99,7 +99,7 @@ const ChatOverview = () => {
                   to={`/chat/${agentId}/${c.id}`}
                   key={c.id}
                 >
-                  {(c.tagline || c.messages[0].content).slice(0, 40)}
+                  {c.tagline}
                 </Link>
               ))}
             </div>

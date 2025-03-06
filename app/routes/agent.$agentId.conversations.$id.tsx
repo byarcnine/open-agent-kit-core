@@ -4,6 +4,8 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Chat from "~/components/chat/chat.client";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
+import { toolNameIdentifierList } from "~/lib/tools/tools.server";
+import type { Message } from "ai";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -27,22 +29,17 @@ export const loader = async ({
   if (!conversation) {
     throw new Response("Not Found", { status: 404 });
   }
-  const initialMessages = conversation.messages.map((message) => ({
-    id: message.id,
-    role:
-      message.author === "USER"
-        ? "user"
-        : ("assistant" as "user" | "assistant"),
-    content: message.author !== "TOOL" ? message.content : "",
-    toolInvocations:
-      message.author === "TOOL" ? [JSON.parse(message.content)] : undefined,
-  }));
-  return { conversation, initialMessages };
+  const toolNames = toolNameIdentifierList();
+  const initialMessages = conversation.messages.map(
+    (message) => message.content as unknown as Message
+  );
+  return { conversation, initialMessages, toolNames };
 };
 
 const ConversationDetail = () => {
   const { agentId } = useParams();
-  const { initialMessages, conversation } = useLoaderData<typeof loader>();
+  const { initialMessages, conversation, toolNames } =
+    useLoaderData<typeof loader>();
 
   return (
     <div className="h-full w-full flex flex-col max-h-screen">
@@ -64,6 +61,7 @@ const ConversationDetail = () => {
             initialMessages={initialMessages}
             disableInput
             agentId={agentId as string}
+            toolNamesList={toolNames}
           />
         )}
       </ClientOnlyComponent>
