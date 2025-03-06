@@ -106,7 +106,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
   if (intent === Intent.UPDATE_GENERAL_SETTINGS) {
     const allowedUrls =
-      formData.get("allowedUrls")?.toString().split(",").map(url => url.trim()).filter(url => url) || [];
+      formData
+        .get("allowedUrls")
+        ?.toString()
+        .split(",")
+        .map((url) => url.trim())
+        .filter((url) => url) || [];
     const rawInput = {
       name: formData.get("name")?.toString().trim(),
       description: formData.get("description")?.toString()?.trim() || null,
@@ -185,11 +190,16 @@ const AgentSettings = () => {
         intro: { title: "", subTitle: "" },
         textAreaInitialRows: 2,
         footerNote: "",
+        enableFileUpload: false,
       };
 
   const actionData = useActionData<typeof action>();
 
   const [isPublic, setIsPublic] = useState(agent.isPublic);
+
+  const [enableFileUpload, setEnableFileUpload] = useState(
+    chatSettings.enableFileUpload
+  );
 
   useEffect(() => {
     if (actionData?.errors) return;
@@ -302,6 +312,20 @@ const AgentSettings = () => {
                 </p>
               </div>
             )}
+            <div className="flex gap-2 flex-col">
+              <Label htmlFor="isPublic">Enable File Upload</Label>
+              <p className="text-sm text-muted-foreground">
+                If enabled the agent can accept file uploads from the user.
+                Supported file types are images and PDFs. PDFs are currently not
+                supported when choosing an OpenAI model.
+              </p>
+              <Switch
+                id="enableFileUpload"
+                name="enableFileUpload"
+                defaultChecked={enableFileUpload}
+                onCheckedChange={setEnableFileUpload}
+              />
+            </div>
             <Button type="submit">Save Changes</Button>
           </Form>
         </CardContent>
