@@ -8,8 +8,9 @@ import { prisma } from "@db/db.server";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import type { ChatSettings } from "~/types/chat";
+import { urlAllowedForAgent } from "~/routes/utils";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { agentId } = params;
   const agent = await prisma.agent.findUnique({
     where: {
@@ -22,6 +23,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   if (!agent.isPublic) {
     throw new Response("Agent is not public", { status: 403 });
   }
+
+  const isAllowed = await urlAllowedForAgent(request.headers.get("Origin") as string, agentId as string);
+  if (!isAllowed) {
+    throw new Response("Unauthorized", { status: 403 });
+  }
+
   const toolNames = toolNameIdentifierList();
   const chatSettings = JSON.parse(agent.chatSettings as string) as ChatSettings;
   return { agent, toolNames, chatSettings };
