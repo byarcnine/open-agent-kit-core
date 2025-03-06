@@ -13,7 +13,6 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import * as React from "react";
 import { APP_URL } from "../config/config";
 
 interface OAKEmailProps {
