@@ -4,7 +4,7 @@ import { prisma } from "@db/db.server";
 import cuid from "cuid";
 import { getConfig } from "../config/config";
 import { getEmbeddingModel } from "../llm/modelManager";
-
+import path from "path";
 type EmbeddingResult = {
   embedding: Embedding;
   chunk: string;
@@ -71,11 +71,27 @@ export const createKnowledgeDocumentFromText = async (
   provider: string = "default"
 ) => {
   const embeddings = await embedText(text, agentId);
+  const filename = path.parse(name).name;
+  const extension = path.parse(name).ext;
+  let nameToUse = name;
+  const existingDocumentCount = await prisma.knowledgeDocument.count({
+    where: {
+      agentId: agentId,
+      name: {
+        startsWith: filename,
+      },
+    },
+  });
+
+  if (existingDocumentCount > 0) {
+    nameToUse = `${filename}-${existingDocumentCount + 1}${extension}`;
+  }
+
   const document = await prisma.knowledgeDocument.create({
     data: {
       id: cuid(),
       agentId: agentId,
-      name: name,
+      name: nameToUse,
       provider: provider,
       status: "EMBEDDING",
     },
