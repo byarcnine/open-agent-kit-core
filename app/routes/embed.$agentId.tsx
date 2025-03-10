@@ -2,15 +2,34 @@ import {
   type LoaderFunctionArgs,
   useLoaderData,
   useParams,
+  data,
+  type HeadersArgs,
 } from "react-router";
 import Chat from "~/components/chat/chat.client";
 import { prisma } from "@db/db.server";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import type { ChatSettings } from "~/types/chat";
-import { urlAllowedForAgent } from "~/routes/utils";
+import { getAllowedUrlsForAgent } from "~/routes/utils";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export function headers({ loaderHeaders }: HeadersArgs) {
+  return loaderHeaders;
+}
+
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+  const allowedUrls = await getAllowedUrlsForAgent(params.agentId as string);
+  const headers = {
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": [
+      `default-src 'self';`,
+      `script-src 'self' 'unsafe-inline';`,
+      `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;`,
+      `font-src 'self' https://fonts.gstatic.com;`,
+      `img-src 'self' data:;`,
+      `frame-ancestors 'self' ${allowedUrls.join(" ")}`,
+    ].join(" "),
+  };
+
   const { agentId } = params;
   const agent = await prisma.agent.findUnique({
     where: {
@@ -18,20 +37,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   });
   if (!agent) {
-    throw new Response("Agent not found", { status: 404 });
+    return data({ error: "Agent not found" }, { status: 404, headers });
   }
   if (!agent.isPublic) {
-    throw new Response("Agent is not public", { status: 403 });
-  }
-
-  const isAllowed = await urlAllowedForAgent(request.headers.get("Origin") as string, agentId as string);
-  if (!isAllowed) {
-    throw new Response("Unauthorized", { status: 403 });
+    return data({ error: "Agent is not public" }, { status: 403, headers });
   }
 
   const toolNames = toolNameIdentifierList();
   const chatSettings = JSON.parse(agent.chatSettings as string) as ChatSettings;
-  return { agent, toolNames, chatSettings };
+
+  return data(
+    { agent, toolNames, chatSettings },
+    {
+      headers,
+    }
+  );
 };
 
 const ChatEmbed = () => {
