@@ -4,7 +4,7 @@ spec:
     - name: open-agent-kit
       git:
         branch: main
-        repo_clone_url: https://github.com/byarcnine/open-agent-kit.git
+        repo_clone_url: https://github.com/byarcnine/open-agent-kit-starter.git
       envs:
         - key: DATABASE_URL
           scope: RUN_TIME
