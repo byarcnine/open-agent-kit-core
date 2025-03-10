@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
-import ChatComponent, { type ChatComponentType } from "../chat_module";
+import Chat from "../app/components/chat/chat.client";
+import { type ChatComponentType } from "../chat_module";
 
 
 // Function to render the component
@@ -11,7 +12,7 @@ export function renderChatComponent(
   const container = document.getElementById(divId);
   if (container) {
     const root = createRoot(container);
-    root.render(<ChatComponent {...config} />);
+    root.render(<Chat {...config} isEmbed />);
   } else {
     console.error(`No element found with ID: ${divId}`);
   }
