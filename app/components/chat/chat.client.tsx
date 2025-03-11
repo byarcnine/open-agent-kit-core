@@ -65,25 +65,22 @@ const Chat = ({
 
   useEffect(() => {
     if (isEmbed) {
-      const startTime = Date.now(); // Record the start time
-
+      const startTime = Date.now();
       fetch(`${API_URL}/api/agentChatSettings/${agentId}`)
         .then((res) => res.json())
         .then((data) => {
-          const chatSettings = data.chatSettings
-            ? JSON.parse(data.chatSettings)
-            : null;
-          setChatSettings(chatSettings);
+          setChatSettings(data.chatSettings || initialChatSettings);
           setToolNames(data.toolNames);
 
-          const elapsedTime = Date.now() - startTime; // Calculate elapsed time
-          const remainingTime = Math.max(1500 - elapsedTime, 0); // Calculate remaining time to reach 2 seconds
+          const elapsedTime = Date.now() - startTime;
+          const remainingTime = Math.max(1500 - elapsedTime, 0);
 
           setTimeout(() => {
             setChatSettingsLoaded(true);
           }, remainingTime);
         })
         .catch((error) => {
+          console.error("Error fetching chat settings:", error);
           throw new Error(
             `Failed to fetch chat settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`
           );
