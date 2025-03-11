@@ -1,6 +1,6 @@
 import { prisma } from "../../../prisma/db.server";
 
-const getAllowedUrlsForAgent = async (agentId: string) => {
+export const getAllowedUrlsForAgent = async (agentId: string) => {
   const agent = await prisma.agent.findUnique({
     where: {
       id: agentId,
