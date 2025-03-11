@@ -203,7 +203,7 @@ const AgentSettings = () => {
   const [isPublic, setIsPublic] = useState(agent.isPublic);
 
   const [enableFileUpload, setEnableFileUpload] = useState(
-    chatSettings.enableFileUpload
+    chatSettings?.enableFileUpload
   );
 
   useEffect(() => {

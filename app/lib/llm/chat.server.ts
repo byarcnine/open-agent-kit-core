@@ -17,7 +17,7 @@ export const getChatSettings = async (
   }
   const settings = JSON.parse(agent.chatSettings as string) as ChatSettings;
   const model = await getModelForAgent(agentId, getConfig());
-  if (settings.enableFileUpload) {
+  if (settings?.enableFileUpload) {
     settings.supportedFileTypes = supportedFileTypesForModel(model.provider);
   }
   return settings;
