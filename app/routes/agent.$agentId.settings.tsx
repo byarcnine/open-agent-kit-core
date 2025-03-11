@@ -27,7 +27,10 @@ import {
 } from "~/components/ui/card";
 import { AlertTriangle } from "react-feather";
 import type { ChatSettings } from "~/types/chat";
-import { getAvailableModels, setModelForAgent } from "~/lib/llm/modelManager";
+import {
+  getConfiguredModelIds,
+  setModelForAgent,
+} from "~/lib/llm/modelManager";
 import { APP_URL, getConfig } from "~/lib/config/config";
 import {
   Select,
@@ -80,7 +83,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     },
   })) as Agent;
 
-  const availableModels = await getAvailableModels(getConfig());
+  const availableModels = await getConfiguredModelIds(getConfig());
 
   const canDeleteAgent = await hasPermission(user, PERMISSIONS.DELETE_AGENT);
 
