@@ -62,7 +62,6 @@ const Chat = ({
     /\/$/,
     ""
   );
-
   useEffect(() => {
     if (isEmbed) {
       const startTime = Date.now();
