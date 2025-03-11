@@ -1,12 +1,16 @@
 import "./chat.scss";
 import { useChat, type Message } from "@ai-sdk/react";
-import type { TextUIPart } from "@ai-sdk/ui-utils";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Textarea } from "../ui/textarea";
 import { ArrowUp, FileText, Plus, XCircle } from "react-feather";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
 import { MessageRole, type ChatSettings } from "~/types/chat";
+
+interface TextPart {
+  type: "text";
+  text: string;
+}
 
 const Chat = ({
   onConversationStart,
@@ -189,7 +193,7 @@ const Chat = ({
               {
                 type: "text",
                 text: chatSettings.initialMessage,
-              } as TextUIPart,
+              } as TextPart,
             ],
           },
           ...messages,
