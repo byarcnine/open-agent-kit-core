@@ -45,8 +45,9 @@ const Chat = ({
     textAreaInitialRows: 2,
   };
 
-  const [chatSettings, setChatSettings] =
-    useState<ChatSettings>(initialChatSettings);
+  const [chatSettings, setChatSettings] = useState<ChatSettings | null>(
+    initialChatSettings
+  );
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
@@ -55,7 +56,7 @@ const Chat = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<FileList | undefined>(undefined);
 
-  const supportedFileTypes = chatSettings.supportedFileTypes;
+  const supportedFileTypes = chatSettings?.supportedFileTypes || [];
 
   const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(
     /\/$/,
@@ -274,7 +275,7 @@ const Chat = ({
               />
 
               <div className="oak-chat__action-row">
-                {chatSettings.enableFileUpload && supportedFileTypes && (
+                {chatSettings?.enableFileUpload && supportedFileTypes && (
                   <div>
                     <button
                       type="button"
