@@ -9,9 +9,6 @@ export const loader: LoaderFunction = async ({ params }) => {
   // fetch agent
 
   const settings = await getChatSettings(params.agentId as string);
-  if (!settings) {
-    throw new Response("Agent not found", { status: 404 });
-  }
   const toolNames = toolNameIdentifierList();
   return {
     chatSettings: settings,
