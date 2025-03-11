@@ -8,11 +8,14 @@ const KnowledgeTool = ({ result }: { result: VectorSearchResult }) => {
   return (
     <div className="knowledge-tool">
       <div className="knowledge-tool__documents">
-        <ul>
-          {documents.map((document) => (
-            <li key={document}>{document}</li>
-          ))}
-        </ul>
+        {documents.length > 0 && (
+          <ul>
+            {documents.map((document) => (
+              <li key={document}>{document}</li>
+            ))}
+          </ul>
+        )}
+        {documents.length === 0 && <p>No relevant documents found</p>}
       </div>
     </div>
   );

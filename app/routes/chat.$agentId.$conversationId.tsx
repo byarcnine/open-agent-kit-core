@@ -6,6 +6,7 @@ import type { Message } from "ai";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import { PERMISSIONS } from "~/types/auth";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
+import { getChatSettings } from "~/lib/llm/chat.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
@@ -27,17 +28,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     (message) => message.content as unknown as Message
   );
   const toolNames = toolNameIdentifierList();
+  const chatSettings = await getChatSettings(agentId);
   return {
     conversation,
     initialMessages,
     conversationId,
     agentId: agentId as string,
     toolNames,
+    chatSettings,
   };
 };
 
 export default function Index() {
-  const { initialMessages, conversationId, agentId, toolNames } =
+  const { initialMessages, conversationId, agentId, toolNames, chatSettings } =
     useLoaderData<typeof loader>();
   return (
     <ClientOnlyComponent>
@@ -47,6 +50,7 @@ export default function Index() {
           initialMessages={initialMessages}
           agentId={agentId}
           toolNamesList={toolNames}
+          agentChatSettings={chatSettings}
         />
       )}
     </ClientOnlyComponent>
