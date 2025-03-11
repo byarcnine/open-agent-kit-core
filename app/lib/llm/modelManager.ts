@@ -5,31 +5,29 @@ import { prisma } from "@db/db.server";
 import type { OAKConfig } from "~/types/config";
 import type { ModelSettings } from "~/types/llm";
 
-export const getAvailableModels = (config: OAKConfig) => {
-  const availableModels: string[] = [];
-  if (process.env.OPENAI_API_KEY) {
-    availableModels.push("openai.chat");
-  }
-  if (process.env.ANTHROPIC_API_KEY) {
-    availableModels.push("anthropic.messages");
-  }
-  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    availableModels.push("google.generative-ai");
-  }
-  if (process.env.XAI_API_KEY) {
-    availableModels.push("xai.chat");
-  }
-
-  return (
-    config.models.filter((model) => availableModels.includes(model.provider)) ||
-    config.models
-  ).map((model) => model.modelId);
+export const getConfiguredModelIds = (config: OAKConfig) => {
+  return config.models.map((model) => model.modelId);
 };
 
 const getDefaultModel = (config: OAKConfig) => {
+  const availableModelProviders: string[] = [];
+
+  if (process.env.OPENAI_API_KEY) {
+    availableModelProviders.push("openai.chat");
+  }
+  if (process.env.ANTHROPIC_API_KEY) {
+    availableModelProviders.push("anthropic.messages");
+  }
+  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    availableModelProviders.push("google.generative-ai");
+  }
+  if (process.env.XAI_API_KEY) {
+    availableModelProviders.push("xai.chat");
+  }
+
   return (
-    config.models.find(
-      (model) => model.modelId === getAvailableModels(config)[0]
+    config.models.find((model) =>
+      availableModelProviders.includes(model.provider)
     ) || config.models[0]
   );
 };
@@ -58,7 +56,7 @@ export const getModelForAgent = async (agentId: string, config: OAKConfig) => {
     "model" in agent.modelSettings
   ) {
     const modelId = (agent.modelSettings as ModelSettings).model;
-    if (getAvailableModels(config).includes(modelId)) {
+    if (getConfiguredModelIds(config).includes(modelId)) {
       return (
         config.models.find((model) => model.modelId === modelId) ||
         getDefaultModel(config)
