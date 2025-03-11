@@ -7,6 +7,8 @@ export interface ChatSettings {
   suggestedQuestions?: string[];
   textAreaInitialRows?: number;
   footerNote?: string;
+  enableFileUpload?: boolean;
+  supportedFileTypes?: string[];
 }
 
 export enum MessageRole {

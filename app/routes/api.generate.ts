@@ -1,9 +1,12 @@
-import { type ActionFunctionArgs, data, type LoaderFunctionArgs } from "react-router";
+import {
+  type ActionFunctionArgs,
+  data,
+  type LoaderFunctionArgs,
+} from "react-router";
 import { canUserAccessAgent } from "~/lib/auth/hasAccess.server";
 import { getSession } from "~/lib/auth/auth.server";
-import { streamConversation } from "~/lib/llm/streamConversation";
+import { streamConversation } from "~/lib/llm/streamConversation.server";
 import { getCorsHeaderForAgent } from "./utils";
-
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -21,11 +24,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-
   const body = await request.json();
   const agentId = body.agentId;
 
-  const corsHeaders = await getCorsHeaderForAgent(request.headers.get("Origin") as string, agentId);
+  const corsHeaders = await getCorsHeaderForAgent(
+    request.headers.get("Origin") as string,
+    agentId
+  );
 
   const session = await getSession(request);
   const userId = session?.user.id;
@@ -37,10 +42,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // make sure the agent is public or the user has access to the agent
   const canAccess = await canUserAccessAgent(session?.user, agentId);
   if (!canAccess) {
-    return data({ error: "Unauthorized" }, {
-      status: 403,
-      headers: corsHeaders,
-    });
+    return data(
+      { error: "Unauthorized" },
+      {
+        status: 403,
+        headers: corsHeaders,
+      }
+    );
   }
 
   try {
@@ -64,9 +72,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   } catch (error) {
     console.error(error);
-    return data({ error: "An error occurred" }, {
-      status: 500,
-      headers: corsHeaders,
-    });
+    return data(
+      { error: "An error occurred" },
+      {
+        status: 500,
+        headers: corsHeaders,
+      }
+    );
   }
 };

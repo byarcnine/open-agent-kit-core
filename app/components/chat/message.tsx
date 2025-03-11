@@ -4,6 +4,8 @@ import DOMPurify from "dompurify";
 import { type Message as MessageType } from "ai";
 import { Avatar, AvatarFallback } from "./avatar";
 import { toolComponents } from "~/lib/tools/toolComponents";
+import { FileText } from "react-feather";
+import { openBase64Pdf } from "~/lib/utils";
 
 interface MessageProps {
   message: MessageType;
@@ -24,6 +26,40 @@ const Message: React.FC<MessageProps> = React.memo(({ message, toolNames }) => (
       </Avatar>
     )}
     <div className="oak-chat__message-content-container">
+      <div className="oak-chat__message-content-container-attachments">
+        {message?.experimental_attachments?.map((attachment, index) => {
+          return (
+            <div
+              key={index}
+              className="oak-chat__message-content-container-attachments-attachment"
+            >
+              {attachment.contentType?.includes("image") && (
+                <img
+                  className="oak-chat__message-content-container-attachments-attachment--image"
+                  src={attachment.url}
+                  alt={attachment.name}
+                />
+              )}
+              {attachment.contentType?.includes("pdf") && (
+                <a
+                  onClick={() => openBase64Pdf(attachment.url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="oak-chat__file-thumbnails__item--pdf"
+                >
+                  <div className="oak-chat__file-thumbnails__item--pdf-icon">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <span>{attachment.name}</span>
+                    <span>PDF</span>
+                  </div>
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
       {message.parts?.map((part, index) => {
         if (part.type === "tool-invocation") {
           const ToolComponent = toolComponents[part.toolInvocation.toolName];

@@ -11,6 +11,7 @@ import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComp
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import type { ChatSettings } from "~/types/chat";
 import { getAllowedUrlsForAgent } from "~/routes/utils";
+import { getChatSettings } from "~/lib/llm/chat.server";
 
 export function headers({ loaderHeaders }: HeadersArgs) {
   return loaderHeaders;
@@ -44,7 +45,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   }
 
   const toolNames = toolNameIdentifierList();
-  const chatSettings = JSON.parse(agent.chatSettings as string) as ChatSettings;
+  const chatSettings = await getChatSettings(agentId as string);
 
   return data(
     { agent, toolNames, chatSettings },

@@ -9,7 +9,7 @@ import {
   type Message,
 } from "ai";
 import { getConfig } from "../config/config";
-import { getModelForAgent } from "./modelManager";
+import { getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate";
 
 export const streamConversation = async (

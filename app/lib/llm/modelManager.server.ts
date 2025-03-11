@@ -91,3 +91,16 @@ export const getEmbeddingModel = async (config: OAKConfig, agentId: string) => {
     (await getDefaultEmbeddingModel(config, agentId));
   return agentModel;
 };
+
+export const supportedFileTypesForModel = (model: string) => {
+  switch (model) {
+    case "openai.chat":
+      // openai models do not support PDF file uploads
+      return ["image/*"];
+    case "anthropic.messages":
+    case "google.generative-ai":
+      return ["image/*", "application/pdf"];
+    default:
+      return ["image/*"];
+  }
+};

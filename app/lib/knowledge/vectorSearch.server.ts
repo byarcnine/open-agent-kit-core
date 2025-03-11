@@ -1,7 +1,7 @@
 import { embedMany } from "ai";
 import { prisma } from "@db/db.server";
 import { getConfig } from "../config/config";
-import { getEmbeddingModel } from "../llm/modelManager";
+import { getEmbeddingModel } from "../llm/modelManager.server";
 
 const vectorSearch = async (
   query: string,

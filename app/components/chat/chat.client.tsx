@@ -2,7 +2,7 @@ import "./chat.scss";
 import { useChat, type Message } from "@ai-sdk/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Textarea } from "../ui/textarea";
-import { Send } from "react-feather";
+import { ArrowUp, FileText, Plus, XCircle } from "react-feather";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
 import { MessageRole, type ChatSettings } from "~/types/chat";
@@ -52,6 +52,10 @@ const Chat = ({
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<FileList | undefined>(undefined);
+
+  const supportedFileTypes = chatSettings.supportedFileTypes;
 
   const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(
     /\/$/,
@@ -107,7 +111,10 @@ const Chat = ({
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
-        handleSubmit();
+        handleSubmit(event, {
+          experimental_attachments: files,
+        });
+        setFiles(undefined);
       }
     },
     [handleSubmit]
@@ -117,11 +124,25 @@ const Chat = ({
     setInput(question);
   };
 
+  const clearSelectedFile = (fileName: string) => {
+    setFiles((prevFiles) => {
+      if (!prevFiles) return prevFiles;
+      const updatedFiles = Array.from(prevFiles).filter(
+        (file) => file.name !== fileName
+      );
+      const dataTransfer = new DataTransfer();
+      updatedFiles.forEach((file) => dataTransfer.items.add(file));
+      return dataTransfer.files;
+    });
+  };
+
   useEffect(() => {
     const isSuggestedQuestion =
       chatSettings?.suggestedQuestions?.includes(input);
     if (isSuggestedQuestion) {
-      handleSubmit();
+      handleSubmit(event, {
+        experimental_attachments: files,
+      });
     }
   }, [input, handleSubmit]);
 
@@ -209,6 +230,38 @@ const Chat = ({
               onSubmit={handleSubmit}
               className="oak-chat__form"
             >
+              {files && (
+                <div className="oak-chat__file-thumbnails">
+                  {Array.from(files).map((file) => (
+                    <div
+                      key={file.name}
+                      className="oak-chat__file-thumbnails__item"
+                    >
+                      {file.type.startsWith("image/") && (
+                        <img src={URL.createObjectURL(file)} alt={file.name} />
+                      )}
+                      {file.type === "application/pdf" && (
+                        <div className="oak-chat__file-thumbnails__item--pdf">
+                          <div className="oak-chat__file-thumbnails__item--pdf-icon">
+                            <FileText size={20} />
+                          </div>
+                          <div>
+                            <span>{file.name}</span>
+                            <span>PDF</span>
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="oak-chat__file-remove-button"
+                        onClick={() => clearSelectedFile(file.name)}
+                      >
+                        <XCircle size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <Textarea
                 ref={textareaRef}
                 onKeyDown={handleKeyDown}
@@ -219,13 +272,40 @@ const Chat = ({
                 placeholder="Type your message..."
                 className="oak-chat__text-area"
               />
-              <button
-                type="submit"
-                disabled={!input}
-                className="oak-chat__submit-button"
-              >
-                <Send size={20} />
-              </button>
+
+              <div className="oak-chat__action-row">
+                {chatSettings.enableFileUpload && supportedFileTypes && (
+                  <div>
+                    <button
+                      type="button"
+                      className="oak-chat__file-upload-button"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Plus size={15} />
+                      <span>Upload File</span>
+                    </button>
+                    <input
+                      multiple
+                      type="file"
+                      accept={supportedFileTypes.join(",")}
+                      ref={fileInputRef}
+                      style={{ display: "none" }}
+                      onChange={(event) => {
+                        if (event.target.files) {
+                          setFiles(event.target.files);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={!input}
+                  className="oak-chat__submit-button"
+                >
+                  <ArrowUp size={20} />
+                </button>
+              </div>
             </form>
             {chatSettings?.footerNote && (
               <p className="oak-chat__footer-note">

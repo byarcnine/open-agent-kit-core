@@ -59,7 +59,8 @@ $oak-border-radius: 0.4rem;
     &__form {
       position: relative;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: start;
       border-radius: $oak-border-radius;
       background-color: $oak-color-bg;
       // border: 2px solid $oak-color-bg;
@@ -70,19 +71,74 @@ $oak-border-radius: 0.4rem;
       // }
     }
 
+    &__file-thumbnails {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.5rem;
+
+      &__item {
+        position: relative;
+        flex-shrink: 0;
+        img {
+          width: 4rem;
+          height: 4rem;
+          border-radius: $oak-border-radius;
+          object-fit: cover;
+          overflow: hidden;
+        }
+
+        &--pdf {
+          background-color: $oak-color-primary;
+          color: $oak-white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.5rem 2.5rem 0.5rem 0.5rem;
+
+          border-radius: $oak-border-radius;
+          font-size: 1.5rem;
+          height: 4rem;
+
+          &-icon {
+            padding: 0.5rem;
+            background-color: $oak-color-muted-foreground;
+            border-radius: $oak-border-radius;
+          }
+
+          > div {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.8rem;
+
+          }
+        }
+      }
+    }
+
+    &__file-remove-button {
+      position: absolute;
+      top: 0.3rem;
+      right: 0.3rem;
+      color: $oak-color-bg;
+    }
+
     &__submit-button {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-top: auto;
+      margin-left: auto;
       padding: 0.5rem;
       color: white;
       border-radius: $oak-border-radius;
       background-color: $oak-color-primary;
       opacity: 1;
-      margin-bottom: 0.5rem;
-      margin-right: 0.5rem;
+      transition: 300ms ease;
+
       border: none;
       cursor: pointer;
       width: 36px;
@@ -99,15 +155,49 @@ $oak-border-radius: 0.4rem;
       border: none;
       outline: none;
       resize: none;
-      padding: 0.8rem;
+      padding: 0.8rem 0.8rem 0 0.8rem;
       margin: 0;
       background: transparent;
       font-family: inherit;
-      font-size: inherit;
+      font-size: 0.9rem;
       max-height: 300px;
       &::-webkit-scrollbar {
         display: none;
       }
+    }
+
+    &__file-upload-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background-color: $oak-color-primary;
+      border-radius: $oak-border-radius;
+      padding: 0.25rem 0.5rem;
+      opacity: 0.5;
+      transition: 300ms ease;
+
+      &:hover {
+        opacity: 1;
+      }
+
+      svg {
+        stroke: $oak-color-bg;
+      }
+
+      span {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: $oak-color-bg;
+      }
+    }
+
+    &__action-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      width: 100%;
+      padding: 0.8rem;
     }
 
     &__footer-note {
@@ -213,7 +303,27 @@ $oak-border-radius: 0.4rem;
 
       &-content {
         &-container {
+          display: flex;
+          flex-direction: column;
           max-width: 80%;
+
+          &-attachments {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+
+            &-attachment {
+              position: relative;
+              margin-bottom: 0.5rem;
+              &--image {
+                width: 7rem;
+                height: 7rem;
+                border-radius: $oak-border-radius;
+                object-fit: cover;
+                overflow: hidden;
+              }
+            }
+          }
         }
 
         &--assistant {
@@ -393,7 +503,8 @@ $oak-border-radius: 0.4rem;
     }
   }
 
-  ul, ol {
+  ul,
+  ol {
     list-style: none;
     padding: 0;
     padding-bottom: 0.3rem;
