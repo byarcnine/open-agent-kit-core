@@ -3,7 +3,7 @@ import { createChunks } from "./createChunks.server";
 import { prisma } from "@db/db.server";
 import cuid from "cuid";
 import { getConfig } from "../config/config";
-import { getEmbeddingModel } from "../llm/modelManager";
+import { getEmbeddingModel } from "../llm/modelManager.server";
 import path from "path";
 type EmbeddingResult = {
   embedding: Embedding;

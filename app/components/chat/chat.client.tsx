@@ -55,9 +55,7 @@ const Chat = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<FileList | undefined>(undefined);
 
-  const supportedFileTypes = chatSettings.enableFileUpload
-    ? ["image/*", "application/pdf"]
-    : ["image/*"];
+  const supportedFileTypes = chatSettings.supportedFileTypes;
 
   const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(
     /\/$/,
@@ -276,7 +274,7 @@ const Chat = ({
               />
 
               <div className="oak-chat__action-row">
-                {chatSettings.enableFileUpload && (
+                {chatSettings.enableFileUpload && supportedFileTypes && (
                   <div>
                     <button
                       type="button"

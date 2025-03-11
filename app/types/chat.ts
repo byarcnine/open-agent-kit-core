@@ -8,6 +8,7 @@ export interface ChatSettings {
   textAreaInitialRows?: number;
   footerNote?: string;
   enableFileUpload?: boolean;
+  supportedFileTypes?: string[];
 }
 
 export enum MessageRole {

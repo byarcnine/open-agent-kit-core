@@ -3,7 +3,7 @@ import { generateText, type CoreMessage } from "ai";
 import { getSystemPrompt } from "./systemPrompts.server";
 import { getToolsForAgent } from "../tools/tools.server";
 import type { OAKConfig } from "~/types/config";
-import { getModelForAgent } from "./modelManager";
+import { getModelForAgent } from "./modelManager.server";
 
 export const generateSingleMessage =
   (config: OAKConfig) =>

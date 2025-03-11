@@ -1,25 +1,20 @@
 import Chat from "~/components/chat/chat.client";
 import { useLoaderData, useParams, type LoaderFunction } from "react-router";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
-import { prisma } from "@db/db.server";
-import type { ChatSettings } from "~/types/chat";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
+import { getChatSettings } from "~/lib/llm/chat.server";
 
 // Loader function to fetch environment variable
 export const loader: LoaderFunction = async ({ params }) => {
   // fetch agent
 
-  const agent = await prisma.agent.findUnique({
-    where: {
-      id: params.agentId as string,
-    },
-  });
-  if (!agent) {
+  const settings = await getChatSettings(params.agentId as string);
+  if (!settings) {
     throw new Response("Agent not found", { status: 404 });
   }
   const toolNames = toolNameIdentifierList();
   return {
-    chatSettings: JSON.parse(agent.chatSettings as string) as ChatSettings,
+    chatSettings: settings,
     toolNames,
   };
 };

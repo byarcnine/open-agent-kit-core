@@ -30,7 +30,7 @@ import type { ChatSettings } from "~/types/chat";
 import {
   getConfiguredModelIds,
   setModelForAgent,
-} from "~/lib/llm/modelManager";
+} from "~/lib/llm/modelManager.server";
 import { APP_URL, getConfig } from "~/lib/config/config";
 import {
   Select,
@@ -56,6 +56,7 @@ const AgentUpdateSchema = z.object({
 });
 
 const ChatSettingsUpdateSchema = z.object({
+  enableFileUpload: z.boolean(),
   initialMessage: z.string().nullable(),
   suggestedQuestions: z.array(z.string()).nullable(),
   intro: z
@@ -151,6 +152,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       .filter(Boolean);
 
     const rawInput = {
+      enableFileUpload: !!formData.get("enableFileUpload"),
       initialMessage: formData.get("initialMessage"),
       suggestedQuestions: parsedSuggestedQuestions || [],
       intro: {
@@ -315,20 +317,7 @@ const AgentSettings = () => {
                 </p>
               </div>
             )}
-            <div className="flex gap-2 flex-col">
-              <Label htmlFor="isPublic">Enable File Upload</Label>
-              <p className="text-sm text-muted-foreground">
-                If enabled the agent can accept file uploads from the user.
-                Supported file types are images and PDFs. PDFs are currently not
-                supported when choosing an OpenAI model.
-              </p>
-              <Switch
-                id="enableFileUpload"
-                name="enableFileUpload"
-                defaultChecked={enableFileUpload}
-                onCheckedChange={setEnableFileUpload}
-              />
-            </div>
+
             <Button type="submit">Save Changes</Button>
           </Form>
         </CardContent>
@@ -344,6 +333,20 @@ const AgentSettings = () => {
               name="intent"
               value={Intent.UPDATE_CHAT_SETTINGS}
             />
+            <div className="flex gap-2 flex-col">
+              <Label htmlFor="isPublic">Enable File Upload</Label>
+              <p className="text-sm text-muted-foreground">
+                If enabled the agent can accept file uploads from the user.
+                Supported file types are images and PDFs. PDFs are currently not
+                supported when choosing an OpenAI model.
+              </p>
+              <Switch
+                id="enableFileUpload"
+                name="enableFileUpload"
+                defaultChecked={enableFileUpload}
+                onCheckedChange={setEnableFileUpload}
+              />
+            </div>
             <div className="flex flex-col space-y-2">
               <Label htmlFor="introTitle">Intro Title</Label>
               <Input
