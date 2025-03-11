@@ -1,5 +1,5 @@
 import { parse as csvParse } from "csv-parse/sync";
-import * as XLSX from "xlsx";
+import readXlsxFile, { type CellValue } from "read-excel-file/node";
 import * as mammoth from "mammoth";
 import { parseString } from "xml2js";
 import * as mime from "mime-types";
@@ -52,11 +52,20 @@ export async function parseFile(
 
       case "application/vnd.ms-excel":
       case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-        const workbook = XLSX.read(buffer, { type: "buffer" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const excelData: Record<string, unknown>[] =
-          XLSX.utils.sheet_to_json(firstSheet);
-        return { content: JSON.stringify(excelData, null, 2), format: "excel" };
+        const excelData = await readXlsxFile(buffer);
+        // Skip the title row (index 0) and use row 1 as headers
+        const headers = excelData[1];
+        const rows = excelData.slice(2);
+
+        // Convert rows to objects using headers
+        const jsonData = rows.map((row) => {
+          const obj: Record<string, any> = {};
+          headers.forEach((header: CellValue, index: number) => {
+            if (header && typeof header === "string") obj[header] = row[index];
+          });
+          return obj;
+        });
+        return { content: JSON.stringify(jsonData, null, 2), format: "excel" };
 
       case "application/msword":
       case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
