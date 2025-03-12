@@ -58,8 +58,8 @@ $oak-border-radius: 0.4rem;
 
     &__form {
       position: relative;
-      display: flex;
-      flex-direction: column;
+      // display: flex;
+      // flex-direction: column;
       align-items: start;
       border-radius: $oak-border-radius;
       background-color: $oak-color-bg;
@@ -112,7 +112,6 @@ $oak-border-radius: 0.4rem;
             display: flex;
             flex-direction: column;
             font-size: 0.8rem;
-
           }
         }
       }
@@ -332,6 +331,7 @@ $oak-border-radius: 0.4rem;
       }
 
       &-tool-invocations {
+        margin-bottom: 1.5rem;
         &-marker {
           display: inline-block;
           display: inline-block;
