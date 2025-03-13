@@ -1,35 +1,48 @@
 .root {
-  min-height: 300px;
-  &:global(.mdxeditor-popup-container) {
-    display: none;
-  }
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-  }
+  border: 1px solid var(--baseBg);
+  border-radius: var(--radius-md);
+  // &:global(.mdxeditor-popup-container) {
+  //   display: none;
+  // }
+  :global(.mdxeditor-root-contenteditable) {
+    min-height: 300px;
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
 
-  h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
 
-  h3 {
-    font-size: 1.125rem;
-    font-weight: 600;
-  }
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
 
-  h4 {
-    font-size: 1rem;
-    font-weight: 600;
-  }
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
 
-  h5 {
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
+    h5 {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
 
-  h6 {
-    font-size: 0.75rem;
-    font-weight: 600;
+    h6 {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    ol {
+      list-style: decimal;
+    }
+    ul {
+      list-style: circle;
+    }
+    li {
+      margin-left: 2rem;
+    }
   }
 }

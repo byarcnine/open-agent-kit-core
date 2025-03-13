@@ -66,7 +66,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ...corsHeaders,
       },
       getErrorMessage(error) {
-        console.log(error);
+        if (process.env.NODE_ENV === "development") {
+          if (error instanceof Error) {
+            return error.message;
+          }
+          return "An error occurred";
+        }
         return "An error occurred";
       },
     });

@@ -6,9 +6,10 @@ import useScrollToBottom from "~/hooks/useScrollBottom";
 interface MessagesProps {
   messages: MessageType[];
   toolNames: Record<string, string>;
+  error?: string;
 }
 
-const Messages: React.FC<MessagesProps> = ({ messages, toolNames }) => {
+const Messages: React.FC<MessagesProps> = ({ messages, toolNames, error }) => {
   const [containerRef, endRef] = useScrollToBottom<HTMLDivElement>();
 
   return (
@@ -19,6 +20,11 @@ const Messages: React.FC<MessagesProps> = ({ messages, toolNames }) => {
         ))}
         <div ref={endRef} className={"oak-chat__scroll-end"} />
       </div>
+      {error && (
+        <div className="oak-chat__error-container">
+          <p className="oak-chat__error-message">{error}</p>
+        </div>
+      )}
     </div>
   );
 };
