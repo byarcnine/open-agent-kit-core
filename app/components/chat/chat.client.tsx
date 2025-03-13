@@ -87,7 +87,7 @@ const Chat = ({
     }
   }, []);
 
-  const { messages, input, handleInputChange, handleSubmit, setInput } =
+  const { messages, input, handleInputChange, handleSubmit, setInput, error } =
     useChat({
       api: `${API_URL}/api/generate`,
       body: {
@@ -104,6 +104,7 @@ const Chat = ({
         }
       },
     });
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {
@@ -218,6 +219,11 @@ const Chat = ({
         </div>
       ) : (
         <Messages toolNames={toolNames} messages={messagesWithInitMessage} />
+      )}
+      {error && (
+        <div className="oak-chat__error-container">
+          <p className="oak-chat__error-message">{error.message}</p>
+        </div>
       )}
       {!disableInput && (
         <>

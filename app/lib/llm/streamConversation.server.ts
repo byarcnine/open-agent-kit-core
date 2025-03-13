@@ -44,6 +44,20 @@ export const streamConversation = async (
     },
   });
 
+  // filter out tool results without a result.
+  // this happens if a tools errors out
+  // it break the streamText function otherwise
+  const cleanedMessages = messages.filter((message) => {
+    if (message.role === "assistant") {
+      return !message.parts?.some(
+        (part) =>
+          part.type === "tool-invocation" &&
+          part.toolInvocation.state !== "result"
+      );
+    }
+    return true;
+  });
+
   let tagLinePromise: Promise<void> | null = null;
   if (!conversation.tagline) {
     tagLinePromise = generateSingleMessage(config)(
@@ -85,7 +99,7 @@ export const streamConversation = async (
   return {
     stream: streamText({
       model,
-      messages: messages,
+      messages: cleanedMessages,
       system: systemPrompt,
       tools: Object.fromEntries(tools),
       toolChoice: "auto",

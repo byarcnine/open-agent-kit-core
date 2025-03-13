@@ -4,6 +4,7 @@ $oak-border-color: #e2e8f0;
 $oak-white: white;
 $oak-color-muted-foreground: #737373;
 $oak-border-radius: 0.4rem;
+$oak-error-color: oklch(0.704 0.191 22.216);
 
 #oak-chat-container {
   font-family: "Inter", "ui-sans-serif", "system-ui", "sans-serif";
@@ -112,7 +113,6 @@ $oak-border-radius: 0.4rem;
             display: flex;
             flex-direction: column;
             font-size: 0.8rem;
-
           }
         }
       }
@@ -418,6 +418,17 @@ $oak-border-radius: 0.4rem;
         width: 40px;
         height: 40px;
       }
+    }
+    &__error-container {
+      padding: 1rem;
+    }
+    &__error-message {
+      padding: 0.5rem;
+      text-align: center;
+      background-color: $oak-error-color;
+      color: $oak-white;
+      border-radius: $oak-border-radius;
+      font-size: 0.875rem;
     }
   }
 }
