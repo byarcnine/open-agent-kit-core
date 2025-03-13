@@ -9,7 +9,6 @@ import {
   UndoRedo,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { cn } from "~/lib/utils";
 import styles from "./markdownedit.module.scss";
 
 const MarkdownEdit = ({
@@ -21,19 +20,19 @@ const MarkdownEdit = ({
 }) => {
   return (
     <MDXEditor
-      className={cn("border mb-8", styles.root)}
+      className={styles.root}
       plugins={[
-        headingsPlugin(),
+        headingsPlugin({
+          allowedHeadingLevels: [1, 2, 3],
+        }),
         listsPlugin(),
         toolbarPlugin({
-          toolbarClassName: "my-classname",
           toolbarContents: () => (
             <>
-              {" "}
               <BlockTypeSelect />
               <UndoRedo />
               <BoldItalicUnderlineToggles />
-              <ListsToggle />
+              <ListsToggle options={["number", "bullet"]} />
             </>
           ),
         }),
