@@ -218,12 +218,11 @@ const Chat = ({
           )}
         </div>
       ) : (
-        <Messages toolNames={toolNames} messages={messagesWithInitMessage} />
-      )}
-      {error && (
-        <div className="oak-chat__error-container">
-          <p className="oak-chat__error-message">{error.message}</p>
-        </div>
+        <Messages
+          toolNames={toolNames}
+          messages={messagesWithInitMessage}
+          error={error?.message}
+        />
       )}
       {!disableInput && (
         <>
