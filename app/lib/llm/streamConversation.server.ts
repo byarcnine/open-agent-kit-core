@@ -115,11 +115,12 @@ export const streamConversation = async (
         }
         await prisma.usage.upsert({
           where: {
-            agentId_year_month_day: {
+            agentId_year_month_day_modelId: {
               agentId: agentId,
               year: new Date().getFullYear(),
               month: new Date().getMonth() + 1,
               day: new Date().getDate(),
+              modelId: model.modelId,
             },
           },
           create: {
@@ -127,6 +128,7 @@ export const streamConversation = async (
             month: new Date().getMonth() + 1,
             day: new Date().getDate(),
             tokens: usage,
+            modelId: model.modelId,
             agent: {
               connect: {
                 id: agentId,

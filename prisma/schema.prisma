@@ -169,10 +169,11 @@ model Usage {
   month     Int
   day       Int
   tokens    BigInt
+  modelId   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([agentId, year, month, day])
+  @@unique([agentId, year, month, day, modelId])
   @@map("usage")
 }
 
