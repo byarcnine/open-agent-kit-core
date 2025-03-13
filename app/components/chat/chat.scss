@@ -454,7 +454,7 @@ $oak-border-radius: 0.4rem;
   ul {
     margin: 0;
     &:not(:last-child) {
-      padding-bottom: 0.5rem;
+      padding-bottom: 0.8rem;
     }
   }
 
@@ -468,7 +468,9 @@ $oak-border-radius: 0.4rem;
     text-decoration: underline;
     color: $oak-color-primary;
   }
-
+  hr {
+    margin-bottom: 1rem;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -505,23 +507,30 @@ $oak-border-radius: 0.4rem;
 
   ul,
   ol {
-    list-style: none;
+    list-style: initial;
     padding: 0;
     padding-bottom: 0.3rem;
 
     li {
-      margin-left: 0;
-      padding: 10px;
-      border-bottom: 1px solid $oak-border-color;
+      // padding: 1rem;
+      margin-left: 2rem;
+      padding-left: 0.5rem;
+      // border-bottom: 1px solid $oak-border-color;
 
       &:last-child {
         border-bottom: none;
       }
 
-      &::marker {
-        color: transparent;
-      }
+      // &::marker {
+      //   color: transparent;
+      // }
     }
+  }
+  ul {
+    list-style: circle;
+  }
+  ol {
+    list-style: decimal;
   }
 
   @mixin heading-style($color, $font-weight, $padding-top, $font-size) {
