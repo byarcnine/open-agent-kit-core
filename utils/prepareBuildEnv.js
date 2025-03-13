@@ -1,7 +1,7 @@
 import { existsSync, symlinkSync, mkdirSync } from "fs";
 import { resolve } from "path";
 
-export const prepareBuildEnv = () => {
+const prepareBuildEnv = () => {
   // Create .oak directory if it doesn't exist
   if (!existsSync(".oak")) {
     mkdirSync(".oak");
@@ -26,3 +26,5 @@ export const prepareBuildEnv = () => {
     }
   });
 };
+
+prepareBuildEnv();
