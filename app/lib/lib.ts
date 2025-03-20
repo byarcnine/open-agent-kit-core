@@ -25,8 +25,8 @@ const OAKProvider = (config: OAKConfig, pluginIdentifier: string) => {
         findUnique(pluginIdentifier, agentId, identifier),
       findMany: (agentId: string, filter: Prisma.AgentPluginDataFindManyArgs) =>
         findMany(pluginIdentifier, agentId, filter),
-      create: (agentId: string, identifier: string, data: object) =>
-        create(pluginIdentifier, agentId, identifier, data),
+      create: (agentId: string, data: object) =>
+        create(pluginIdentifier, agentId, data),
       update: (agentId: string, identifier: string, data: object) =>
         update(pluginIdentifier, agentId, identifier, data),
       deleteOne: (agentId: string, identifier: string) =>

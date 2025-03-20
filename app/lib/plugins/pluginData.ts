@@ -1,4 +1,5 @@
 import { Prisma, prisma } from "@db/db.server";
+import cuid from "cuid";
 
 export const findUnique = async (
   pluginIdentifier: string,
@@ -22,8 +23,9 @@ export const findMany = async (
   filter: Prisma.AgentPluginDataFindManyArgs
 ) => {
   return prisma.agentPluginData.findMany({
+    ...filter,
     where: {
-      ...filter,
+      ...(filter.where || {}),
       agentId,
       pluginIdentifier,
     },
@@ -33,9 +35,9 @@ export const findMany = async (
 export const create = async (
   pluginIdentifier: string,
   agentId: string,
-  identifier: string,
   data: any
 ) => {
+  const identifier = cuid();
   return prisma.agentPluginData.create({
     data: {
       agentId,
