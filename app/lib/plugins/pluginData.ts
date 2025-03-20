@@ -89,7 +89,7 @@ export const deleteMany = async (
 ) => {
   return prisma.agentPluginData.deleteMany({
     where: {
-      ...filter,
+      ...(filter.where || {}),
       agentId,
       pluginIdentifier,
     },
