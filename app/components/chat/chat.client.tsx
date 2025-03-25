@@ -43,6 +43,7 @@ const Chat = ({
     initialMessage: "",
     suggestedQuestions: [],
     textAreaInitialRows: 2,
+    showMessageToolBar: false,
   };
 
   const [chatSettings, setChatSettings] = useState<ChatSettings | null>(
@@ -62,6 +63,7 @@ const Chat = ({
     /\/$/,
     ""
   );
+
   useEffect(() => {
     if (isEmbed) {
       const startTime = Date.now();
@@ -222,6 +224,7 @@ const Chat = ({
           toolNames={toolNames}
           messages={messagesWithInitMessage}
           error={error?.message}
+          showMessageToolBar={chatSettings?.showMessageToolBar}
         />
       )}
       {!disableInput && (
