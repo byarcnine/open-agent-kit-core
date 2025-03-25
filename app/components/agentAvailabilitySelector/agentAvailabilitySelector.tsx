@@ -56,7 +56,7 @@ const AgentAvailabilitySelector = ({
       open={!!selectedPlugin}
       onOpenChange={() => setSelectedPluginIdentifier(null)}
     >
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Settings for {selectedPlugin?.name} </DialogTitle>
         </DialogHeader>
