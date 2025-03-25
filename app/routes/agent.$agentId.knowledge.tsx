@@ -145,7 +145,7 @@ const KnowledgeBaseView = () => {
   return (
     <div className="p-6 w-full">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold tracking-tight my-8">Knowledge</h1>
+        <h1 className="text-3xl font-bold tracking-tight my-8">Knowledge</h1>
       </div>
       <ClientOnlyComponent>
         {Dropzone && <Dropzone agentId={agentId as string} />}
