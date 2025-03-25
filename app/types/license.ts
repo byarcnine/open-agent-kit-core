@@ -10,4 +10,5 @@ export type LicenseRequestMeta = {
   userCount: number;
   agentCount: number;
   documentsCount: number;
+  deploymentId: string;
 };
