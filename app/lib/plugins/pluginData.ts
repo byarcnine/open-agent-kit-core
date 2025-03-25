@@ -1,4 +1,5 @@
 import { Prisma, prisma } from "@db/db.server";
+import cuid from "cuid";
 
 export const findUnique = async (
   pluginIdentifier: string,
@@ -19,11 +20,12 @@ export const findUnique = async (
 export const findMany = async (
   pluginIdentifier: string,
   agentId: string,
-  filter: Prisma.AgentPluginDataFindManyArgs
+  findManyArgs: Prisma.AgentPluginDataFindManyArgs
 ) => {
   return prisma.agentPluginData.findMany({
+    ...findManyArgs,
     where: {
-      ...filter,
+      ...(findManyArgs.where || {}),
       agentId,
       pluginIdentifier,
     },
@@ -33,8 +35,8 @@ export const findMany = async (
 export const create = async (
   pluginIdentifier: string,
   agentId: string,
-  identifier: string,
-  data: any
+  identifier: string = cuid(),
+  data: any,
 ) => {
   return prisma.agentPluginData.create({
     data: {
@@ -83,11 +85,11 @@ export const deleteOne = async (
 export const deleteMany = async (
   agentId: string,
   pluginIdentifier: string,
-  filter: Prisma.AgentPluginDataDeleteManyArgs
+  deleteManyArgs: Prisma.AgentPluginDataDeleteManyArgs
 ) => {
   return prisma.agentPluginData.deleteMany({
     where: {
-      ...filter,
+      ...(deleteManyArgs.where || {}),
       agentId,
       pluginIdentifier,
     },

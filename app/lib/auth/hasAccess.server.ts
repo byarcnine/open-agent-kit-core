@@ -64,17 +64,6 @@ export const hasAccess = async (
   throw new Error("Unauthorized");
 };
 
-// export const getUserAgentPermission = async (
-//   user: SessionUser,
-//   agentId: string
-// ): Promise<AgentUserRole> => {
-//   if (user.role === "SUPER_ADMIN") return AgentUserRole.OWNER;
-//   const agentUser = await prisma.agentUser.findFirst({
-//     where: { userId: user.id, agentId },
-//   });
-//   return agentUser?.role ?? AgentUserRole.VIEWER; // TODO: fix this. The user should be able to access the agent even if they are not an agent user or global admin
-// };
-
 export const canUserAccessAgent = async (
   user: SessionUser | undefined,
   agentId: string
