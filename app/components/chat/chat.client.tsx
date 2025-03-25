@@ -89,6 +89,22 @@ const Chat = ({
     }
   }, []);
 
+  const initMessages = !initialMessages && chatSettings?.initialMessage
+    ? [
+        {
+          id: "initial-message",
+          role: MessageRole.Assistant,
+          content: chatSettings?.initialMessage,
+          parts: [
+            {
+              type: "text",
+              text: chatSettings?.initialMessage,
+            } as TextPart,
+          ],
+        } as Message,
+      ]
+    : initialMessages;
+
   const { messages, input, handleInputChange, handleSubmit, setInput, error } =
     useChat({
       api: `${API_URL}/api/generate`,
@@ -97,7 +113,7 @@ const Chat = ({
         agentId,
         meta,
       },
-      initialMessages,
+      initialMessages: initMessages,
       onResponse: (response) => {
         const newConversationId = response.headers.get("x-conversation-id");
         if (newConversationId && !conversationId) {
@@ -158,7 +174,6 @@ const Chat = ({
     }
   }, []);
 
-  // Add effect to adjust height when input changes
   useEffect(() => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
@@ -179,28 +194,9 @@ const Chat = ({
   }
 
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
-  const messagesWithInitMessage =
-    chatSettings?.initialMessage &&
-    (!initialMessages || initialMessages?.length === 0)
-      ? [
-          {
-            id: "initial-message",
-            role: MessageRole.Assistant,
-            content: chatSettings.initialMessage,
-            parts: [
-              {
-                type: "text",
-                text: chatSettings.initialMessage,
-              } as TextPart,
-            ],
-          },
-          ...messages,
-        ]
-      : messages;
-
   return (
     <div id="oak-chat-container" className="oak-chat">
-      {messagesWithInitMessage.length === 0 ? (
+      {messages.length === 0 ? (
         <div className="oak-chat__empty-state">
           {chatSettings?.intro?.title && (
             <h1 className="oak-chat__empty-state-heading">
@@ -222,7 +218,7 @@ const Chat = ({
       ) : (
         <Messages
           toolNames={toolNames}
-          messages={messagesWithInitMessage}
+          messages={messages}
           error={error?.message}
           showMessageToolBar={chatSettings?.showMessageToolBar}
         />
