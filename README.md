@@ -20,7 +20,7 @@ Website: https://open-agent-kit.com
 
 [![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/byarcnine/open-agent-kit-starter/tree/main&refcode=8ab6450926a8)
 
-More guides are available [here](https://docs.open-agent-kit.com/guides/deployment)
+More guides are available [here](https://docs.open-agent-kit.com/hosting-deploy)
 
 ## Build on the best open source libraries
 
@@ -75,13 +75,13 @@ http://localhost:5173
 ```
 
 5. Deploy
-   Read our [deployment docs](https://docs.open-agent-kit.com/guides/deployment)
+   Read our [deployment docs](https://docs.open-agent-kit.com/hosting-deploy)
 
 ## Plugin Ecosystem
 
 OAK is designed to be extensible with plugins. From custom knowledge providers, tools, pages, the sky is the limit!
 Create your own plugins or use the ones made by the community!
-Get started with the [plugin docs](https://docs.open-agent-kit.com/plugins/introduction)
+Get started with the [plugin docs](https://docs.open-agent-kit.com/plugins/create-plugin)
 
 ## Read the docs
 
