@@ -20,12 +20,12 @@ export const findUnique = async (
 export const findMany = async (
   pluginIdentifier: string,
   agentId: string,
-  filter: Prisma.AgentPluginDataFindManyArgs
+  findManyArgs: Prisma.AgentPluginDataFindManyArgs
 ) => {
   return prisma.agentPluginData.findMany({
-    ...filter,
+    ...findManyArgs,
     where: {
-      ...(filter.where || {}),
+      ...(findManyArgs.where || {}),
       agentId,
       pluginIdentifier,
     },
@@ -85,11 +85,11 @@ export const deleteOne = async (
 export const deleteMany = async (
   agentId: string,
   pluginIdentifier: string,
-  filter: Prisma.AgentPluginDataDeleteManyArgs
+  deleteManyArgs: Prisma.AgentPluginDataDeleteManyArgs
 ) => {
   return prisma.agentPluginData.deleteMany({
     where: {
-      ...(filter.where || {}),
+      ...(deleteManyArgs.where || {}),
       agentId,
       pluginIdentifier,
     },
