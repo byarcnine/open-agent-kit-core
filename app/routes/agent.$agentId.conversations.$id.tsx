@@ -6,6 +6,7 @@ import Chat from "~/components/chat/chat.client";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import type { Message } from "ai";
+import { getChatSettings } from "~/lib/llm/chat.server";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -33,12 +34,13 @@ export const loader = async ({
   const initialMessages = conversation.messages.map(
     (message) => message.content as unknown as Message
   );
-  return { conversation, initialMessages, toolNames };
+  const chatSettings = await getChatSettings(agentId);
+  return { conversation, initialMessages, toolNames, chatSettings };
 };
 
 const ConversationDetail = () => {
   const { agentId } = useParams();
-  const { initialMessages, conversation, toolNames } =
+  const { initialMessages, conversation, toolNames, chatSettings } =
     useLoaderData<typeof loader>();
 
   return (
@@ -62,6 +64,7 @@ const ConversationDetail = () => {
             disableInput
             agentId={agentId as string}
             toolNamesList={toolNames}
+            agentChatSettings={chatSettings}
           />
         )}
       </ClientOnlyComponent>

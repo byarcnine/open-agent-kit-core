@@ -59,6 +59,7 @@ const ChatSettingsUpdateSchema = z.object({
   enableFileUpload: z.boolean(),
   initialMessage: z.string().nullable(),
   suggestedQuestions: z.array(z.string()).nullable(),
+  showMessageToolBar: z.boolean(),
   intro: z
     .object({
       title: z.string().nullable(),
@@ -151,6 +152,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       .map((question) => question.trim())
       .filter(Boolean);
 
+    console.log("formData", formData);
     const rawInput = {
       enableFileUpload: !!formData.get("enableFileUpload"),
       initialMessage: formData.get("initialMessage"),
@@ -164,6 +166,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         10
       ),
       footerNote: formData.get("footerNote")?.toString() || "",
+      showMessageToolBar: !!formData.get("showMessageToolBar"),
     };
     try {
       const validatedData = ChatSettingsUpdateSchema.parse(rawInput);
@@ -196,6 +199,7 @@ const AgentSettings = () => {
         textAreaInitialRows: 2,
         footerNote: "",
         enableFileUpload: false,
+        showMessageToolBar: false,
       };
 
   const actionData = useActionData<typeof action>();
@@ -434,6 +438,18 @@ const AgentSettings = () => {
               />
               <p className="text-sm text-muted-foreground">
                 Enter a note that will be displayed below the chat input.
+              </p>
+              </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="showMessageToolBar">Show Message Tool Bar</Label>
+              <Switch
+                id="showMessageToolBar"
+                name="showMessageToolBar"
+                defaultChecked={chatSettings?.showMessageToolBar}
+              />
+              <p className="text-sm text-muted-foreground">
+                If enabled, actions like copy will be shown below the response
+                messages.
               </p>
             </div>
             <Button type="submit">Save Changes</Button>
