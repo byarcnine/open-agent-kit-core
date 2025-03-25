@@ -35,9 +35,9 @@ export const findMany = async (
 export const create = async (
   pluginIdentifier: string,
   agentId: string,
-  data: any
+  identifier: string = cuid(),
+  data: any,
 ) => {
-  const identifier = cuid();
   return prisma.agentPluginData.create({
     data: {
       agentId,
