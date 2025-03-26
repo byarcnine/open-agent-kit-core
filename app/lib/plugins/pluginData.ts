@@ -1,5 +1,5 @@
 import { Prisma, prisma } from "@db/db.server";
-import { v4 as uuidv4 } from "uuid";
+import cuid2 from "@paralleldrive/cuid2";
 
 export const findUnique = async (
   pluginIdentifier: string,
@@ -41,7 +41,7 @@ export const create = async (
   return prisma.agentPluginData.create({
     data: {
       agentId,
-      identifier: identifier ?? uuidv4(),
+      identifier: identifier ?? cuid2.createId(),
       pluginIdentifier,
       data,
     },
