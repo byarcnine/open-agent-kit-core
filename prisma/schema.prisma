@@ -333,8 +333,8 @@ model AgentPluginData {
   identifier       String
   pluginIdentifier String
   data             Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@id([agentId, identifier, pluginIdentifier])
   @@map("agent_plugin_data")
