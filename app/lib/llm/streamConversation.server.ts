@@ -18,7 +18,7 @@ export const streamConversation = async (
   userId: string,
   customIdentifier: string,
   messages: Message[],
-  meta: Record<string, any>
+  meta: Record<string, any>,
 ) => {
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
@@ -36,8 +36,8 @@ export const streamConversation = async (
     data: {
       content: JSON.parse(
         JSON.stringify(
-          convertToCoreMessages([messages[messages.length - 1]])[0]
-        )
+          convertToCoreMessages([messages[messages.length - 1]])[0],
+        ),
       ),
       conversationId: conversation.id,
       author: "USER",
@@ -52,7 +52,7 @@ export const streamConversation = async (
       return !message.parts?.some(
         (part) =>
           part.type === "tool-invocation" &&
-          part.toolInvocation.state !== "result"
+          part.toolInvocation.state !== "result",
       );
     }
     return true;
@@ -64,7 +64,7 @@ export const streamConversation = async (
       `What is the main topic of the conversation with the initial message (3-4 words max): ${
         messages[messages.length - 1].content
       }`,
-      agentId
+      agentId,
     ).then(async (r) => {
       await prisma.conversation.update({
         where: { id: conversation.id },
@@ -84,9 +84,10 @@ export const streamConversation = async (
             conversationId: conversation.id,
             agentId,
             meta,
+            config: getConfig(),
           }),
         ];
-      })
+      }),
     );
   });
 
@@ -148,7 +149,7 @@ export const streamConversation = async (
         await prisma.message.create({
           data: {
             content: JSON.parse(
-              JSON.stringify(messagesToStore[messagesToStore.length - 1])
+              JSON.stringify(messagesToStore[messagesToStore.length - 1]),
             ),
             conversationId: conversation.id,
             author: "ASSISTANT",
