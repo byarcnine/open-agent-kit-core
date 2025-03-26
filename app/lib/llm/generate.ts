@@ -4,13 +4,14 @@ import { getSystemPrompt } from "./systemPrompts.server";
 import { getToolsForAgent } from "../tools/tools.server";
 import type { OAKConfig } from "~/types/config";
 import { getModelForAgent } from "./modelManager.server";
+import { getConfig } from "../config/config";
 
 export const generateSingleMessage =
   (config: OAKConfig) =>
   async (
     prompt: string,
     agentId: string,
-    systemPrompt?: string | null // system prompt override
+    systemPrompt?: string | null, // system prompt override
   ) => {
     const system =
       systemPrompt || (await getSystemPrompt("default", agentId)) || "";
@@ -25,10 +26,11 @@ export const generateSingleMessage =
             await t.tool({
               conversationId: "0",
               agentId,
+              config: getConfig(),
               meta: {},
             }),
           ];
-        })
+        }),
       );
     });
     const messages: CoreMessage[] = [
@@ -61,10 +63,11 @@ export const generateConversation =
             await t.tool({
               conversationId: "0",
               agentId,
+              config: getConfig(),
               meta: {},
             }),
           ];
-        })
+        }),
       );
     });
     const completion = await generateText({

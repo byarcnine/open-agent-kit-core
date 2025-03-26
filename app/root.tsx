@@ -9,7 +9,7 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import "./tailwind.css";
-import config from "../config";
+import { getConfig } from "./lib/config/config";
 import type { Route } from "./+types/root";
 
 export const links: LinksFunction = () => [
@@ -43,8 +43,8 @@ export const links: LinksFunction = () => [
   { rel: "manifest", href: "/site.webmanifest" },
 ];
 
-export const loader = async ({ context, params }: LoaderFunctionArgs) => {
-  context.config = config;
+export const loader = async ({ context }: LoaderFunctionArgs) => {
+  context.config = getConfig();
   return {};
 };
 
