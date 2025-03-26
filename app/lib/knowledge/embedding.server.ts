@@ -1,7 +1,7 @@
 import { embedMany, type Embedding } from "ai";
 import { createChunks } from "./createChunks.server";
 import { prisma } from "@db/db.server";
-import cuid from "cuid";
+import cuid2 from "@paralleldrive/cuid2";
 import { getConfig } from "../config/config";
 import { getEmbeddingModel } from "../llm/modelManager.server";
 import path from "path";
@@ -51,7 +51,7 @@ export const embeddingsToDatabase = async (
               "updatedAt"
             )
             VALUES (
-              ${cuid()},
+              ${cuid2.createId()},
               ${sanitizeText(embedding.chunk)},
               ${documentId},
               ${JSON.stringify(embedding.embedding)}::vector,
@@ -94,7 +94,7 @@ export const createKnowledgeDocumentFromText = async (
 
   const document = await prisma.knowledgeDocument.create({
     data: {
-      id: cuid(),
+      id: cuid2.createId(),
       agentId: agentId,
       name: nameToUse,
       provider: provider,
