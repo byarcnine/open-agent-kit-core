@@ -6,8 +6,10 @@ import {
   Scripts,
   ScrollRestoration,
   type LinksFunction,
+  type LoaderFunctionArgs,
 } from "react-router";
 import "./tailwind.css";
+import config from "../config";
 import type { Route } from "./+types/root";
 
 export const links: LinksFunction = () => [
@@ -40,6 +42,11 @@ export const links: LinksFunction = () => [
   },
   { rel: "manifest", href: "/site.webmanifest" },
 ];
+
+export const loader = async ({ context, params }: LoaderFunctionArgs) => {
+  context.config = config;
+  return {};
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
