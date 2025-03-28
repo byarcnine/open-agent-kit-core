@@ -4,7 +4,7 @@ import { getPlugins } from "~/lib/plugins/plugins.server";
 
 export const refreshKnowledgeSources = async (
   agentId: string,
-  pluginName: string
+  pluginName: string,
 ) => {
   const existingDocuments = await prisma.knowledgeDocument.findMany({
     where: {
@@ -24,7 +24,7 @@ export const refreshKnowledgeSources = async (
   if (!plugin.syncKnowledge || typeof plugin.syncKnowledge !== "function") {
     // This plugin does not have a syncKnowledge function implemented
     console.log(
-      `Plugin ${pluginName} does not have a syncKnowledge function implemented`
+      `Plugin ${pluginName} does not have a syncKnowledge function implemented`,
     );
     return true;
   }
@@ -50,6 +50,7 @@ export const refreshKnowledgeSources = async (
               provider: pluginName,
               name: syncJob.name,
               status: "PENDING",
+              metadata: syncJob.metadata,
             },
           });
           upsertDocumentId = newDocument.id;
@@ -73,7 +74,7 @@ export const refreshKnowledgeSources = async (
   } catch (error) {
     console.error(
       `Error refreshing knowledge sources for plugin ${pluginName}`,
-      error
+      error,
     );
     return false;
   }
