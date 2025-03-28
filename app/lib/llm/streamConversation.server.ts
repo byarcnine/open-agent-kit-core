@@ -10,7 +10,7 @@ import {
 } from "ai";
 import { getConfig } from "../config/config";
 import { getModelForAgent } from "./modelManager.server";
-import { generateSingleMessage } from "./generate";
+import { generateSingleMessage } from "./generate.server";
 
 export const streamConversation = async (
   conversationId: string,

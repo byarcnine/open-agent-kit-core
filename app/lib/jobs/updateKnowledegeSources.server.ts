@@ -30,18 +30,13 @@ export const updateKnowledgeSourcesQueue = createQueue<JobPayload, JobResult>(
     ]);
     console.log("updateKnowledgeSourcesQueue - job finished", agentId, plugin);
     return { success: true };
-  }
+  },
 );
 
 export const createUpdateKnowledgeSourcesJobs = async (
   agentId?: string,
-  pluginName?: string
+  pluginName?: string,
 ) => {
-  console.log(
-    "createUpdateKnowledgeSourcesJobs - starting",
-    agentId,
-    pluginName
-  );
   const agents = await prisma.agent.findMany();
   for (const agent of agents) {
     const plugins = await getPluginsForAgent(agent.id);
@@ -52,11 +47,14 @@ export const createUpdateKnowledgeSourcesJobs = async (
       if (pluginName && pluginName !== plugin.name) {
         continue;
       }
+      if (!plugin.syncKnowledge || typeof plugin.syncKnowledge !== "function") {
+        continue;
+      }
       console.log(
         "Enqueuing job for agent",
         agent.id,
         "and plugin",
-        plugin.name
+        plugin.name,
       );
       updateKnowledgeSourcesQueue.enqueue({
         agentId: agent.id,
@@ -70,7 +68,7 @@ export const processUpdateKnowledgeSources = async () => {
   const startSize = await updateKnowledgeSourcesQueue.size(true);
   console.log(
     "processUpdateKnowledgeSources - Starting queue with size",
-    startSize
+    startSize,
   );
   if (startSize === 0) {
     return { success: true };
