@@ -8,6 +8,7 @@ export type SyncKnowledgeFunctionReturnParams = (
       name: string;
       action: "ADD";
       text: string;
+      metadata?: Record<string, any>;
     }
   | {
       id: string;
@@ -31,7 +32,7 @@ export type SyncKnowledgeFunctionParams = {
 
 export type KnowledgeProviderServerConfig = {
   syncKnowledge: (
-    params: SyncKnowledgeFunctionParams
+    params: SyncKnowledgeFunctionParams,
   ) => Promise<SyncKnowledgeFunctionReturnParams>;
   identifier: string;
   loader: LoaderFunction;
