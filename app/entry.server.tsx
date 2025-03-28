@@ -8,14 +8,17 @@ import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
 import config from "../config";
 import type { OAKConfig } from "./types/config";
+import OAKProvider from "./lib/lib";
 
 declare global {
   var config: OAKConfig;
+  var oak: (pluginName: string) => ReturnType<typeof OAKProvider>;
 }
 
 export const streamTimeout = 10_000;
 
 global.config = config;
+global.oak = (pluginName: string) => OAKProvider(config, pluginName);
 
 export default function handleRequest(
   request: Request,

@@ -23,11 +23,12 @@ const OAKProvider = (config: OAKConfig, pluginIdentifier: string) => {
       getPluginConfig(pluginIdentifier, agentId),
     setPluginConfig: (agentId: string, config: object) =>
       setPluginConfig(pluginIdentifier, agentId, config),
-    syncKnowledge: (agentId: string, pluginName: string) =>
-      updateKnowledgeSourcesQueue.enqueue({
+    enqueueSyncKnowledge: (agentId: string) => {
+      return updateKnowledgeSourcesQueue.enqueue({
         agentId,
-        plugin: pluginName,
-      }),
+        plugin: pluginIdentifier,
+      });
+    },
     data: {
       findUnique: (agentId: string, identifier: string) =>
         findUnique(pluginIdentifier, agentId, identifier),
