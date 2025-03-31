@@ -5,6 +5,7 @@ import { getToolsForAgent } from "../tools/tools.server";
 import type { OAKConfig } from "~/types/config";
 import { getModelForAgent } from "./modelManager.server";
 import { getConfig } from "../config/config";
+import OAKProvider from "../lib";
 
 export const generateSingleMessage =
   (config: OAKConfig) =>
@@ -28,6 +29,7 @@ export const generateSingleMessage =
               agentId,
               config: getConfig(),
               meta: {},
+              provider: OAKProvider(getConfig(), t.pluginName as string),
             }),
           ];
         }),
@@ -65,6 +67,7 @@ export const generateConversation =
               agentId,
               config: getConfig(),
               meta: {},
+              provider: OAKProvider(getConfig(), t.pluginName as string),
             }),
           ];
         }),
