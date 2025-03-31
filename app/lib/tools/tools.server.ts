@@ -5,7 +5,7 @@ import { defaultTools } from "./index.server";
 export const getToolsForAgent = async (agentId: string) => {
   const agentPlugins = await getPluginsForAgent(agentId);
   const agentTools = agentPlugins.flatMap((p) =>
-    p.tools?.map((t) => ({ ...t, identifier: `${p.name}__${t.identifier}` }))
+    p.tools?.map((t) => ({ ...t, identifier: `${p.name}__${t.identifier}` })),
   );
   return [...agentTools, ...defaultTools.tools].filter((i) => !!i);
 };
@@ -17,7 +17,7 @@ export const toolNameIdentifierList = () => {
     tools.map((t) => [
       t.pluginName ? `${t.pluginName}__${t.identifier}` : t.identifier,
       t.name,
-    ])
+    ]),
   ) as Record<string, string>;
   return toolNames;
 };
