@@ -1,6 +1,8 @@
 import { prisma } from "@db/db.server";
 import { embedDocumentQueue } from "~/lib/jobs/embedDocument.server";
 import { getPlugins } from "~/lib/plugins/plugins.server";
+import OAKProvider from "../lib";
+import { getConfig } from "../config/config";
 
 export const refreshKnowledgeSources = async (
   agentId: string,
@@ -32,6 +34,7 @@ export const refreshKnowledgeSources = async (
     const syncJobs = await plugin.syncKnowledge({
       agentId,
       existingDocuments,
+      provider: OAKProvider(getConfig(), pluginName),
     });
     console.log("syncJobs", syncJobs);
     for (const syncJob of syncJobs) {

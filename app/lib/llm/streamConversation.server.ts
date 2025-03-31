@@ -11,6 +11,7 @@ import {
 import { getConfig } from "../config/config";
 import { getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
+import OAKProvider from "../lib";
 
 export const streamConversation = async (
   conversationId: string,
@@ -85,6 +86,7 @@ export const streamConversation = async (
             agentId,
             meta,
             config: getConfig(),
+            provider: OAKProvider(getConfig(), t.pluginName as string),
           }),
         ];
       }),
