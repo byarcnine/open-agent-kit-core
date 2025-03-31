@@ -49,13 +49,14 @@ export const refreshKnowledgeSources = async (
         } else {
           const newDocument = await prisma.knowledgeDocument.upsert({
             where: {
-              agentId_name: {
+              agentId_name_provider: {
                 agentId,
                 name: syncJob.name,
+                provider: pluginName,
               },
             },
             update: {
-              status: "PENDING",
+              name: syncJob.name,
               metadata: syncJob.metadata,
             },
             create: {
