@@ -163,7 +163,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       },
       textAreaInitialRows: parseInt(
         formData.get("textAreaInitialRows") as string,
-        10
+        10,
       ),
       footerNote: formData.get("footerNote")?.toString() || "",
       showMessageToolBar: !!formData.get("showMessageToolBar"),
@@ -207,7 +207,7 @@ const AgentSettings = () => {
   const [isPublic, setIsPublic] = useState(agent.isPublic);
 
   const [enableFileUpload, setEnableFileUpload] = useState(
-    chatSettings?.enableFileUpload
+    chatSettings?.enableFileUpload,
   );
 
   useEffect(() => {
@@ -220,7 +220,7 @@ const AgentSettings = () => {
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (
       !confirm(
-        "Are you sure you want to delete this agent? This action cannot be undone."
+        "Are you sure you want to delete this agent? This action cannot be undone.",
       )
     ) {
       e.preventDefault();
@@ -439,7 +439,7 @@ const AgentSettings = () => {
               <p className="text-sm text-muted-foreground">
                 Enter a note that will be displayed below the chat input.
               </p>
-              </div>
+            </div>
             <div className="flex flex-col space-y-2">
               <Label htmlFor="showMessageToolBar">Show Message Tool Bar</Label>
               <Switch
@@ -488,7 +488,7 @@ const AgentSettings = () => {
   // Initialize the chat component
   ChatComponent.renderChatComponent('chat-container', {
     agentId: "${agent.id}",
-    apiUrl: "${appUrl}/api/generate"
+    apiUrl: "${appUrl}"
   });
 </script>
     `}
