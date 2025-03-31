@@ -27,7 +27,9 @@ export const withOAKContext = serverOnly$(
       const path = args.request.url.split("/");
       const indexOfPlugin = path.indexOf("plugins");
       const pluginSlug = path[indexOfPlugin + 1];
-      const pluginName = getPluginNameForSlug(pluginSlug) as string;
+      // remove url params from pluginSlug
+      const pluginSlugWithoutParams = pluginSlug.split("?")[0];
+      const pluginName = getPluginNameForSlug(pluginSlugWithoutParams) as string;
       const context = {
         ...args.context,
         oakConfig: config,
