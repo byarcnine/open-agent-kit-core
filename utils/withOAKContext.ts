@@ -18,4 +18,4 @@ export const withOAKContext = serverOnly$(
       return fn({ ...args, context });
     }) as T;
   },
-);
+) as <T extends (...args: any[]) => any>(fn: T) => T;
