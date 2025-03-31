@@ -7,7 +7,7 @@ const pluginConfigs: Record<string, { default: PluginType }> = import.meta.glob(
   "/node_modules/oak-*/config.server.ts",
   {
     eager: true,
-  }
+  },
 );
 
 const modulePackageJsons: Record<string, { default: PluginPackageJson }> =
@@ -34,7 +34,7 @@ Object.entries(pluginConfigs).forEach(
       ...plugin.default,
       name: packageInfo.name,
     });
-  }
+  },
 );
 
 export const getPlugins = (): PluginType[] => {
@@ -47,8 +47,12 @@ export function getTools(): ToolConfig[] {
       plugin.tools?.map((tool) => ({
         ...tool,
         pluginName: plugin.name,
-      }))
+      })),
     )
     .flat()
     .filter((i) => !!i);
 }
+
+export const getPluginNameForSlug = (slug: string) => {
+  return importedPlugins.find((plugin) => plugin.slug === slug)?.name;
+};
