@@ -58,11 +58,14 @@ export const refreshKnowledgeSources = async (
             update: {
               name: syncJob.name,
               metadata: syncJob.metadata,
+              status: "PENDING",
             },
             create: {
               agentId,
               provider: pluginName,
               name: syncJob.name,
+              metadata: syncJob.metadata,
+              status: "PENDING",
             },
           });
           upsertDocumentId = newDocument.id;
