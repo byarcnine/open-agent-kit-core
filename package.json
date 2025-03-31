@@ -31,6 +31,7 @@
     "@ai-sdk/google": "^1.1.20",
     "@ai-sdk/openai": "^1.2.1",
     "@ai-sdk/xai": "^1.1.13",
+    "@aws-sdk/client-s3": "^3.775.0",
     "@langchain/textsplitters": "^0.1.0",
     "@mdxeditor/editor": "^3.20.0",
     "@mgcrea/prisma-queue": "^1.12.0",
@@ -74,8 +75,7 @@
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "xml2js": "^0.6.2",
-    "zod": "^3.24.2",
-    "@aws-sdk/client-s3": "^3.775.0"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@module-federation/vite": "^1.2.2",
@@ -94,6 +94,7 @@
     "tailwindcss": "^4.0.3",
     "typescript": "^5.7.3",
     "vite": "^6.2.1",
+    "vite-env-only": "^3.0.3",
     "vite-plugin-dts": "^4.5.3",
     "vite-tsconfig-paths": "^5.1.4"
   },
