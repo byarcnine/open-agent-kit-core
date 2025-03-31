@@ -143,7 +143,7 @@ model KnowledgeDocument {
   embeddings Embedding[]
   status     KnowledgeSourceStatus @default(PENDING)
 
-  @@unique([agentId, name])
+  @@unique([agentId, name, provider])
   @@index([agentId])
   @@map("knowledge_document")
 }
@@ -329,7 +329,7 @@ model GlobalConfig {
 
 model AgentPluginData {
   agentId          String
-  agent            Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent            Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   identifier       String
   pluginIdentifier String
   data             Json
