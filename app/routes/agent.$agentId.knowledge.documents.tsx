@@ -5,7 +5,6 @@ import {
   type LoaderFunctionArgs,
   useFetcher,
   type ActionFunctionArgs,
-  useNavigate,
 } from "react-router";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -205,31 +204,6 @@ const DocumentsTab = () => {
   const loaderData = useLoaderData();
   const { files = [], message, tags = [] } = loaderData;
   const { agentId } = useParams();
-  const [sortConfig, setSortConfig] = useState([
-    { key: "name", direction: "asc" },
-    { key: "updatedAt", direction: "asc" },
-  ]);
-  const navigate = useNavigate();
-
-  const getSortConfigOrder = (key: string) => {
-    const sortConfigItem = sortConfig.find((config) => config.key === key);
-    if (!sortConfigItem) return null;
-    return sortConfigItem.direction;
-  };
-
-  const handleSort = (key: string) => {
-    setSortConfig((prevConfig) => {
-      const existingSort = prevConfig.find((config) => config.key === key);
-      const newDirection = existingSort && existingSort.direction === "asc" ? "desc" : "asc";
-
-      const updatedConfig = [{ key, direction: newDirection }];
-
-      const sortParams = `sortKey=${key}&sortOrder=${newDirection}`;
-      navigate(`?${sortParams}`);
-
-      return updatedConfig;
-    });
-  };
 
   useEffect(() => {
     if (message) {
@@ -254,15 +228,13 @@ const DocumentsTab = () => {
             <TableHeader>
               <TableRow>
                 <TableHead
-                  onClick={() => handleSort("name")}
-                  sortOrder={getSortConfigOrder("name")}
                   isSortable
+                  fieldName="name"
                 >
                   Name
                 </TableHead>
                 <TableHead
-                  onClick={() => handleSort("updatedAt")}
-                  sortOrder={getSortConfigOrder("updatedAt")}
+                  fieldName="updatedAt"
                   isSortable
                 >
                   Last Modified
