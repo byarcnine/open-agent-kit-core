@@ -1,4 +1,5 @@
 import * as React from "react"
+import { ChevronUp, ChevronDown } from "react-feather"
 
 import { cn } from "~/lib/utils"
 
@@ -68,16 +69,28 @@ TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  React.ThHTMLAttributes<HTMLTableCellElement> & { sortOrder?: string | null , isSortable?: boolean }
+>(({ className, sortOrder, isSortable, children, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
       "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      isSortable ? "cursor-pointer" : "",
       className
     )}
     {...props}
-  />
+  >
+    <div className="flex items-center">
+      {children}
+      {isSortable && (
+        sortOrder === 'asc' ? (
+          <ChevronUp className="w-4 h-4 ml-1" />
+        ) : (
+          <ChevronDown className="w-4 h-4 ml-1" />
+        )
+      )}
+    </div>
+  </th>
 ))
 TableHead.displayName = "TableHead"
 

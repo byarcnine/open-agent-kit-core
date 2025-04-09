@@ -5,6 +5,7 @@ import {
   type LoaderFunctionArgs,
   useFetcher,
   type ActionFunctionArgs,
+  useNavigate,
 } from "react-router";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -28,7 +29,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { Trash2, Check, X, Edit, PlusSquare } from "react-feather";
+import {
+  Trash2,
+  Check,
+  X,
+  Edit,
+  PlusSquare,
+} from "react-feather";
 import { parseFile } from "~/lib/knowledge/parseFile.sever";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { prisma } from "@db/db.server";
@@ -166,13 +173,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
+  const url = new URL(request.url);
+  const sortKey = url.searchParams.get("sortKey") || "name";
+  const sortOrder = url.searchParams.get("sortOrder") || "asc";
+
   const files = await prisma.knowledgeDocument.findMany({
     where: { agentId },
     include: { tags: true },
+    orderBy: { [sortKey]: sortOrder },
   });
+
   const tags = await prisma.knowledgeDocumentTag.findMany({
     where: { agentId },
   });
+
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie"),
   );
@@ -191,6 +205,31 @@ const DocumentsTab = () => {
   const loaderData = useLoaderData();
   const { files = [], message, tags = [] } = loaderData;
   const { agentId } = useParams();
+  const [sortConfig, setSortConfig] = useState([
+    { key: "name", direction: "asc" },
+    { key: "updatedAt", direction: "asc" },
+  ]);
+  const navigate = useNavigate();
+
+  const getSortConfigOrder = (key: string) => {
+    const sortConfigItem = sortConfig.find((config) => config.key === key);
+    if (!sortConfigItem) return null;
+    return sortConfigItem.direction;
+  };
+
+  const handleSort = (key: string) => {
+    setSortConfig((prevConfig) => {
+      const existingSort = prevConfig.find((config) => config.key === key);
+      const newDirection = existingSort && existingSort.direction === "asc" ? "desc" : "asc";
+
+      const updatedConfig = [{ key, direction: newDirection }];
+
+      const sortParams = `sortKey=${key}&sortOrder=${newDirection}`;
+      navigate(`?${sortParams}`);
+
+      return updatedConfig;
+    });
+  };
 
   useEffect(() => {
     if (message) {
@@ -214,8 +253,20 @@ const DocumentsTab = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Last Modified</TableHead>
+                <TableHead
+                  onClick={() => handleSort("name")}
+                  sortOrder={getSortConfigOrder("name")}
+                  isSortable
+                >
+                  Name
+                </TableHead>
+                <TableHead
+                  onClick={() => handleSort("updatedAt")}
+                  sortOrder={getSortConfigOrder("updatedAt")}
+                  isSortable
+                >
+                  Last Modified
+                </TableHead>
                 <TableHead>Provider</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Tags</TableHead>
@@ -256,14 +307,14 @@ const DocumentRow = ({ file, tags }: { file: any; tags: any[] }) => {
       },
       {
         method: "POST",
-      }
+      },
     );
   };
 
   return (
     <TableRow key={file.name}>
       <TableCell className="font-medium">{file.name}</TableCell>
-      <TableCell className="max-w-[300px] truncate">
+      <TableCell className="min-w-[130px] max-w-[300px] truncate">
         {dayjs(file.updatedAt).fromNow()}
       </TableCell>
       <TableCell className="max-w-[300px] truncate">{file.provider}</TableCell>
@@ -365,7 +416,7 @@ const Tag = ({
       },
       {
         method: "POST",
-      }
+      },
     );
   };
 
@@ -397,7 +448,7 @@ const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
       },
       {
         method: "POST",
-      }
+      },
     );
   };
 
@@ -458,7 +509,7 @@ const DeleteForm = ({ documentId }: { documentId: string }) => {
       },
       {
         method: "POST",
-      }
+      },
     );
   };
 
