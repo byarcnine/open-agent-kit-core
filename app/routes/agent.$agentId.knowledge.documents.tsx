@@ -256,7 +256,7 @@ const DocumentRow = ({ file, tags }: { file: any; tags: any[] }) => {
       },
       {
         method: "POST",
-      },
+      }
     );
   };
 
@@ -443,22 +443,36 @@ const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
   );
 };
 
-const DeleteForm = ({ documentId }: { documentId: string }) => (
-  <form className="flex items-center" method="post">
-    <input type="hidden" name="intent" value={Intent.DELETE} />
-    <input type="hidden" name="documentId" value={documentId} />
-    <button
-      type="submit"
-      className="text-red-500 hover:text-red-700"
-      onClick={(e) => {
-        if (!confirm("Are you sure you want to delete this document?")) {
-          e.preventDefault();
-        }
-      }}
-    >
-      <Trash2 className="w-4 h-4" />
-    </button>
-  </form>
-);
+const DeleteForm = ({ documentId }: { documentId: string }) => {
+  const fetcher = useFetcher();
+
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!confirm("Are you sure you want to delete this document?")) {
+      e.preventDefault();
+      return;
+    }
+    fetcher.submit(
+      {
+        intent: Intent.DELETE,
+        documentId,
+      },
+      {
+        method: "POST",
+      }
+    );
+  };
+
+  return (
+    <div className="flex items-center">
+      <button
+        type="button"
+        className="text-red-500 hover:text-red-700"
+        onClick={handleDelete}
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
 
 export default DocumentsTab;
