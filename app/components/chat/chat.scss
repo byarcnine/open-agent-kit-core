@@ -48,6 +48,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.4s;
+        text-align: center;
       }
     }
 
@@ -329,6 +330,12 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         &--assistant {
           margin-top: 3.2px;
         }
+      }
+
+      &-iframe-container {
+        position: relative;
+        overflow: hidden;
+        padding-top: 56.25%;
       }
 
       &-tool-invocations {

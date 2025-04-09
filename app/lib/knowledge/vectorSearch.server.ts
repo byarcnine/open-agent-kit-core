@@ -18,6 +18,7 @@ const vectorSearch = async (
   const vector = embeddings[0];
   const dimensions = vector.length;
   // Cast vector fields to text for Prisma handling
+
   const results: {
     id: string;
     content: string;

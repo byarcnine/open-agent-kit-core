@@ -1,4 +1,9 @@
-import React, { useContext, useState, type DetailedHTMLProps, type AnchorHTMLAttributes } from "react";
+import React, {
+  useContext,
+  useState,
+  type DetailedHTMLProps,
+  type AnchorHTMLAttributes,
+} from "react";
 import Markdown from "react-markdown";
 import DOMPurify from "dompurify";
 import { type Message as MessageType } from "ai";
@@ -7,20 +12,64 @@ import { toolComponents } from "~/lib/tools/toolComponents";
 import { FileText, Copy, Check } from "react-feather";
 import { openBase64Pdf } from "~/lib/utils";
 import { ChatContext } from "./chat.client";
+import type { ChatSettings } from "~/types/chat";
 
 interface MessageProps {
   message: MessageType;
   toolNames: Record<string, string>;
 }
 
+const getVideoId = (url: string) => {
+  const videoId = url.includes("youtube.com")
+    ? new URL(url).searchParams.get("v")
+    : url.split("/").pop();
+  return videoId;
+};
+
+const YouTubeEmbed = ({ url }: { url: string }) => {
+  const videoId = getVideoId(url);
+  return (
+    <div className="block py-6">
+      <div className="oak-chat__message-iframe-container">
+        <iframe
+          className="absolute top-0 left-0 w-full h-full"
+          src={`https://www.youtube.com/embed/${videoId}`}
+          title="YouTube video player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        ></iframe>
+      </div>
+    </div>
+  );
+};
 const renderMarkdownLink = ({
   children,
+  href,
+  chatSettings,
   ...props
-}: DetailedHTMLProps<AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>) => (
-  <a {...props} target="_blank" rel="noopener noreferrer">
-    {children}
-  </a>
-);
+}: DetailedHTMLProps<
+  AnchorHTMLAttributes<HTMLAnchorElement>,
+  HTMLAnchorElement
+> & { chatSettings: ChatSettings }) => {
+  const isYouTubeLink =
+    href?.includes("youtube.com") || href?.includes("youtu.be");
+  if (isYouTubeLink && chatSettings?.openYoutubeVideosInIframe) {
+    return href ? <YouTubeEmbed url={href} /> : null;
+  }
+
+  const isExternalLink =
+    href?.includes("http") && !href?.includes(window.location.hostname);
+  const openInNewTab =
+    isExternalLink &&
+    (chatSettings?.openExternalLinksInNewTab ||
+      (!isExternalLink && chatSettings?.openInternalLinksInNewTab));
+  const blankTarget = openInNewTab ? "_blank" : "_self";
+  return href ? (
+    <a {...props} href={href} target={blankTarget} rel="noopener noreferrer">
+      {children}
+    </a>
+  ) : null;
+};
 
 const Message: React.FC<MessageProps> = React.memo(({ message, toolNames }) => {
   const [copied, setCopied] = useState(false);
@@ -86,19 +135,23 @@ const Message: React.FC<MessageProps> = React.memo(({ message, toolNames }) => {
           if (part.type === "tool-invocation") {
             const ToolComponent = toolComponents[part.toolInvocation.toolName];
             const isIframeOrEmbed = isIframe || isEmbed;
-            const isDefaultTool = part.toolInvocation.toolName.endsWith("__default");
-            const hideDefaultTool = (isDefaultTool && !chatSettings?.showDefaultToolsDebugMessages) || isIframeOrEmbed;
+            const isDefaultTool =
+              part.toolInvocation.toolName.endsWith("__default");
+            const hideDefaultTool =
+              (isDefaultTool && !chatSettings?.showDefaultToolsDebugMessages) ||
+              isIframeOrEmbed;
             if (!ToolComponent || hideDefaultTool) return null;
             return (
               <div
                 key={part.toolInvocation.toolCallId}
                 className="oak-chat__message-tool-invocations"
               >
-                {!isIframeOrEmbed && chatSettings?.showDefaultToolsDebugMessages && (
-                  <span className="oak-chat__message-tool-invocations-marker">
-                    using tool "{toolNames[part.toolInvocation.toolName]}"
-                  </span>
-                )}
+                {!isIframeOrEmbed &&
+                  chatSettings?.showDefaultToolsDebugMessages && (
+                    <span className="oak-chat__message-tool-invocations-marker">
+                      using tool "{toolNames[part.toolInvocation.toolName]}"
+                    </span>
+                  )}
                 <ToolComponent {...part.toolInvocation} />
               </div>
             );
@@ -113,7 +166,8 @@ const Message: React.FC<MessageProps> = React.memo(({ message, toolNames }) => {
               >
                 <Markdown
                   components={{
-                    a: renderMarkdownLink,
+                    a: (props) =>
+                      renderMarkdownLink({ ...props, chatSettings }),
                   }}
                 >
                   {DOMPurify.sanitize(part.text)}

@@ -7,15 +7,7 @@ import { ArrowUp, FileText, Plus, XCircle } from "react-feather";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
 import { MessageRole, type ChatSettings } from "~/types/chat";
-
-
-const initialChatSettings: ChatSettings = {
-  initialMessage: "",
-  suggestedQuestions: [],
-  textAreaInitialRows: 2,
-  showMessageToolBar: false,
-  showDefaultToolsDebugMessages: false,
-};
+import { initialChatSettings } from "~/constants/chat";
 
 interface ChatContextType {
   isEmbed: boolean;

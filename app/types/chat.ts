@@ -11,7 +11,9 @@ export interface ChatSettings {
   supportedFileTypes?: string[];
   showMessageToolBar?: boolean;
   showDefaultToolsDebugMessages?: boolean;
-
+  openExternalLinksInNewTab?: boolean;
+  openInternalLinksInNewTab?: boolean;
+  openYoutubeVideosInIframe?: boolean;
 }
 
 export enum MessageRole {
