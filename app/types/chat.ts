@@ -10,6 +10,8 @@ export interface ChatSettings {
   enableFileUpload?: boolean;
   supportedFileTypes?: string[];
   showMessageToolBar?: boolean;
+  showDefaultToolsDebugMessages?: boolean;
+
 }
 
 export enum MessageRole {

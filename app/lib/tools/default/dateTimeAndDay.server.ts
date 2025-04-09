@@ -27,7 +27,7 @@ const dateTimeAndDay = () =>
   });
 
 export default {
-  identifier: "dateTimeAndDay",
+  identifier: "dateTimeAndDay__default",
   name: "Date And Time",
   description:
     "Retrieves date and time - enables the model to answer time based questions.",

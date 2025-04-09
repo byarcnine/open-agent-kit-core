@@ -25,7 +25,7 @@ const accessKnowledgeBase = async ({ agentId }: ToolParams) => {
 };
 
 export default {
-  identifier: "accessKnowledgeBase",
+  identifier: "accessKnowledgeBase__default",
   name: "Access Knowledge Base",
   description: "Access the knowledge base",
   tool: accessKnowledgeBase,

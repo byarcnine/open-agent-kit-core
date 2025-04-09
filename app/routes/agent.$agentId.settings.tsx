@@ -60,6 +60,7 @@ const ChatSettingsUpdateSchema = z.object({
   initialMessage: z.string().nullable(),
   suggestedQuestions: z.array(z.string()).nullable(),
   showMessageToolBar: z.boolean(),
+  showDefaultToolsDebugMessages: z.boolean(),
   intro: z
     .object({
       title: z.string().nullable(),
@@ -152,7 +153,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       .map((question) => question.trim())
       .filter(Boolean);
 
-    console.log("formData", formData);
     const rawInput = {
       enableFileUpload: !!formData.get("enableFileUpload"),
       initialMessage: formData.get("initialMessage"),
@@ -167,6 +167,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       ),
       footerNote: formData.get("footerNote")?.toString() || "",
       showMessageToolBar: !!formData.get("showMessageToolBar"),
+      showDefaultToolsDebugMessages: !!formData.get("showDefaultToolsDebugMessages"),
     };
     try {
       const validatedData = ChatSettingsUpdateSchema.parse(rawInput);
@@ -200,6 +201,7 @@ const AgentSettings = () => {
         footerNote: "",
         enableFileUpload: false,
         showMessageToolBar: false,
+        showDefaultToolsDebugMessages: false,
       };
 
   const actionData = useActionData<typeof action>();
@@ -452,6 +454,19 @@ const AgentSettings = () => {
                 messages.
               </p>
             </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="showDefaultToolsDebugMessages">Show Default Tools Debug Messages</Label>
+              <Switch
+                id="showDefaultToolsDebugMessages"
+                name="showDefaultToolsDebugMessages"
+                defaultChecked={chatSettings?.showDefaultToolsDebugMessages}
+              />
+              <p className="text-sm text-muted-foreground">
+                If enabled, the default tool debug messages will be shown in the response
+                messages.
+              </p>
+            </div>
+
             <Button type="submit">Save Changes</Button>
           </Form>
         </CardContent>

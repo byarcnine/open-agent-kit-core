@@ -1,4 +1,5 @@
 import "./chat.scss";
+import React from "react";
 import { useChat, type Message } from "@ai-sdk/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Textarea } from "../ui/textarea";
@@ -7,6 +8,21 @@ import AdviceCards from "./adviceCards";
 import Messages from "./messages";
 import { MessageRole, type ChatSettings } from "~/types/chat";
 
+
+const initialChatSettings: ChatSettings = {
+  initialMessage: "",
+  suggestedQuestions: [],
+  textAreaInitialRows: 2,
+  showMessageToolBar: false,
+  showDefaultToolsDebugMessages: false,
+};
+
+interface ChatContextType {
+  isEmbed: boolean;
+  chatSettings: ChatSettings;
+}
+
+export const ChatContext = React.createContext<ChatContextType>({ isEmbed: false, chatSettings: initialChatSettings });
 interface TextPart {
   type: "text";
   text: string;
@@ -39,15 +55,8 @@ const Chat = ({
     initialConversationId
   );
 
-  const initialChatSettings = agentChatSettings || {
-    initialMessage: "",
-    suggestedQuestions: [],
-    textAreaInitialRows: 2,
-    showMessageToolBar: false,
-  };
-
-  const [chatSettings, setChatSettings] = useState<ChatSettings | null>(
-    initialChatSettings
+  const [chatSettings, setChatSettings] = useState<ChatSettings>(
+    agentChatSettings || initialChatSettings
   );
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
@@ -70,7 +79,7 @@ const Chat = ({
       fetch(`${API_URL}/api/agentChatSettings/${agentId}`)
         .then((res) => res.json())
         .then((data) => {
-          setChatSettings(data.chatSettings || initialChatSettings);
+          setChatSettings(data.chatSettings || chatSettings);
           setToolNames(data.toolNames);
 
           const elapsedTime = Date.now() - startTime;
@@ -199,9 +208,10 @@ const Chat = ({
       : messages;
 
   return (
-    <div id="oak-chat-container" className="oak-chat">
-      {messagesWithInitMessage.length === 0 ? (
-        <div className="oak-chat__empty-state">
+    <ChatContext.Provider value={{ isEmbed, chatSettings }}>
+      <div id="oak-chat-container" className="oak-chat">
+        {messagesWithInitMessage.length === 0 ? (
+          <div className="oak-chat__empty-state">
           {chatSettings?.intro?.title && (
             <h1 className="oak-chat__empty-state-heading">
               {chatSettings?.intro?.title}
@@ -224,7 +234,6 @@ const Chat = ({
           toolNames={toolNames}
           messages={messagesWithInitMessage}
           error={error?.message}
-          showMessageToolBar={chatSettings?.showMessageToolBar}
         />
       )}
       {!disableInput && (
@@ -321,6 +330,7 @@ const Chat = ({
         </>
       )}
     </div>
+    </ChatContext.Provider>
   );
 };
 

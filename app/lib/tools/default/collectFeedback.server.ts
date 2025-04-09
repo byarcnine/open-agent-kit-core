@@ -58,7 +58,7 @@ const collectFeedback = ({ conversationId }: ToolParams) =>
   });
 
 export default {
-  identifier: "collectFeedback",
+  identifier: "collectFeedback__default",
   name: "Collect Feedback",
   description: "Collect user feedback",
   tool: collectFeedback,
