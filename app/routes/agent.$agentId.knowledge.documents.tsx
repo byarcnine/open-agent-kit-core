@@ -173,7 +173,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
   const url = new URL(request.url);
-  const sortKey = url.searchParams.get("sortKey") || "name";
+  const sortKey = url.searchParams.get("sortField") || "name";
   const sortOrder = url.searchParams.get("sortOrder") || "asc";
 
   const files = await prisma.knowledgeDocument.findMany({
