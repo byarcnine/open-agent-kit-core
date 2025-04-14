@@ -348,6 +348,7 @@ enum MCPType {
 
 model MCPs {
   id             String   @id @default(cuid())
+  name           String   @default("")
   type           MCPType
   agentId        String
   agent          Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
