@@ -48,6 +48,7 @@ export const generateSingleMessage =
     const completion = await generateText({
       model,
       messages,
+      maxSteps: 1,
       tools: Object.fromEntries(tools),
     });
     return completion.text;

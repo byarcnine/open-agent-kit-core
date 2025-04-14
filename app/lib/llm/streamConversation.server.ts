@@ -105,8 +105,7 @@ export const streamConversation = async (
       messages: cleanedMessages,
       system: systemPrompt,
       tools: Object.fromEntries(tools),
-      toolChoice: "auto",
-      maxSteps: 5,
+      maxSteps: 50,
       experimental_telemetry: {
         isEnabled: false,
       },
