@@ -31,7 +31,7 @@ export const AdminNav = ({
           {
             "bg-zinc-200 text-primary":
               location.pathname === `/agent/${agentId}`,
-          }
+          },
         )}
       >
         <Type className="h-4 w-4" />
@@ -44,9 +44,9 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/conversations`
+              `/agent/${agentId}/conversations`,
             ),
-          }
+          },
         )}
       >
         <MessageSquare className="h-4 w-4" />
@@ -59,9 +59,9 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/prompts`
+              `/agent/${agentId}/prompts`,
             ),
-          }
+          },
         )}
       >
         <Clipboard className="h-4 w-4" />
@@ -74,9 +74,9 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/knowledge`
+              `/agent/${agentId}/knowledge`,
             ),
-          }
+          },
         )}
       >
         <Database className="h-4 w-4" />
@@ -89,9 +89,9 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/feedback`
+              `/agent/${agentId}/feedback`,
             ),
-          }
+          },
         )}
       >
         <Inbox className="h-4 w-4" />
@@ -104,13 +104,13 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/plugins`
+              `/agent/${agentId}/plugins`,
             ),
-          }
+          },
         )}
       >
         <Tool className="h-4 w-4" />
-        Plugins
+        Plugins & MCPs
       </Link>
       {pluginMenuItems.map((item) => {
         const href = `/agent/${agentId}/plugins/${item.href}`;
@@ -123,7 +123,7 @@ export const AdminNav = ({
               "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
               {
                 "bg-zinc-200 text-primary": location.pathname.includes(href),
-              }
+              },
             )}
           >
             <CornerDownRight className="h-4 w-4" />
@@ -139,9 +139,9 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/users`
+              `/agent/${agentId}/users`,
             ),
-          }
+          },
         )}
       >
         <Users className="h-4 w-4" />
@@ -154,9 +154,9 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/settings`
+              `/agent/${agentId}/settings`,
             ),
-          }
+          },
         )}
       >
         <Settings className="h-4 w-4" />
@@ -171,9 +171,9 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-zinc-200 text-primary": location.pathname.includes(
-              `/chat/${agentId}`
+              `/chat/${agentId}`,
             ),
-          }
+          },
         )}
       >
         <MessageSquare className="h-4 w-4" />
