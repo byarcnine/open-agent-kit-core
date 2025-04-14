@@ -40,7 +40,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { experimental_createMCPClient as createMCPClient, tool } from "ai";
 import { Experimental_StdioMCPTransport as StdioMCPTransport } from "ai/mcp-stdio";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { Loader } from "react-feather";
+import { Loader, Trash2 } from "react-feather";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -52,12 +52,14 @@ type AddMcpResponse =
       success: true;
       error?: never;
       tools: { [key: string]: { description: string } };
+      newMcp: Awaited<ReturnType<typeof prisma.mCPs.create>>;
     }
   | {
       _action: "addMcp";
       success?: never;
       error: string;
       tools?: never;
+      newMcp?: never;
     };
 
 type FetchToolsResponse =
@@ -74,7 +76,23 @@ type FetchToolsResponse =
       tools?: never;
     };
 
-type ActionResponse = AddMcpResponse | FetchToolsResponse;
+// Define the return type for the remove action
+type RemoveMcpResponse =
+  | {
+      _action: "removeMcp";
+      success: true;
+      removedMcpId: string;
+      error?: never;
+    }
+  | {
+      _action: "removeMcp";
+      success?: never;
+      error: string;
+      removedMcpId?: never;
+    };
+
+// Update ActionResponse to include RemoveMcpResponse
+type ActionResponse = AddMcpResponse | FetchToolsResponse | RemoveMcpResponse;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const pluginsPromise = getPluginsForAgent(params.agentId as string);
@@ -97,7 +115,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const formAction = formData.get("_action") as "addMcp" | "fetchTools";
+  const formAction = formData.get("_action") as
+    | "addMcp"
+    | "fetchTools"
+    | "removeMcp"; // Add 'removeMcp'
 
   if (formAction === "fetchTools") {
     const mcpId = formData.get("mcpId") as string;
@@ -158,6 +179,44 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
+  if (formAction === "removeMcp") {
+    const mcpId = formData.get("mcpId") as string;
+    if (!mcpId) {
+      return data(
+        { _action: "removeMcp", error: "MCP ID is required for removal" },
+        { status: 400 },
+      );
+    }
+
+    try {
+      // Optional: Check if MCP exists before deleting
+      const existingMcp = await prisma.mCPs.findUnique({
+        where: { id: mcpId },
+      });
+      if (!existingMcp) {
+        return data(
+          { _action: "removeMcp", error: "MCP not found" },
+          { status: 404 },
+        );
+      }
+
+      await prisma.mCPs.delete({
+        where: { id: mcpId },
+      });
+
+      return data({ _action: "removeMcp", success: true, removedMcpId: mcpId });
+    } catch (error) {
+      console.error("Error removing MCP:", error);
+      return data(
+        {
+          _action: "removeMcp",
+          error: `Failed to remove MCP: ${error instanceof Error ? error.message : String(error)}`,
+        },
+        { status: 500 },
+      );
+    }
+  }
+
   // --- Existing Add MCP Logic ---
   const agentId = formData.get("agentId") as string;
   const type = formData.get("type") as "SSE" | "STDIO";
@@ -206,7 +265,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         await mcpClient.close();
 
         // Save to database
-        await prisma.mCPs.create({
+        const newMcp = await prisma.mCPs.create({
           data: {
             agentId,
             type,
@@ -222,6 +281,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           _action: "addMcp",
           success: true,
           tools: tools,
+          newMcp: newMcp,
         });
       } catch (error) {
         return data(
@@ -250,7 +310,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         await mcpClient.close();
 
         // Save to database
-        await prisma.mCPs.create({
+        const newMcp = await prisma.mCPs.create({
           data: {
             agentId,
             type,
@@ -266,6 +326,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           _action: "addMcp",
           success: true,
           tools: tools,
+          newMcp: newMcp,
         });
       } catch (error) {
         return data(
@@ -313,26 +374,47 @@ const KnowledgeProvider = () => {
     navigation.state === "submitting" &&
     navigation.formData?.get("_action") === "addMcp";
 
-  // State for Tool Details Modal
+  // State for the modal dialog used to display tools from an MCP.
   const [toolModalOpen, setToolModalOpen] = useState(false);
+  // State to store the details of the MCP whose tools are being viewed.
   const [selectedMcp, setSelectedMcp] = useState<{
     id: string;
     type: string;
     name?: string;
   } | null>(null);
-  const fetcher = useFetcher<FetchToolsResponse>(); // Fetcher for tools
+  // Fetcher instance specifically for fetching tools from an MCP.
+  const fetcher = useFetcher<FetchToolsResponse>();
 
-  // Reset add MCP dialog state when it opens/closes
+  // State for the confirmation modal dialog before removing an MCP.
+  const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
+  // State to store the details of the MCP marked for removal.
+  const [mcpToRemove, setMcpToRemove] = useState<{
+    id: string;
+    name?: string;
+  } | null>(null);
+  // Fetcher instance specifically for handling the removal of an MCP.
+  const removeFetcher = useFetcher<RemoveMcpResponse>();
+  // Tracks if the remove MCP action is currently in progress.
+  const isRemovingMcp = removeFetcher.state !== "idle";
+
+  // Manages the list of MCPs displayed in the UI. Initialized with loader data
+  // and updated when MCPs are added or removed.
+  const [mcpList, setMcpList] = useState(initialMcpList);
+
+  // Resets the state associated with the 'Add MCP' dialog whenever it is closed.
+  // This ensures the dialog is clean when reopened.
   useEffect(() => {
     if (!isAddMcpOpen) {
       setAddMcpError(null);
       setAddMcpSuccess(false);
       setAddedTools(null);
-      setMcpType("SSE"); // Reset tab selection
+      setMcpType("SSE"); // Reset tab selection to default
     }
   }, [isAddMcpOpen]);
 
-  // Handle response from adding an MCP
+  // Handles the response from the 'addMcp' action. Updates the UI state
+  // based on success or failure, displays errors, shows success messages,
+  // and adds the new MCP to the local list.
   useEffect(() => {
     if (actionData?._action === "addMcp") {
       if (actionData.error) {
@@ -345,20 +427,54 @@ const KnowledgeProvider = () => {
         if (actionData.tools) {
           setAddedTools(actionData.tools);
         }
-        // Optionally close the dialog automatically on success after a delay
-        // setTimeout(() => setIsAddMcpOpen(false), 2000);
+        // Add the newly created MCP to the state list
+        setMcpList((currentList) => [...currentList, actionData.newMcp]);
       }
     }
   }, [actionData]);
 
-  // Reset fetcher state when tool modal closes
+  // Handles the response from the 'removeMcp' action via the removeFetcher.
+  // If successful, it removes the MCP from the local state list and closes
+  // the confirmation dialog. Optionally, handles error display.
+  useEffect(() => {
+    if (
+      removeFetcher.data?._action === "removeMcp" &&
+      removeFetcher.data.success
+    ) {
+      // Filter out the removed MCP from the state list
+      setMcpList((currentList) =>
+        currentList.filter(
+          (mcp) => mcp.id !== removeFetcher.data?.removedMcpId,
+        ),
+      );
+      setIsRemoveConfirmOpen(false); // Close confirmation dialog on success
+      setMcpToRemove(null); // Clear the MCP marked for removal
+    }
+    // Optional: Handle remove error display (e.g., show a toast notification)
+    // else if (removeFetcher.data?._action === 'removeMcp' && removeFetcher.data.error) {
+    //   // console.error("Failed to remove MCP:", removeFetcher.data.error);
+    // }
+  }, [removeFetcher.data]);
+
+  // Resets the state related to the 'View Tools' modal when it closes.
   useEffect(() => {
     if (!toolModalOpen) {
       setSelectedMcp(null);
-      // Reset fetcher if needed, though it usually resets on new submissions
+      // The fetcher usually resets automatically on new submissions,
+      // but explicit reset could be added here if needed: fetcher.reset?.();
     }
   }, [toolModalOpen]);
 
+  // Resets the state related to the 'Remove MCP' confirmation dialog when it closes.
+  useEffect(() => {
+    if (!isRemoveConfirmOpen) {
+      setMcpToRemove(null);
+    }
+  }, [isRemoveConfirmOpen]);
+
+  // Handler function triggered when the 'View Tools' button is clicked for an MCP.
+  // Sets the selected MCP, opens the tool modal, and initiates a fetch request
+  // using the fetcher to get the tools for that MCP.
   const handleViewTools = (mcp: {
     id: string;
     type: string;
@@ -366,17 +482,31 @@ const KnowledgeProvider = () => {
   }) => {
     setSelectedMcp(mcp);
     setToolModalOpen(true);
-    // Submit using the fetcher
+    // Submit the form data using the fetcher to trigger the 'fetchTools' action
     fetcher.submit(
       { _action: "fetchTools", mcpId: mcp.id },
       { method: "post" },
     );
   };
 
-  // Determine the current list of MCPs (initial + newly added if any)
-  // Note: This simple approach won't reflect additions in real-time without page reload
-  // For real-time updates, you'd need more complex state management or revalidation.
-  const mcpList = initialMcpList;
+  // Handler function triggered when the remove (trash icon) button is clicked for an MCP.
+  // Sets the MCP to be removed and opens the confirmation dialog.
+  const handleRemoveClick = (mcp: { id: string; name?: string }) => {
+    setMcpToRemove(mcp);
+    setIsRemoveConfirmOpen(true);
+  };
+
+  // Handler function triggered when the user confirms the removal in the dialog.
+  // Submits the form data using the removeFetcher to trigger the 'removeMcp' action.
+  // The dialog remains open during submission and is closed by the useEffect hook upon success.
+  const handleConfirmRemove = () => {
+    if (!mcpToRemove) return;
+    removeFetcher.submit(
+      { _action: "removeMcp", mcpId: mcpToRemove.id },
+      { method: "post" },
+    );
+    // Dialog closure is handled by the useEffect watching removeFetcher.data
+  };
 
   return (
     <div className="w-full py-8 px-4 md:p-8">
@@ -441,7 +571,7 @@ const KnowledgeProvider = () => {
               )}
 
               {addMcpSuccess && !addedTools && (
-                <Alert className="mt-2">
+                <Alert className="mt-2 border-green-500 text-green-700 dark:border-green-700 [&>svg]:text-green-700 dark:[&>svg]:text-green-500">
                   <AlertTitle>Success</AlertTitle>
                   <AlertDescription>MCP added successfully!</AlertDescription>
                 </Alert>
@@ -449,7 +579,7 @@ const KnowledgeProvider = () => {
 
               {addMcpSuccess && addedTools ? (
                 <div className="space-y-4 mt-4">
-                  <Alert>
+                  <Alert className="border-green-500 text-green-700 dark:border-green-700 [&>svg]:text-green-700 dark:[&>svg]:text-green-500">
                     <AlertTitle>Success!</AlertTitle>
                     <AlertDescription>MCP added successfully!</AlertDescription>
                   </Alert>
@@ -574,6 +704,14 @@ const KnowledgeProvider = () => {
           </Dialog>
         </div>
 
+        {removeFetcher.data?._action === "removeMcp" &&
+          removeFetcher.data.error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error Removing MCP</AlertTitle>
+              <AlertDescription>{removeFetcher.data.error}</AlertDescription>
+            </Alert>
+          )}
+
         {(!mcpList || mcpList.length === 0) && (
           <NoDataCard
             headline=""
@@ -581,7 +719,7 @@ const KnowledgeProvider = () => {
           />
         )}
         {mcpList && mcpList.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             {mcpList.map((mcp) => (
               <Card key={mcp.id} className="flex flex-col">
                 <CardHeader>
@@ -608,15 +746,20 @@ const KnowledgeProvider = () => {
                     </p>
                   )}
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex justify-between items-center">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleViewTools(mcp)}
                     disabled={
-                      fetcher.state !== "idle" && selectedMcp?.id === mcp.id
+                      // Disable if this MCP's tools are currently loading
+                      (fetcher.state !== "idle" &&
+                        selectedMcp?.id === mcp.id) ||
+                      // Disable if any MCP removal is in progress
+                      isRemovingMcp
                     }
                   >
+                    {/* Show loading state specific to this button */}
                     {fetcher.state !== "idle" && selectedMcp?.id === mcp.id ? (
                       <>
                         <Loader className="mr-2 h-4 w-4 animate-spin" />{" "}
@@ -624,6 +767,20 @@ const KnowledgeProvider = () => {
                       </>
                     ) : (
                       "View Tools"
+                    )}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRemoveClick(mcp)}
+                    // Disable if any MCP removal is in progress
+                    disabled={isRemovingMcp}
+                  >
+                    {/* Show loading state specific to this button */}
+                    {isRemovingMcp && mcpToRemove?.id === mcp.id ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
                     )}
                   </Button>
                 </CardFooter>
@@ -684,6 +841,42 @@ const KnowledgeProvider = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setToolModalOpen(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for removing an MCP connection */}
+      <Dialog open={isRemoveConfirmOpen} onOpenChange={setIsRemoveConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove MCP Connection?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove the MCP connection "
+              {mcpToRemove?.name || mcpToRemove?.id}"? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsRemoveConfirmOpen(false)}
+              disabled={isRemovingMcp}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmRemove}
+              disabled={isRemovingMcp}
+            >
+              {isRemovingMcp ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" /> Removing...
+                </>
+              ) : (
+                "Remove"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
