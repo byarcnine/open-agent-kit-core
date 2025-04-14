@@ -1,6 +1,5 @@
 import { prisma } from "@db/db.server";
 import { getSystemPrompt } from "./systemPrompts.server";
-import { getToolsForAgent } from "../tools/tools.server";
 import {
   appendResponseMessages,
   convertToCoreMessages,
@@ -11,7 +10,7 @@ import {
 import { getConfig } from "../config/config";
 import { getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
-import OAKProvider from "../lib";
+import { prepareToolsForAgent } from "./tools.server";
 
 export const streamConversation = async (
   conversationId: string,
@@ -75,23 +74,7 @@ export const streamConversation = async (
   }
 
   const systemPromptPromise = getSystemPrompt("default", agentId);
-  const toolsPromise = getToolsForAgent(agentId).then(async (r) => {
-    // get tools ready
-    return Promise.all(
-      r.map(async (t) => {
-        return [
-          t.identifier,
-          await t.tool({
-            conversationId: conversation.id,
-            agentId,
-            meta,
-            config: getConfig(),
-            provider: OAKProvider(getConfig(), t.pluginName as string),
-          }),
-        ];
-      }),
-    );
-  });
+  const toolsPromise = prepareToolsForAgent(agentId, conversation.id, meta);
 
   const [systemPrompt, tools, model] = await Promise.all([
     systemPromptPromise,
@@ -99,14 +82,16 @@ export const streamConversation = async (
     getModelForAgent(agentId, config),
     createMessagePromise,
   ]);
+  const { tools: toolsArray, closeMCPs } = tools;
+  console.log(toolsArray);
   return {
     stream: streamText({
       model,
       messages: cleanedMessages,
       system: systemPrompt,
-      tools: Object.fromEntries(tools),
+      tools: { ...Object.fromEntries(toolsArray) },
       toolChoice: "auto",
-      maxSteps: 5,
+      maxSteps: 500,
       experimental_telemetry: {
         isEnabled: false,
       },
@@ -148,18 +133,20 @@ export const streamConversation = async (
           responseMessages: completion.response.messages,
           messages,
         });
-        await prisma.message.create({
-          data: {
-            content: JSON.parse(
-              JSON.stringify(messagesToStore[messagesToStore.length - 1]),
-            ),
-            conversationId: conversation.id,
-            author: "ASSISTANT",
-          },
-        });
-        if (tagLinePromise) {
-          await tagLinePromise;
-        }
+        // close the tools
+        await Promise.all([
+          closeMCPs,
+          prisma.message.create({
+            data: {
+              content: JSON.parse(
+                JSON.stringify(messagesToStore[messagesToStore.length - 1]),
+              ),
+              conversationId: conversation.id,
+              author: "ASSISTANT",
+            },
+          }),
+          tagLinePromise,
+        ]);
       },
     }),
     conversationId: conversation.id,
