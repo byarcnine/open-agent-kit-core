@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { DateTimeAndDayTool } from "~/components/dateAndTimeTool/dateAndTimeTool";
 import FeedbackTool from "~/components/feedbackTool/feedbackTool";
+import InvokeAgentTool from "~/components/invokeAgentTool/InvokeAgentTool";
 import KnowledgeTool from "~/components/knowledgeTool/knowledgeTool";
 import type { PluginPackageJson } from "~/types/plugins";
 
@@ -8,7 +9,7 @@ const toolComponentFiles: Record<string, { default: FC }> = import.meta.glob(
   "/node_modules/oak-*/toolComponents/*.tsx",
   {
     eager: true,
-  }
+  },
 );
 
 const modulePackageJsons: Record<string, { default: PluginPackageJson }> =
@@ -28,10 +29,11 @@ export const toolComponents: Record<string, React.FC<any>> = {
         : undefined;
       const componentName = `${packageInfo?.name}__${fileName}`;
       return [componentName, value.default];
-    })
+    }),
   ),
   // default tools
   dateTimeAndDay: DateTimeAndDayTool,
   accessKnowledgeBase: KnowledgeTool,
   collectFeedback: FeedbackTool,
+  default__invokeAgent: InvokeAgentTool,
 };
