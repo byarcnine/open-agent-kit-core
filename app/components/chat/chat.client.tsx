@@ -106,7 +106,7 @@ const Chat = ({
         }
       },
     });
-  console.log(messages);
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {

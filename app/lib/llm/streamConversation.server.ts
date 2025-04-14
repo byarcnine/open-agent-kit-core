@@ -83,7 +83,6 @@ export const streamConversation = async (
     createMessagePromise,
   ]);
   const { tools: toolsArray, closeMCPs } = tools;
-  console.log(toolsArray);
   return {
     stream: streamText({
       model,

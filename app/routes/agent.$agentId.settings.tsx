@@ -152,7 +152,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       .map((question) => question.trim())
       .filter(Boolean);
 
-    console.log("formData", formData);
     const rawInput = {
       enableFileUpload: !!formData.get("enableFileUpload"),
       initialMessage: formData.get("initialMessage"),
