@@ -41,7 +41,7 @@ const vectorSearch = async (
     LEFT JOIN "knowledge_document_tag" kt ON kdt."B" = kt.id
     WHERE k."agentId" = ${agentId} AND e."dimensions" = ${dimensions}
     ${tags.length > 0 ? Prisma.sql`AND kt.name IN (${Prisma.join(tags)})` : Prisma.empty}
-    GROUP BY e.id, k.id
+    GROUP BY e.id
     ORDER BY similarity ASC
     LIMIT ${limit};
   `;

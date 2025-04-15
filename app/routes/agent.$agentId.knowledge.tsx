@@ -1,4 +1,4 @@
-import { Outlet, useNavigate, useLocation, useParams, type LoaderFunctionArgs } from "react-router";
+import { Outlet, useNavigate, useParams, type LoaderFunctionArgs, useMatches } from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { FileText, Settings } from "react-feather";
 import { prisma } from "@db/db.server";
@@ -45,17 +45,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 const KnowledgeBaseView = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { agentId } = useParams();
+  const matches = useMatches();
 
-  let activeTab = TAB_TYPE.DOCUMENTS;
-  if (location.pathname.replace(/\/$/, '') === `/agent/${agentId}/knowledge`) {
-    activeTab = TAB_TYPE.DOCUMENTS;
-  } else {
-    activeTab = TABS.filter((tab) => tab.value !== TAB_TYPE.DOCUMENTS).find((tab) =>
-      location.pathname.includes(`knowledge/${tab.value}`)
-    )?.value as TAB_TYPE;
-  }
+  const activeTab = matches.some(match => match.pathname.endsWith(`knowledge/settings`))
+    ? TAB_TYPE.SETTINGS
+    : TAB_TYPE.DOCUMENTS;
 
   const handleTabChange = (value: string) => {
     navigate(`/agent/${agentId}/knowledge/${value}`);

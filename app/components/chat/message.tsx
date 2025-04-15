@@ -134,24 +134,21 @@ const Message: React.FC<MessageProps> = React.memo(({ message, toolNames }) => {
         {message.parts?.map((part, index) => {
           if (part.type === "tool-invocation") {
             const ToolComponent = toolComponents[part.toolInvocation.toolName];
-            const isIframeOrEmbed = isIframe || isEmbed;
             const isDefaultTool =
-              part.toolInvocation.toolName.endsWith("__default");
+              part.toolInvocation.toolName.startsWith("default__");
             const hideDefaultTool =
-              (isDefaultTool && !chatSettings?.showDefaultToolsDebugMessages) ||
-              isIframeOrEmbed;
+              isDefaultTool && !chatSettings?.showDefaultToolsDebugMessages;
             if (!ToolComponent || hideDefaultTool) return null;
             return (
               <div
                 key={part.toolInvocation.toolCallId}
                 className="oak-chat__message-tool-invocations"
               >
-                {!isIframeOrEmbed &&
-                  chatSettings?.showDefaultToolsDebugMessages && (
-                    <span className="oak-chat__message-tool-invocations-marker">
-                      using tool "{toolNames[part.toolInvocation.toolName]}"
-                    </span>
-                  )}
+                {chatSettings?.showDefaultToolsDebugMessages && (
+                  <span className="oak-chat__message-tool-invocations-marker">
+                    using tool "{toolNames[part.toolInvocation.toolName]}"
+                  </span>
+                )}
                 <ToolComponent {...part.toolInvocation} />
               </div>
             );
