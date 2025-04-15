@@ -410,6 +410,7 @@ const Tag = ({
 
 const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
   const fetcher = useFetcher();
+  const { agentId } = useParams();
 
   const handleTagAction = (isSelected: boolean, tagId: string) => {
     fetcher.submit(
@@ -435,30 +436,40 @@ const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
         </Button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content className="p-2 bg-white rounded-md shadow-lg border w-40">
+        <Popover.Content className="p-2 bg-white rounded-md shadow-lg border w-50">
           <div className="flex flex-col space-y-1">
-            {tags.map((tag: any) => {
-              const isSelected = file.tags.some(
-                (fileTag: any) => fileTag.id === tag.id,
-              );
-              return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => handleTagAction(isSelected, tag.id)}
-                  className="text-left p-1 hover:bg-gray-100 rounded flex items-center w-full"
-                >
-                  <span
-                    className="inline-block w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: tag.color }}
-                  ></span>
-                  {tag.name}
-                  {isSelected && (
-                    <Check className="ml-2 w-3 h-3 text-green-500" />
-                  )}
-                </button>
-              );
-            })}
+            {tags.length > 0 ? (
+              tags.map((tag: any) => {
+                const isSelected = file.tags.some(
+                  (fileTag: any) => fileTag.id === tag.id,
+                );
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => handleTagAction(isSelected, tag.id)}
+                    className="text-left p-1 hover:bg-gray-100 rounded flex items-center w-full"
+                  >
+                    <span
+                      className="inline-block w-2 h-2 rounded-full mr-2"
+                      style={{ backgroundColor: tag.color }}
+                    ></span>
+                    {tag.name}
+                    {isSelected && (
+                      <Check className="ml-2 w-3 h-3 text-green-500" />
+                    )}
+                  </button>
+                );
+              })
+            ) : (
+              <a
+                href={`/agent/${agentId}/knowledge/settings`}
+                className="text-sm p-1 hover:bg-gray-100 rounded flex items-center w-full"
+              >
+                <PlusSquare className="w-4 h-4 mr-2 shrink-0" />
+                <span className="whitespace-nowrap">Add Tag in Settings</span>
+              </a>
+            )}
           </div>
         </Popover.Content>
       </Popover.Portal>
