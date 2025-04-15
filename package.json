@@ -50,7 +50,7 @@
     "@react-email/components": "0.0.34",
     "@react-router/node": "*",
     "@react-router/serve": "*",
-    "ai": "^4.1.54",
+    "ai": "^4.3.7",
     "better-auth": "^1.2.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

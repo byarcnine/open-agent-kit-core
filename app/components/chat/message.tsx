@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { type Message as MessageType } from "ai";
-import { Avatar, AvatarFallback } from "./avatar";
+import { Avatar } from "./avatar";
 import { toolComponents } from "~/lib/tools/toolComponents";
 import { FileText, Copy, Check, Terminal } from "react-feather";
 import { openBase64Pdf } from "~/lib/utils";
