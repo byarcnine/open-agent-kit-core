@@ -110,7 +110,7 @@ const ChatOverview = () => {
             Chats
           </h2>
           {conversationsByDay.map(({ date, conversations }) => (
-            <div className="block mb-6 px-3" key={date}>
+            <div className="block mb-6 px-3 overflow-auto" key={date}>
               <h2 className="text-sm mb-2 text-muted-foreground">{date}</h2>
               {conversations.map((c) => (
                 <Link
