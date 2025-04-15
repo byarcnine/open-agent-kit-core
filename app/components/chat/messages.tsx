@@ -8,7 +8,7 @@ interface MessagesProps {
   toolNames: Record<string, string>;
   error?: string;
   showMessageToolBar?: boolean;
-  avatarURL?: string;
+  avatarURL: string;
 }
 
 const Messages: React.FC<MessagesProps> = ({

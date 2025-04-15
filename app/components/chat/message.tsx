@@ -10,7 +10,7 @@ interface MessageProps {
   message: MessageType;
   toolNames: Record<string, string>;
   showMessageToolBar: boolean;
-  avatarURL?: string;
+  avatarURL: string;
 }
 
 const Message: React.FC<MessageProps> = React.memo(
@@ -32,7 +32,7 @@ const Message: React.FC<MessageProps> = React.memo(
       >
         {message.role === "assistant" && (
           <Avatar className="oak-chat__message-avatar">
-            <img src={avatarURL || "/assets/oak_leaf.svg"} alt="OAK Logo" />
+            <img src={avatarURL} alt="OAK Logo" />
           </Avatar>
         )}
         <div className="oak-chat__message-content-container">

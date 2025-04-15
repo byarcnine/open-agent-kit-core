@@ -235,11 +235,12 @@ const Chat = ({
             messages={messagesWithInitMessage}
             error={error?.message}
             showMessageToolBar={chatSettings?.showMessageToolBar}
-            avatarURL={avatarImageURL}
+            avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
           />
           {status === "submitted" && (
             <p className="oak-chat__thinking-message">
-              Thinking<span className="oak-chat__thinking-dots"></span>
+              Thinking
+              <span className="oak-chat__thinking-dots" />
             </p>
           )}
         </>
