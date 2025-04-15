@@ -28,18 +28,22 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ data, onSave, onClose, isOpen }
         <DialogHeader>
           <DialogTitle>Edit Metadata</DialogTitle>
         </DialogHeader>
-        <ReactJson
-          src={localData}
-          onEdit={(edit) => setLocalData(edit.updated_src)}
-          onAdd={(add) => setLocalData(add.updated_src)}
-          onDelete={(del) => setLocalData(del.updated_src)}
-          theme="monokai"
-          style={{
-            padding: "10px",
-            borderRadius: "5px",
-            backgroundColor: "#282c34",
-          }}
-        />
+        <div className="overflow-auto max-h-[70vh] w-full rounded-md">
+          <ReactJson
+            src={localData}
+            onEdit={(edit) => setLocalData(edit.updated_src)}
+            onAdd={(add) => setLocalData(add.updated_src)}
+            onDelete={(del) => setLocalData(del.updated_src)}
+            theme="monokai"
+            style={{
+              padding: "10px",
+              borderRadius: "5px",
+              backgroundColor: "#282c34",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          />
+        </div>
         <div className="flex justify-end gap-4 mt-4">
           <DialogClose asChild>
             <Button variant="outline" onClick={onClose}>
