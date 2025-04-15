@@ -64,7 +64,7 @@ export const streamConversation = async (
     tagLinePromise = generateSingleMessage(config)(
       `What is the main topic of the conversation with the initial message (3-4 words max): ${
         messages[messages.length - 1].content
-      }`,
+      }. Always keep the original language of the message.`,
       agentId,
     ).then(async (r) => {
       await prisma.conversation.update({

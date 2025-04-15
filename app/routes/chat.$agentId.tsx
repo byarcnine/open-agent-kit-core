@@ -3,6 +3,7 @@ import {
   Outlet,
   useLoaderData,
   useParams,
+  useNavigate,
   type LoaderFunctionArgs,
 } from "react-router";
 import { type Conversation, type Message, prisma } from "@db/db.server";
@@ -13,6 +14,7 @@ import calendar from "dayjs/plugin/calendar";
 import Layout from "~/components/layout/layout";
 import { MessageCircle, PlusCircle } from "react-feather";
 import { PERMISSIONS } from "~/types/auth";
+import { useEffect } from "react";
 
 // Initialize the plugins
 dayjs.extend(relativeTime);
@@ -51,13 +53,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       acc[date].push(c);
       return acc;
     },
-    {}
+    {},
   );
   const conversationsByDay = Object.keys(dayGroupedConversations).map(
     (key) => ({
       date: key,
       conversations: dayGroupedConversations[key],
-    })
+    }),
   );
   const agent = await prisma.agent.findUnique({
     where: {
@@ -74,6 +76,23 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 const ChatOverview = () => {
   const { agentId } = useParams();
   const { conversationsByDay, agent, user } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        navigate(`/chat/${agentId}`, { replace: true });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [agentId, navigate]);
+
   return (
     <Layout
       navComponent={
@@ -95,7 +114,7 @@ const ChatOverview = () => {
               <h2 className="text-sm mb-2 text-muted-foreground">{date}</h2>
               {conversations.map((c) => (
                 <Link
-                  className="py-2 block hover:bg-zinc-200 rounded-md px-2"
+                  className="py-2 block hover:bg-zinc-200 rounded-md px-2 text-sm text-neutral-900 font-normal"
                   to={`/chat/${agentId}/${c.id}`}
                   key={c.id}
                 >

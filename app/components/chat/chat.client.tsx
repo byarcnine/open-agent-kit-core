@@ -36,7 +36,7 @@ const Chat = ({
   toolNamesList?: Record<string, string>;
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
-    initialConversationId
+    initialConversationId,
   );
 
   const initialChatSettings = agentChatSettings || {
@@ -47,7 +47,7 @@ const Chat = ({
   };
 
   const [chatSettings, setChatSettings] = useState<ChatSettings | null>(
-    initialChatSettings
+    initialChatSettings,
   );
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
@@ -61,7 +61,7 @@ const Chat = ({
 
   const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(
     /\/$/,
-    ""
+    "",
   );
 
   useEffect(() => {
@@ -83,29 +83,36 @@ const Chat = ({
         .catch((error) => {
           console.error("Error fetching chat settings:", error);
           throw new Error(
-            `Failed to fetch chat settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`
+            `Failed to fetch chat settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`,
           );
         });
     }
   }, []);
 
-  const { messages, input, handleInputChange, handleSubmit, setInput, error } =
-    useChat({
-      api: `${API_URL}/api/generate`,
-      body: {
-        conversationId,
-        agentId,
-        meta,
-      },
-      initialMessages,
-      onResponse: (response) => {
-        const newConversationId = response.headers.get("x-conversation-id");
-        if (newConversationId && !conversationId) {
-          setConversationId(newConversationId);
-          onConversationStart?.(newConversationId);
-        }
-      },
-    });
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    setInput,
+    error,
+    status,
+  } = useChat({
+    api: `${API_URL}/api/generate`,
+    body: {
+      conversationId,
+      agentId,
+      meta,
+    },
+    initialMessages,
+    onResponse: (response) => {
+      const newConversationId = response.headers.get("x-conversation-id");
+      if (newConversationId && !conversationId) {
+        setConversationId(newConversationId);
+        onConversationStart?.(newConversationId);
+      }
+    },
+  });
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -117,7 +124,7 @@ const Chat = ({
         setFiles(undefined);
       }
     },
-    [handleSubmit]
+    [handleSubmit],
   );
 
   const handleCardSelect = (question: string) => {
@@ -128,7 +135,7 @@ const Chat = ({
     setFiles((prevFiles) => {
       if (!prevFiles) return prevFiles;
       const updatedFiles = Array.from(prevFiles).filter(
-        (file) => file.name !== fileName
+        (file) => file.name !== fileName,
       );
       const dataTransfer = new DataTransfer();
       updatedFiles.forEach((file) => dataTransfer.items.add(file));
@@ -220,12 +227,19 @@ const Chat = ({
           )}
         </div>
       ) : (
-        <Messages
-          toolNames={toolNames}
-          messages={messagesWithInitMessage}
-          error={error?.message}
-          showMessageToolBar={chatSettings?.showMessageToolBar}
-        />
+        <>
+          <Messages
+            toolNames={toolNames}
+            messages={messagesWithInitMessage}
+            error={error?.message}
+            showMessageToolBar={chatSettings?.showMessageToolBar}
+          />
+          {status === "submitted" && (
+            <p className="oak-chat__thinking-message">
+              Thinking<span className="oak-chat__thinking-dots"></span>
+            </p>
+          )}
+        </>
       )}
       {!disableInput && (
         <>
