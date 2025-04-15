@@ -1,21 +1,20 @@
 import React, { useState } from "react";
-import Markdown from "react-markdown";
-import DOMPurify from "dompurify";
 import { type Message as MessageType } from "ai";
 import { Avatar, AvatarFallback } from "./avatar";
 import { toolComponents } from "~/lib/tools/toolComponents";
 import { FileText, Copy, Check, Terminal } from "react-feather";
 import { openBase64Pdf } from "~/lib/utils";
-import { CopyBlock } from "react-code-blocks";
+import MarkdownViewer from "./markdownViewer";
 
 interface MessageProps {
   message: MessageType;
   toolNames: Record<string, string>;
   showMessageToolBar: boolean;
+  avatarURL?: string;
 }
 
 const Message: React.FC<MessageProps> = React.memo(
-  ({ message, toolNames, showMessageToolBar }) => {
+  ({ message, toolNames, showMessageToolBar, avatarURL }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = (text: string) => {
@@ -33,9 +32,7 @@ const Message: React.FC<MessageProps> = React.memo(
       >
         {message.role === "assistant" && (
           <Avatar className="oak-chat__message-avatar">
-            <AvatarFallback className="oak-chat__message-avatar-fallback">
-              <img src="/assets/oak_leaf.svg" alt="OAK Logo" />
-            </AvatarFallback>
+            <img src={avatarURL || "/assets/oak_leaf.svg"} alt="OAK Logo" />
           </Avatar>
         )}
         <div className="oak-chat__message-content-container">
@@ -99,39 +96,7 @@ const Message: React.FC<MessageProps> = React.memo(
                     message.role === "user" ? "user" : "assistant"
                   } relative group`}
                 >
-                  <Markdown
-                    components={{
-                      code({
-                        node,
-                        inline,
-                        className,
-                        children,
-                        ...props
-                      }: {
-                        node?: any;
-                        inline?: boolean;
-                        className?: string;
-                        children?: React.ReactNode;
-                      } & React.HTMLAttributes<HTMLElement>) {
-                        const match = /language-(\w+)/.exec(className || "");
-                        return !inline && match ? (
-                          <CopyBlock
-                            text={String(children).replace(/\n$/, "")}
-                            language={match[1]}
-                            showLineNumbers={false}
-                            startingLineNumber={1}
-                            codeBlock
-                          />
-                        ) : (
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
-                        );
-                      },
-                    }}
-                  >
-                    {DOMPurify.sanitize(part.text)}
-                  </Markdown>
+                  <MarkdownViewer text={part.text} />
                   {showMessageToolBar && message.role === "assistant" && (
                     <button
                       onClick={() => handleCopy(part.text)}

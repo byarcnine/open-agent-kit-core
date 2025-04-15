@@ -23,6 +23,7 @@ const Chat = ({
   isEmbed = false,
   agentChatSettings = null,
   toolNamesList = {},
+  avatarImageURL,
 }: {
   onConversationStart?: (conversationId: string) => void;
   initialMessages?: Message[];
@@ -34,6 +35,7 @@ const Chat = ({
   isEmbed?: boolean;
   agentChatSettings?: ChatSettings | null;
   toolNamesList?: Record<string, string>;
+  avatarImageURL?: string;
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     initialConversationId,
@@ -233,6 +235,7 @@ const Chat = ({
             messages={messagesWithInitMessage}
             error={error?.message}
             showMessageToolBar={chatSettings?.showMessageToolBar}
+            avatarURL={avatarImageURL}
           />
           {status === "submitted" && (
             <p className="oak-chat__thinking-message">
