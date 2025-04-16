@@ -144,7 +144,7 @@ export const streamConversation = async (
               author: "ASSISTANT",
             },
           }),
-          tagLinePromise,
+          tagLinePromise || Promise.resolve(),
         ]);
       },
     }),
