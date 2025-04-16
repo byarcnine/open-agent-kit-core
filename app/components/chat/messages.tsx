@@ -8,6 +8,7 @@ interface MessagesProps {
   toolNames: Record<string, string>;
   error?: string;
   showMessageToolBar?: boolean;
+  avatarURL: string;
 }
 
 const Messages: React.FC<MessagesProps> = ({
@@ -15,6 +16,7 @@ const Messages: React.FC<MessagesProps> = ({
   toolNames,
   error,
   showMessageToolBar,
+  avatarURL,
 }) => {
   const [containerRef, endRef] = useScrollToBottom<HTMLDivElement>();
 
@@ -27,6 +29,7 @@ const Messages: React.FC<MessagesProps> = ({
             key={message.id}
             message={message}
             toolNames={toolNames}
+            avatarURL={avatarURL}
           />
         ))}
         <div ref={endRef} className={"oak-chat__scroll-end"} />
