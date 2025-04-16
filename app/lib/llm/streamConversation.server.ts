@@ -77,19 +77,23 @@ export const streamConversation = async (
 
   const systemPromptPromise = getSystemPrompt("default", agentId);
   const toolsPromise = getToolsForAgent(agentId).then(async (r) => {
-    // get tools ready
     return Promise.all(
       r.map(async (t) => {
-        return [
-          t.identifier,
-          await t.tool({
-            conversationId: conversation.id,
-            agentId,
-            meta,
-            config: getConfig(),
-            provider: OAKProvider(getConfig(), t.pluginName as string),
-          }),
-        ];
+        try {
+          return [
+            t.identifier,
+            await t.tool({
+              conversationId: conversation.id,
+              agentId,
+              meta,
+              config: getConfig(),
+              provider: OAKProvider(getConfig(), t.pluginName as string),
+            }),
+          ];
+        } catch (error) {
+          console.error("Error invoking tool", error);
+          return [t.identifier, `Error invoking tool: ${error}`];
+        }
       }),
     );
   });

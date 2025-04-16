@@ -25,7 +25,6 @@ const Messages: React.FC<MessagesProps> = ({
       <div ref={containerRef}>
         {messages.map((message) => (
           <Message
-            showMessageToolBar={showMessageToolBar ?? false}
             key={message.id}
             message={message}
             toolNames={toolNames}

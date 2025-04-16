@@ -1,22 +1,22 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { type Message as MessageType } from "ai";
 import { Avatar } from "./avatar";
 import { toolComponents } from "~/lib/tools/toolComponents";
 import { FileText, Copy, Check, Terminal } from "react-feather";
 import { openBase64Pdf } from "~/lib/utils";
+import { ChatContext } from "./chat.client";
 import MarkdownViewer from "./markdownViewer";
 
 interface MessageProps {
   message: MessageType;
   toolNames: Record<string, string>;
-  showMessageToolBar: boolean;
   avatarURL: string;
 }
 
 const Message: React.FC<MessageProps> = React.memo(
-  ({ message, toolNames, showMessageToolBar, avatarURL }) => {
+  ({ message, toolNames, avatarURL }) => {
     const [copied, setCopied] = useState(false);
-
+    const { chatSettings } = useContext(ChatContext);
     const handleCopy = (text: string) => {
       navigator.clipboard.writeText(text).then(() => {
         setCopied(true);
@@ -74,7 +74,11 @@ const Message: React.FC<MessageProps> = React.memo(
             if (part.type === "tool-invocation") {
               const ToolComponent =
                 toolComponents[part.toolInvocation.toolName];
-              if (!ToolComponent) return null;
+              const isDefaultTool =
+                part.toolInvocation.toolName.startsWith("default__");
+              const hideDefaultTool =
+                isDefaultTool && !chatSettings?.showDefaultToolsDebugMessages;
+              if (!ToolComponent || hideDefaultTool) return null;
               return (
                 <div
                   key={part.toolInvocation.toolCallId}
@@ -97,14 +101,15 @@ const Message: React.FC<MessageProps> = React.memo(
                   } relative group`}
                 >
                   <MarkdownViewer text={part.text} />
-                  {showMessageToolBar && message.role === "assistant" && (
-                    <button
-                      onClick={() => handleCopy(part.text)}
-                      className="copy-button opacity-30 group-hover:opacity-100 transition-opacity cursor-pointer"
-                    >
-                      {copied ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                  )}
+                  {chatSettings?.showMessageToolBar &&
+                    message.role === "assistant" && (
+                      <button
+                        onClick={() => handleCopy(part.text)}
+                        className="copy-button opacity-30 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                      </button>
+                    )}
                 </div>
               );
             }

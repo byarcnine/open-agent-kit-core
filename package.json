@@ -35,6 +35,7 @@
     "@langchain/textsplitters": "^0.1.0",
     "@mdxeditor/editor": "^3.20.0",
     "@mgcrea/prisma-queue": "^1.12.0",
+    "@microlink/react-json-view": "^1.26.1",
     "@mjackson/form-data-parser": "^0.7.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^6.5.0",

@@ -26,7 +26,8 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { AlertTriangle } from "react-feather";
-import type { ChatSettings } from "~/types/chat";
+import { type ChatSettings } from "~/types/chat";
+import { initialChatSettings } from "~/constants/chat";
 import {
   getConfiguredModelIds,
   setModelForAgent,
@@ -60,6 +61,10 @@ const ChatSettingsUpdateSchema = z.object({
   initialMessage: z.string().nullable(),
   suggestedQuestions: z.array(z.string()).nullable(),
   showMessageToolBar: z.boolean(),
+  showDefaultToolsDebugMessages: z.boolean(),
+  openExternalLinksInNewTab: z.boolean(),
+  openInternalLinksInNewTab: z.boolean(),
+  openYoutubeVideosInIframe: z.boolean(),
   intro: z
     .object({
       title: z.string().nullable(),
@@ -92,6 +97,23 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const appUrl = APP_URL() as string;
 
   return { agent, user, canDeleteAgent, appUrl, availableModels };
+};
+
+const CardContentSection = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => {
+  return (
+    <div className="flex flex-col space-y-3 mb-6">
+      <div className="font-semibold text-md leading-none tracking-tight mb-3">
+        {title}
+      </div>
+      {children}
+    </div>
+  );
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -151,6 +173,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       .split("\n")
       .map((question) => question.trim())
       .filter(Boolean);
+
     const rawInput = {
       enableFileUpload: !!formData.get("enableFileUpload"),
       initialMessage: formData.get("initialMessage"),
@@ -165,6 +188,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       ),
       footerNote: formData.get("footerNote")?.toString() || "",
       showMessageToolBar: !!formData.get("showMessageToolBar"),
+      showDefaultToolsDebugMessages: !!formData.get(
+        "showDefaultToolsDebugMessages",
+      ),
+      openExternalLinksInNewTab: !!formData.get("openExternalLinksInNewTab"),
+      openInternalLinksInNewTab: !!formData.get("openInternalLinksInNewTab"),
+      openYoutubeVideosInIframe: !!formData.get("openYoutubeVideosInIframe"),
     };
     try {
       const validatedData = ChatSettingsUpdateSchema.parse(rawInput);
@@ -189,16 +218,10 @@ const AgentSettings = () => {
   const { agent, canDeleteAgent, appUrl, availableModels } =
     useLoaderData<typeof loader>();
   const chatSettings: ChatSettings = agent.chatSettings
-    ? JSON.parse(agent.chatSettings as string)
-    : {
-        initialMessage: "",
-        suggestedQuestions: [],
-        intro: { title: "", subTitle: "" },
-        textAreaInitialRows: 2,
-        footerNote: "",
-        enableFileUpload: false,
-        showMessageToolBar: false,
-      };
+    ? { ...initialChatSettings, ...JSON.parse(agent.chatSettings as string) }
+    : initialChatSettings;
+
+
 
   const actionData = useActionData<typeof action>();
 
@@ -240,8 +263,7 @@ const AgentSettings = () => {
               name="intent"
               value={Intent.UPDATE_GENERAL_SETTINGS}
             />
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="name">Name</Label>
+            <div title="General Settings">
               <Input
                 id="name"
                 name="name"
@@ -335,121 +357,169 @@ const AgentSettings = () => {
               name="intent"
               value={Intent.UPDATE_CHAT_SETTINGS}
             />
-            <div className="flex gap-2 flex-col">
-              <Label htmlFor="isPublic">Enable File Upload</Label>
-              <p className="text-sm text-muted-foreground">
-                If enabled the agent can accept file uploads from the user.
-                Supported file types are images and PDFs. PDFs are currently not
-                supported when choosing an OpenAI model.
-              </p>
-              <Switch
-                id="enableFileUpload"
-                name="enableFileUpload"
-                defaultChecked={enableFileUpload}
-                onCheckedChange={setEnableFileUpload}
-              />
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="introTitle">Intro Title</Label>
-              <Input
-                id="introTitle"
-                name="introTitle"
-                defaultValue={chatSettings?.intro?.title || ""}
-                placeholder="Enter intro title"
-              />
-              <p className="text-sm text-muted-foreground">
-                This is the title of the chat, in case there is no intro message
-                defined. This field is optional.
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="introSubTitle">Intro SubTitle</Label>
-              <Input
-                id="introSubTitle"
-                name="introSubTitle"
-                defaultValue={chatSettings?.intro?.subTitle || ""}
-                placeholder="Enter intro subTitle"
-              />
-              <p className="text-sm text-muted-foreground">
-                This is the subTitle of the chat, in case there is no intro
-                message defined. This field is optional.
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="name">Initial Message</Label>
-              <Input
-                id="initialMessage"
-                name="initialMessage"
-                defaultValue={chatSettings?.initialMessage || ""}
-                placeholder="Enter initial message"
-              />
-              <p className="text-sm text-muted-foreground">
-                This message will be sent to the user when they first open the
-                chat. If you don't want to send a message, leave it blank.
-              </p>
-              {actionData?.errors?.initialMessage && (
-                <p className="text-sm text-red-500">
-                  {actionData.errors.initialMessage[0]}
+            <CardContentSection title="Intro Screen">
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="introTitle">Intro Title</Label>
+                <Input
+                  id="introTitle"
+                  name="introTitle"
+                  defaultValue={chatSettings?.intro?.title || ""}
+                  placeholder="Enter intro title"
+                />
+                <p className="text-sm text-muted-foreground">
+                  This is the title of the chat, in case there is no intro
+                  message defined. This field is optional.
                 </p>
-              )}
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="suggestedQuestions">Suggested Questions</Label>
-              <Textarea
-                id="suggestedQuestions"
-                name="suggestedQuestions"
-                className="border"
-                defaultValue={
-                  chatSettings?.suggestedQuestions?.join("\n") || ""
-                }
-                placeholder="Enter suggested questions line by line"
-                rows={4}
-              />
-              <p className="text-sm text-muted-foreground">
-                Enter one question per line. Keep it short and concise. If you
-                don't want to provide initial questions, leave it blank.
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="textAreaInitialRows">Text Area Rows</Label>
-              <Input
-                type="number"
-                id="textAreaInitialRows"
-                name="textAreaInitialRows"
-                className="border"
-                defaultValue={chatSettings?.textAreaInitialRows || 2}
-                placeholder="Enter number of initial rows of the text area"
-              />
-              <p className="text-sm text-muted-foreground">
-                Enter number of initial rows of the text area
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="footerNote">Footer Note</Label>
-              <Textarea
-                id="footerNote"
-                name="footerNote"
-                className="border"
-                defaultValue={chatSettings?.footerNote || ""}
-                placeholder="Enter footer note"
-                rows={2}
-              />
-              <p className="text-sm text-muted-foreground">
-                Enter a note that will be displayed below the chat input.
-              </p>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="showMessageToolBar">Show Message Tool Bar</Label>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="introSubTitle">Intro SubTitle</Label>
+                <Input
+                  id="introSubTitle"
+                  name="introSubTitle"
+                  defaultValue={chatSettings?.intro?.subTitle || ""}
+                  placeholder="Enter intro subTitle"
+                />
+                <p className="text-sm text-muted-foreground">
+                  This is the subTitle of the chat, in case there is no intro
+                  message defined. This field is optional.
+                </p>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="name">Initial Message</Label>
+                <Input
+                  id="initialMessage"
+                  name="initialMessage"
+                  defaultValue={chatSettings?.initialMessage || ""}
+                  placeholder="Enter initial message"
+                />
+                <p className="text-sm text-muted-foreground">
+                  This message will be sent to the user when they first open the
+                  chat. If you don't want to send a message, leave it blank.
+                </p>
+                {actionData?.errors?.initialMessage && (
+                  <p className="text-sm text-red-500">
+                    {actionData.errors.initialMessage[0]}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="suggestedQuestions">Suggested Questions</Label>
+                <Textarea
+                  id="suggestedQuestions"
+                  name="suggestedQuestions"
+                  className="border"
+                  defaultValue={
+                    chatSettings?.suggestedQuestions?.join("\n") || ""
+                  }
+                  placeholder="Enter suggested questions line by line"
+                  rows={4}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Enter one question per line. Keep it short and concise. If you
+                  don't want to provide initial questions, leave it blank.
+                </p>
+              </div>
+            </CardContentSection>
+            <CardContentSection title="Chat Input">
+              <div className="flex gap-2 flex-col">
+                <Label htmlFor="isPublic">Enable File Upload</Label>
+                <p className="text-sm text-muted-foreground">
+                  If enabled the agent can accept file uploads from the user.
+                  Supported file types are images and PDFs. PDFs are currently
+                  not supported when choosing an OpenAI model.
+                </p>
+                <Switch
+                  id="enableFileUpload"
+                  name="enableFileUpload"
+                  defaultChecked={enableFileUpload}
+                  onCheckedChange={setEnableFileUpload}
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="textAreaInitialRows">Text Area Rows</Label>
+                <Input
+                  type="number"
+                  id="textAreaInitialRows"
+                  name="textAreaInitialRows"
+                  className="border"
+                  defaultValue={chatSettings?.textAreaInitialRows || 2}
+                  placeholder="Enter number of initial rows of the text area"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Enter number of initial rows of the text area
+                </p>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="footerNote">Footer Note</Label>
+                <Textarea
+                  id="footerNote"
+                  name="footerNote"
+                  className="border"
+                  defaultValue={chatSettings?.footerNote || ""}
+                  placeholder="Enter footer note"
+                  rows={2}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Enter a note that will be displayed below the chat input.
+                </p>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="showMessageToolBar">
+                  Show Message Tool Bar
+                </Label>
+                <Switch
+                  id="showMessageToolBar"
+                  name="showMessageToolBar"
+                  defaultChecked={chatSettings?.showMessageToolBar}
+                />
+                <p className="text-sm text-muted-foreground">
+                  If enabled, actions like copy will be shown below the response
+                  messages.
+                </p>
+              </div>
+            </CardContentSection>
+            <CardContentSection title="Message Formatting">
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="showDefaultToolsDebugMessages">
+                  Show Default Tools Debug Messages
+              </Label>
               <Switch
-                id="showMessageToolBar"
-                name="showMessageToolBar"
-                defaultChecked={chatSettings?.showMessageToolBar}
+                id="showDefaultToolsDebugMessages"
+                name="showDefaultToolsDebugMessages"
+                defaultChecked={chatSettings?.showDefaultToolsDebugMessages}
               />
-              <p className="text-sm text-muted-foreground">
-                If enabled, actions like copy will be shown below the response
-                messages.
-              </p>
-            </div>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="openExternalLinksInNewTab">
+                  Open External Links in New Tab
+              </Label>
+              <Switch
+                id="openExternalLinksInNewTab"
+                name="openExternalLinksInNewTab"
+                defaultChecked={chatSettings?.openExternalLinksInNewTab}
+              />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="openInternalLinksInNewTab">
+                  Open Internal Links in New Tab
+              </Label>
+              <Switch
+                id="openInternalLinksInNewTab"
+                name="openInternalLinksInNewTab"
+                defaultChecked={chatSettings?.openInternalLinksInNewTab}
+              />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="openYoutubeVideosInIframe ">
+                  Open Youtube Videos in Iframe
+              </Label>
+              <Switch
+                id="openYoutubeVideosInIframe"
+                name="openYoutubeVideosInIframe"
+                defaultChecked={chatSettings?.openYoutubeVideosInIframe}
+              />
+              </div>
+            </CardContentSection>
             <Button type="submit">Save Changes</Button>
           </Form>
         </CardContent>
