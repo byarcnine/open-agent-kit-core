@@ -28,13 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import {
-  Trash2,
-  Check,
-  X,
-  Edit,
-  PlusSquare,
-} from "react-feather";
+import { Trash2, Check, X, Edit, PlusSquare } from "react-feather";
 import { parseFile } from "~/lib/knowledge/parseFile.sever";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { prisma } from "@db/db.server";
@@ -43,6 +37,7 @@ import { sessionStorage } from "~/lib/sessions.server";
 import * as Popover from "@radix-ui/react-popover";
 import { Button } from "~/components/ui/button";
 import JsonEditorDialog from "~/components/jsonEditorDialog/jsonEditorDialog";
+import React from "react";
 
 dayjs.extend(relativeTime);
 
@@ -184,6 +179,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const tags = await prisma.knowledgeDocumentTag.findMany({
     where: { agentId },
+    orderBy: { name: "asc" },
   });
 
   const session = await sessionStorage.getSession(
@@ -227,16 +223,10 @@ const DocumentsTab = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead
-                  isSortable
-                  fieldName="name"
-                >
+                <TableHead isSortable fieldName="name">
                   Name
                 </TableHead>
-                <TableHead
-                  fieldName="updatedAt"
-                  isSortable
-                >
+                <TableHead fieldName="updatedAt" isSortable>
                   Last Modified
                 </TableHead>
                 <TableHead>Provider</TableHead>
@@ -408,7 +398,7 @@ const Tag = ({
   );
 };
 
-const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
+const TagPopover = React.memo(({ file, tags }: { file: any; tags: any[] }) => {
   const fetcher = useFetcher();
   const { agentId } = useParams();
 
@@ -427,6 +417,9 @@ const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
 
   return (
     <Popover.Root>
+      <Popover.Anchor asChild>
+        <span />
+      </Popover.Anchor>
       <Popover.Trigger asChild>
         <Button
           variant="link"
@@ -436,7 +429,12 @@ const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
         </Button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content className="p-2 bg-white rounded-md shadow-lg border w-50">
+        <Popover.Content
+          side="left"
+          align="end"
+          sideOffset={4}
+          className="p-2 bg-white rounded-md shadow-lg border w-60 max-h-[300px] overflow-y-auto"
+        >
           <div className="flex flex-col space-y-1">
             {tags.length > 0 ? (
               tags.map((tag: any) => {
@@ -448,15 +446,17 @@ const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
                     key={tag.id}
                     type="button"
                     onClick={() => handleTagAction(isSelected, tag.id)}
-                    className="text-left p-1 hover:bg-gray-100 rounded flex items-center w-full"
+                    className="text-left p-1 hover:bg-gray-100 rounded flex items-center w-full min-w-0"
                   >
                     <span
-                      className="inline-block w-2 h-2 rounded-full mr-2"
+                      className="inline-block w-2 h-2 rounded-full mr-2 shrink-0"
                       style={{ backgroundColor: tag.color }}
                     ></span>
-                    {tag.name}
+                    <span className="text-wrap break-words truncate min-w-0">
+                      {tag.name}
+                    </span>
                     {isSelected && (
-                      <Check className="ml-2 w-3 h-3 text-green-500" />
+                      <Check className="ml-2 w-4 h-4 text-green-500 shrink-0" />
                     )}
                   </button>
                 );
@@ -475,7 +475,7 @@ const TagPopover = ({ file, tags }: { file: any; tags: any[] }) => {
       </Popover.Portal>
     </Popover.Root>
   );
-};
+});
 
 const DeleteForm = ({ documentId }: { documentId: string }) => {
   const fetcher = useFetcher();
