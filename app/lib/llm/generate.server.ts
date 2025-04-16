@@ -13,28 +13,32 @@ export const generateSingleMessage =
     prompt: string,
     agentId: string,
     systemPrompt?: string | null, // system prompt override
+    options?: {
+      disableTools?: boolean;
+    },
   ) => {
     const system =
       systemPrompt || (await getSystemPrompt("default", agentId)) || "";
-
     const model = await getModelForAgent(agentId, config);
-    const tools = await getToolsForAgent(agentId).then(async (r) => {
-      // get tools ready
-      return Promise.all(
-        r.map(async (t) => {
-          return [
-            t.identifier,
-            await t.tool({
-              conversationId: "0",
-              agentId,
-              config: getConfig(),
-              meta: {},
-              provider: OAKProvider(getConfig(), t.pluginName as string),
+    const tools = options?.disableTools
+      ? undefined
+      : await getToolsForAgent(agentId).then(async (r) => {
+          // get tools ready
+          return Promise.all(
+            r.map(async (t) => {
+              return [
+                t.identifier,
+                await t.tool({
+                  conversationId: "0",
+                  agentId,
+                  config: getConfig(),
+                  meta: {},
+                  provider: OAKProvider(getConfig(), t.pluginName as string),
+                }),
+              ];
             }),
-          ];
-        }),
-      );
-    });
+          );
+        });
     const messages: CoreMessage[] = [
       {
         role: "system",
@@ -47,8 +51,9 @@ export const generateSingleMessage =
     ];
     const completion = await generateText({
       model,
+      toolChoice: options?.disableTools ? "none" : "auto",
       messages,
-      tools: Object.fromEntries(tools),
+      tools: tools ? Object.fromEntries(tools) : undefined,
     });
     return completion.text;
   };
