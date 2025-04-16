@@ -14,7 +14,10 @@ interface ChatContextType {
   chatSettings: ChatSettings;
 }
 
-export const ChatContext = React.createContext<ChatContextType>({ isEmbed: false, chatSettings: initialChatSettings });
+export const ChatContext = React.createContext<ChatContextType>({
+  isEmbed: false,
+  chatSettings: initialChatSettings,
+});
 interface TextPart {
   type: "text";
   text: string;
@@ -50,7 +53,7 @@ const Chat = ({
   );
 
   const [chatSettings, setChatSettings] = useState<ChatSettings>(
-    agentChatSettings || initialChatSettings
+    agentChatSettings || initialChatSettings,
   );
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
@@ -213,134 +216,137 @@ const Chat = ({
       <div id="oak-chat-container" className="oak-chat">
         {messagesWithInitMessage.length === 0 ? (
           <div className="oak-chat__empty-state">
-          {chatSettings?.intro?.title && (
-            <h1 className="oak-chat__empty-state-heading">
-              {chatSettings?.intro?.title}
-            </h1>
-          )}
-          {chatSettings?.intro?.subTitle && (
-            <p className="oak-chat__empty-state-subheading">
-              {chatSettings?.intro?.subTitle}
-            </p>
-          )}
-          {suggestedQuestions.length > 0 && (
-            <AdviceCards
-              onCardSelect={handleCardSelect}
-              questions={suggestedQuestions}
-            />
-          )}
-        </div>
-      ) : (
-        <>
-          <Messages
-            toolNames={toolNames}
-            messages={messagesWithInitMessage}
-            error={error?.message}
-            showMessageToolBar={chatSettings?.showMessageToolBar}
-            avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
-          />
-          {status === "submitted" && (
-            <p className="oak-chat__thinking-message">
-              Thinking
-              <span className="oak-chat__thinking-dots" />
-            </p>
-          )}
-        </>
-      )}
-      {!disableInput && (
-        <>
-          <div className="oak-chat__input-container">
-            <form
-              ref={formRef}
-              onSubmit={handleSubmit}
-              className="oak-chat__form"
-            >
-              {files && (
-                <div className="oak-chat__file-thumbnails">
-                  {Array.from(files).map((file) => (
-                    <div
-                      key={file.name}
-                      className="oak-chat__file-thumbnails__item"
-                    >
-                      {file.type.startsWith("image/") && (
-                        <img src={URL.createObjectURL(file)} alt={file.name} />
-                      )}
-                      {file.type === "application/pdf" && (
-                        <div className="oak-chat__file-thumbnails__item--pdf">
-                          <div className="oak-chat__file-thumbnails__item--pdf-icon">
-                            <FileText size={20} />
-                          </div>
-                          <div>
-                            <span>{file.name}</span>
-                            <span>PDF</span>
-                          </div>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="oak-chat__file-remove-button"
-                        onClick={() => clearSelectedFile(file.name)}
-                      >
-                        <XCircle size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Textarea
-                ref={textareaRef}
-                onKeyDown={handleKeyDown}
-                name="prompt"
-                value={input}
-                rows={chatSettings?.textAreaInitialRows || 2}
-                onChange={handleInputChange}
-                placeholder="Type your message..."
-                className="oak-chat__text-area"
-              />
-
-              <div className="oak-chat__action-row">
-                {chatSettings?.enableFileUpload && supportedFileTypes && (
-                  <div>
-                    <button
-                      type="button"
-                      className="oak-chat__file-upload-button"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Plus size={15} />
-                      <span>Upload File</span>
-                    </button>
-                    <input
-                      multiple
-                      type="file"
-                      accept={supportedFileTypes.join(",")}
-                      ref={fileInputRef}
-                      style={{ display: "none" }}
-                      onChange={(event) => {
-                        if (event.target.files) {
-                          setFiles(event.target.files);
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  disabled={!input}
-                  className="oak-chat__submit-button"
-                >
-                  <ArrowUp size={20} />
-                </button>
-              </div>
-            </form>
-            {chatSettings?.footerNote && (
-              <p className="oak-chat__footer-note">
-                {chatSettings?.footerNote}
+            {chatSettings?.intro?.title && (
+              <h1 className="oak-chat__empty-state-heading">
+                {chatSettings?.intro?.title}
+              </h1>
+            )}
+            {chatSettings?.intro?.subTitle && (
+              <p className="oak-chat__empty-state-subheading">
+                {chatSettings?.intro?.subTitle}
               </p>
             )}
+            {suggestedQuestions.length > 0 && (
+              <AdviceCards
+                onCardSelect={handleCardSelect}
+                questions={suggestedQuestions}
+              />
+            )}
           </div>
-        </>
-      )}
-    </div>
+        ) : (
+          <>
+            <Messages
+              toolNames={toolNames}
+              messages={messagesWithInitMessage}
+              error={error?.message}
+              avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
+            >
+              {status === "submitted" && (
+                <p className="oak-chat__thinking-message">
+                  Thinking
+                  <span className="oak-chat__thinking-dots" />
+                </p>
+              )}
+            </Messages>
+          </>
+        )}
+        {!disableInput && (
+          <>
+            <div className="oak-chat__input-container">
+              <form
+                ref={formRef}
+                onSubmit={handleSubmit}
+                className="oak-chat__form"
+              >
+                {files && (
+                  <div className="oak-chat__file-thumbnails">
+                    {Array.from(files).map((file) => (
+                      <div
+                        key={file.name}
+                        className="oak-chat__file-thumbnails__item"
+                      >
+                        {file.type.startsWith("image/") && (
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                          />
+                        )}
+                        {file.type === "application/pdf" && (
+                          <div className="oak-chat__file-thumbnails__item--pdf">
+                            <div className="oak-chat__file-thumbnails__item--pdf-icon">
+                              <FileText size={20} />
+                            </div>
+                            <div>
+                              <span>{file.name}</span>
+                              <span>PDF</span>
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className="oak-chat__file-remove-button"
+                          onClick={() => clearSelectedFile(file.name)}
+                        >
+                          <XCircle size={20} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Textarea
+                  ref={textareaRef}
+                  onKeyDown={handleKeyDown}
+                  name="prompt"
+                  value={input}
+                  rows={chatSettings?.textAreaInitialRows || 2}
+                  onChange={handleInputChange}
+                  placeholder="Type your message..."
+                  className="oak-chat__text-area"
+                />
+
+                <div className="oak-chat__action-row">
+                  {chatSettings?.enableFileUpload && supportedFileTypes && (
+                    <div>
+                      <button
+                        type="button"
+                        className="oak-chat__file-upload-button"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Plus size={15} />
+                        <span>Upload File</span>
+                      </button>
+                      <input
+                        multiple
+                        type="file"
+                        accept={supportedFileTypes.join(",")}
+                        ref={fileInputRef}
+                        style={{ display: "none" }}
+                        onChange={(event) => {
+                          if (event.target.files) {
+                            setFiles(event.target.files);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={!input}
+                    className="oak-chat__submit-button"
+                  >
+                    <ArrowUp size={20} />
+                  </button>
+                </div>
+              </form>
+              {chatSettings?.footerNote && (
+                <p className="oak-chat__footer-note">
+                  {chatSettings?.footerNote}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </ChatContext.Provider>
   );
 };

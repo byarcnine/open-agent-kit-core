@@ -9,14 +9,15 @@ interface MessagesProps {
   error?: string;
   showMessageToolBar?: boolean;
   avatarURL: string;
+  children?: React.ReactNode;
 }
 
 const Messages: React.FC<MessagesProps> = ({
   messages,
   toolNames,
   error,
-  showMessageToolBar,
   avatarURL,
+  children,
 }) => {
   const [containerRef, endRef] = useScrollToBottom<HTMLDivElement>();
 
@@ -38,6 +39,7 @@ const Messages: React.FC<MessagesProps> = ({
           <p className="oak-chat__error-message">{error}</p>
         </div>
       )}
+      {children}
     </div>
   );
 };
