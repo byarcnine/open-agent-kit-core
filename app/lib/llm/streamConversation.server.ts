@@ -90,7 +90,7 @@ export const streamConversation = async (
       system: systemPrompt,
       tools: { ...Object.fromEntries(toolsArray) },
       toolChoice: "auto",
-      maxSteps: 500,
+      maxSteps: 25,
       experimental_telemetry: {
         isEnabled: false,
       },

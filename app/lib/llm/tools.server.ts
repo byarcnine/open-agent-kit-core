@@ -16,54 +16,62 @@ const getMCPTools = async (agentId: string) => {
     },
   });
   return mcpConnections.map(async (mcp) => {
-    const type = mcp.type;
-    if (type === "SSE") {
-      const connectionArgs = mcp.connectionArgs as {
-        connectionString: string;
-        [x: string]: any;
-      };
-      const { connectionString, ...additionalArgs } = connectionArgs;
+    try {
+      const type = mcp.type;
+      if (type === "SSE") {
+        const connectionArgs = mcp.connectionArgs as {
+          connectionString: string;
+          [x: string]: any;
+        };
+        const { connectionString, ...additionalArgs } = connectionArgs;
 
-      const mcpClient = await createMCPClient({
-        transport: {
-          type: "sse",
-          url: connectionString,
-          ...(additionalArgs || {}),
-        },
-      });
+        const mcpClient = await createMCPClient({
+          transport: {
+            type: "sse",
+            url: connectionString,
+            ...(additionalArgs || {}),
+          },
+        });
 
-      // Try to get tools to verify connection
+        // Try to get tools to verify connection
+        return {
+          tools: Object.entries(await mcpClient.tools()) as [string, Tool][],
+          close: async () => {
+            await mcpClient.close();
+          },
+        };
+      } else if (type === "STDIO") {
+        const connectionArgs = mcp.connectionArgs as {
+          command: string;
+          args: string;
+        };
+        const command = connectionArgs.command;
+        const args = connectionArgs.args;
+
+        const mcpClient = await createMCPClient({
+          transport: new StdioMCPTransport({
+            command,
+            args: args ? args.split(" ") : [],
+          }),
+        });
+        return {
+          tools: Object.entries(await mcpClient.tools()) as [string, Tool][],
+          close: async () => {
+            await mcpClient.close();
+          },
+        };
+      }
       return {
-        tools: Object.entries(await mcpClient.tools()) as [string, Tool][],
-        close: async () => {
-          await mcpClient.close();
-        },
+        tools: [],
+        close: async () => {},
       };
-    } else if (type === "STDIO") {
-      const connectionArgs = mcp.connectionArgs as {
-        command: string;
-        args: string;
-      };
-      const command = connectionArgs.command;
-      const args = connectionArgs.args;
-
-      const mcpClient = await createMCPClient({
-        transport: new StdioMCPTransport({
-          command,
-          args: args ? args.split(" ") : [],
-        }),
-      });
+    } catch (e) {
+      console.error(e);
       return {
-        tools: Object.entries(await mcpClient.tools()) as [string, Tool][],
-        close: async () => {
-          await mcpClient.close();
-        },
+        tools: [],
+        close: async () => {},
       };
     }
-    return {
-      tools: [],
-      close: async () => {},
-    };
   });
 };
 
