@@ -3,14 +3,14 @@ import { getSystemPrompt } from "./systemPrompts.server";
 import { getToolsForAgent } from "../tools/tools.server";
 import {
   appendResponseMessages,
-  convertToCoreMessages,
   smoothStream,
   streamText,
   type Message,
 } from "ai";
 import { getConfig } from "../config/config";
 import { getModelForAgent } from "./modelManager.server";
-import { generateSingleMessage } from "./generate";
+import { generateSingleMessage } from "./generate.server";
+import OAKProvider from "../lib";
 
 export const streamConversation = async (
   conversationId: string,
@@ -18,7 +18,7 @@ export const streamConversation = async (
   userId: string,
   customIdentifier: string,
   messages: Message[],
-  meta: Record<string, any>
+  meta: Record<string, any>,
 ) => {
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
@@ -34,11 +34,7 @@ export const streamConversation = async (
   // Add the user message to the conversation
   const createMessagePromise = prisma.message.create({
     data: {
-      content: JSON.parse(
-        JSON.stringify(
-          convertToCoreMessages([messages[messages.length - 1]])[0]
-        )
-      ),
+      content: JSON.parse(JSON.stringify([messages[messages.length - 1]][0])),
       conversationId: conversation.id,
       author: "USER",
     },
@@ -52,7 +48,7 @@ export const streamConversation = async (
       return !message.parts?.some(
         (part) =>
           part.type === "tool-invocation" &&
-          part.toolInvocation.state !== "result"
+          part.toolInvocation.state !== "result",
       );
     }
     return true;
@@ -61,32 +57,44 @@ export const streamConversation = async (
   let tagLinePromise: Promise<void> | null = null;
   if (!conversation.tagline) {
     tagLinePromise = generateSingleMessage(config)(
-      `What is the main topic of the conversation with the initial message (3-4 words max): ${
-        messages[messages.length - 1].content
-      }`,
-      agentId
-    ).then(async (r) => {
-      await prisma.conversation.update({
-        where: { id: conversation.id },
-        data: { tagline: r },
+      messages[0].content,
+      agentId,
+      "What is the conversation about? Tell me in 3-4 words. Only return the tagline, no other text. Only summarize the topic of the conversation. Do not engage in the conversation, just return the tagline. Maintain the prompt language for your output.",
+      {
+        disableTools: true,
+      },
+    )
+      .then(async (r) => {
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { tagline: r.trim() },
+        });
+      })
+      .catch((e) => {
+        console.error("Error generating tagline", e);
       });
-    });
   }
 
   const systemPromptPromise = getSystemPrompt("default", agentId);
   const toolsPromise = getToolsForAgent(agentId).then(async (r) => {
-    // get tools ready
     return Promise.all(
       r.map(async (t) => {
-        return [
-          t.identifier,
-          await t.tool({
-            conversationId: conversation.id,
-            agentId,
-            meta,
-          }),
-        ];
-      })
+        try {
+          return [
+            t.identifier,
+            await t.tool({
+              conversationId: conversation.id,
+              agentId,
+              meta,
+              config: getConfig(),
+              provider: OAKProvider(getConfig(), t.pluginName as string),
+            }),
+          ];
+        } catch (error) {
+          console.error("Error invoking tool", error);
+          return [t.identifier, `Error invoking tool: ${error}`];
+        }
+      }),
     );
   });
 
@@ -148,7 +156,7 @@ export const streamConversation = async (
         await prisma.message.create({
           data: {
             content: JSON.parse(
-              JSON.stringify(messagesToStore[messagesToStore.length - 1])
+              JSON.stringify(messagesToStore[messagesToStore.length - 1]),
             ),
             conversationId: conversation.id,
             author: "ASSISTANT",

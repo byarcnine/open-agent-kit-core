@@ -1,6 +1,6 @@
 import { prisma } from "@db/db.server";
 import type { LicenseConfig, LicenseRequestMeta } from "~/types/license";
-
+import crypto from "crypto";
 export const MAX_USERS = 10;
 export const MAX_AGENTS = 5;
 export const MAX_DOCUMENTS = 100;
@@ -92,11 +92,17 @@ const getMetaFromRequest = async (
     request.headers.get("origin") || request.headers.get("referer");
 
   const originDomain = originURL ? new URL(originURL).hostname : "";
+  const deploymentId = crypto
+    .createHash("sha256")
+    .update(process.env.APP_SECRET || "")
+    .digest("hex");
+
   const meta = {
     originURL: originDomain,
     userCount,
     agentCount,
     documentsCount,
+    deploymentId,
   } satisfies LicenseRequestMeta;
   return meta;
 };

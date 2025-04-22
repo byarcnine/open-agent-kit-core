@@ -1,10 +1,12 @@
 import { prisma } from "@db/db.server";
 import { embedDocumentQueue } from "~/lib/jobs/embedDocument.server";
 import { getPlugins } from "~/lib/plugins/plugins.server";
+import OAKProvider from "../lib";
+import { getConfig } from "../config/config";
 
 export const refreshKnowledgeSources = async (
   agentId: string,
-  pluginName: string
+  pluginName: string,
 ) => {
   const existingDocuments = await prisma.knowledgeDocument.findMany({
     where: {
@@ -24,7 +26,7 @@ export const refreshKnowledgeSources = async (
   if (!plugin.syncKnowledge || typeof plugin.syncKnowledge !== "function") {
     // This plugin does not have a syncKnowledge function implemented
     console.log(
-      `Plugin ${pluginName} does not have a syncKnowledge function implemented`
+      `Plugin ${pluginName} does not have a syncKnowledge function implemented`,
     );
     return true;
   }
@@ -32,6 +34,7 @@ export const refreshKnowledgeSources = async (
     const syncJobs = await plugin.syncKnowledge({
       agentId,
       existingDocuments,
+      provider: OAKProvider(getConfig(), pluginName),
     });
     console.log("syncJobs", syncJobs);
     for (const syncJob of syncJobs) {
@@ -44,11 +47,24 @@ export const refreshKnowledgeSources = async (
           // update the document
           upsertDocumentId = syncJob.id;
         } else {
-          const newDocument = await prisma.knowledgeDocument.create({
-            data: {
+          const newDocument = await prisma.knowledgeDocument.upsert({
+            where: {
+              agentId_name_provider: {
+                agentId,
+                name: syncJob.name,
+                provider: pluginName,
+              },
+            },
+            update: {
+              name: syncJob.name,
+              metadata: syncJob.metadata,
+              status: "PENDING",
+            },
+            create: {
               agentId,
               provider: pluginName,
               name: syncJob.name,
+              metadata: syncJob.metadata,
               status: "PENDING",
             },
           });
@@ -73,7 +89,7 @@ export const refreshKnowledgeSources = async (
   } catch (error) {
     console.error(
       `Error refreshing knowledge sources for plugin ${pluginName}`,
-      error
+      error,
     );
     return false;
   }

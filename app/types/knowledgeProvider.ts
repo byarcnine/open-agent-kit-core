@@ -1,6 +1,7 @@
 import type { KnowledgeDocument } from "@prisma/client";
 import type { ActionFunction, LoaderFunction } from "react-router";
 import type { FC } from "react";
+import type OAKProvider from "~/lib/lib";
 
 export type SyncKnowledgeFunctionReturnParams = (
   | {
@@ -8,6 +9,7 @@ export type SyncKnowledgeFunctionReturnParams = (
       name: string;
       action: "ADD";
       text: string;
+      metadata?: Record<string, any>;
     }
   | {
       id: string;
@@ -27,11 +29,12 @@ export type KnowledgeProviderClientConfig = {
 export type SyncKnowledgeFunctionParams = {
   agentId: string;
   existingDocuments: KnowledgeDocument[];
+  provider: ReturnType<typeof OAKProvider>;
 };
 
 export type KnowledgeProviderServerConfig = {
   syncKnowledge: (
-    params: SyncKnowledgeFunctionParams
+    params: SyncKnowledgeFunctionParams,
   ) => Promise<SyncKnowledgeFunctionReturnParams>;
   identifier: string;
   loader: LoaderFunction;

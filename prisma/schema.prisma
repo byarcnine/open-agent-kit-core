@@ -86,6 +86,7 @@ model Agent {
   AgentPluginData    AgentPluginData[]
 
   @@map("agent")
+  KnowledgeDocumentTag KnowledgeDocumentTag[]
 }
 
 model Conversation {
@@ -142,10 +143,25 @@ model KnowledgeDocument {
   updatedAt  DateTime              @updatedAt
   embeddings Embedding[]
   status     KnowledgeSourceStatus @default(PENDING)
+  tags       KnowledgeDocumentTag[] @relation("KnowledgeDocumentToTag")
 
-  @@unique([agentId, name])
+  @@unique([agentId, name, provider])
   @@index([agentId])
   @@map("knowledge_document")
+}
+
+model KnowledgeDocumentTag {
+  id                 String           @id @default(cuid())
+  agentId           String
+  agent             Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  name              String
+  color             String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  documents         KnowledgeDocument[] @relation("KnowledgeDocumentToTag")
+
+  @@unique([agentId, name])
+  @@map("knowledge_document_tag")
 }
 
 model Embedding {
@@ -329,12 +345,12 @@ model GlobalConfig {
 
 model AgentPluginData {
   agentId          String
-  agent            Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent            Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
   identifier       String
   pluginIdentifier String
   data             Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@id([agentId, identifier, pluginIdentifier])
   @@map("agent_plugin_data")

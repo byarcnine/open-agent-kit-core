@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { LogOut, Settings, Menu, X } from "react-feather";
+import { LogOut, Menu, X } from "react-feather";
 import { Link, useNavigate } from "react-router";
 import type { User } from "better-auth";
 import { authClient } from "~/lib/auth/auth.client";
 import { cn } from "~/lib/utils";
+import "./layout.scss";
 
 const Layout = ({
   children,
@@ -16,7 +17,6 @@ const Layout = ({
   agentName?: string;
   navComponent?: React.ReactNode;
 }) => {
-  const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
@@ -44,8 +44,8 @@ const Layout = ({
                 </span>
               </Link>
             </div>
-            <div className="flex-1 flex justify-between flex-col">
-              <div>{navComponent}</div>
+            <div className="flex-1 flex justify-between flex-col overflow-auto scrollbar-none">
+              <div className="overflow-auto scrollbar-none">{navComponent}</div>
               {user && (
                 <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">
                   <Link

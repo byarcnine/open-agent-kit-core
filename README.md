@@ -1,4 +1,4 @@
-> ⚠️ **Note:** OAK is currently in pre alpha and not ready for testing. Please stay tuned and check back in a couple of days.
+> ⚠️ **Note:** OAK is currently in beta - expect some bugs and issues. We are working hard to fix them!
 
 # Welcome to OPEN AGENT KIT (OAK)
 
@@ -18,9 +18,9 @@ Website: https://open-agent-kit.com
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbyarcnine%2Fopen-agent-kit-starter&env=APP_SECRET,OPENAI_API_KEY,SMTP_HOST,SMTP_PORT,SMTP_USER,SMTP_PASSWORD&envDescription=You%20can%20generate%20the%20secret%20with%20this%20link.&envLink=https%3A%2F%2Fdocs.open-agent-kit.com%2Fenvironment-variables&project-name=open-agent-kit&repository-name=open-agent-kit&integration-ids=oac_3sK3gnG06emjIEVL09jjntDD)
 
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/byarcnine/open-agent-kit-starter/tree/main)
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/byarcnine/open-agent-kit-starter/tree/main&refcode=8ab6450926a8)
 
-More guides are available [here](https://docs.open-agent-kit.com/guides/deployment)
+More guides are available [here](https://docs.open-agent-kit.com/hosting-deploy)
 
 ## Build on the best open source libraries
 
@@ -75,13 +75,13 @@ http://localhost:5173
 ```
 
 5. Deploy
-   Read our [deployment docs](https://docs.open-agent-kit.com/guides/deployment)
+   Read our [deployment docs](https://docs.open-agent-kit.com/hosting-deploy)
 
 ## Plugin Ecosystem
 
 OAK is designed to be extensible with plugins. From custom knowledge providers, tools, pages, the sky is the limit!
 Create your own plugins or use the ones made by the community!
-Get started with the [plugin docs](https://docs.open-agent-kit.com/plugins/introduction)
+Get started with the [plugin docs](https://docs.open-agent-kit.com/plugins/create-plugin)
 
 ## Read the docs
 

@@ -4,33 +4,41 @@ import { getSystemPrompt } from "./systemPrompts.server";
 import { getToolsForAgent } from "../tools/tools.server";
 import type { OAKConfig } from "~/types/config";
 import { getModelForAgent } from "./modelManager.server";
+import { getConfig } from "../config/config";
+import OAKProvider from "../lib";
 
 export const generateSingleMessage =
   (config: OAKConfig) =>
   async (
     prompt: string,
     agentId: string,
-    systemPrompt?: string | null // system prompt override
+    systemPrompt?: string | null, // system prompt override
+    options?: {
+      disableTools?: boolean;
+    },
   ) => {
     const system =
       systemPrompt || (await getSystemPrompt("default", agentId)) || "";
-
     const model = await getModelForAgent(agentId, config);
-    const tools = await getToolsForAgent(agentId).then(async (r) => {
-      // get tools ready
-      return Promise.all(
-        r.map(async (t) => {
-          return [
-            t.identifier,
-            await t.tool({
-              conversationId: "0",
-              agentId,
-              meta: {},
+    const tools = options?.disableTools
+      ? undefined
+      : await getToolsForAgent(agentId).then(async (r) => {
+          // get tools ready
+          return Promise.all(
+            r.map(async (t) => {
+              return [
+                t.identifier,
+                await t.tool({
+                  conversationId: "0",
+                  agentId,
+                  config: getConfig(),
+                  meta: {},
+                  provider: OAKProvider(getConfig(), t.pluginName as string),
+                }),
+              ];
             }),
-          ];
-        })
-      );
-    });
+          );
+        });
     const messages: CoreMessage[] = [
       {
         role: "system",
@@ -43,8 +51,9 @@ export const generateSingleMessage =
     ];
     const completion = await generateText({
       model,
+      toolChoice: options?.disableTools ? "none" : "auto",
       messages,
-      tools: Object.fromEntries(tools),
+      tools: tools ? Object.fromEntries(tools) : undefined,
     });
     return completion.text;
   };
@@ -61,10 +70,12 @@ export const generateConversation =
             await t.tool({
               conversationId: "0",
               agentId,
+              config: getConfig(),
               meta: {},
+              provider: OAKProvider(getConfig(), t.pluginName as string),
             }),
           ];
-        })
+        }),
       );
     });
     const completion = await generateText({

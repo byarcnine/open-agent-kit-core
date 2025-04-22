@@ -1,8 +1,12 @@
 import type { Tool } from "ai";
+import type { OAKConfig } from "./config";
+import type OAKProvider from "~/lib/lib";
 
 export type ToolParams = {
   conversationId: string;
   agentId: string;
+  config: OAKConfig;
+  provider: ReturnType<typeof OAKProvider>;
   meta?: object;
 };
 

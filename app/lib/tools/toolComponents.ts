@@ -31,7 +31,7 @@ export const toolComponents: Record<string, React.FC<any>> = {
     })
   ),
   // default tools
-  dateTimeAndDay: DateTimeAndDayTool,
-  accessKnowledgeBase: KnowledgeTool,
-  collectFeedback: FeedbackTool,
+  default__dateTimeAndDay: DateTimeAndDayTool,
+  default__accessKnowledgeBase: KnowledgeTool,
+  default__collectFeedback: FeedbackTool,
 };
