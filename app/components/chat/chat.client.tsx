@@ -78,7 +78,7 @@ const Chat = ({
       style.innerHTML = customCSS;
     }
     document.head.appendChild(style);
-  }, []);
+  }, [chatSettings?.customCSS]);
 
   useEffect(() => {
     if (isEmbed) {
