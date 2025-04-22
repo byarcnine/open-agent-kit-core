@@ -95,30 +95,39 @@ const Chat = ({
     }
   }, []);
 
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    setInput,
-    error,
-    status,
-  } = useChat({
-    api: `${API_URL}/api/generate`,
-    body: {
-      conversationId,
-      agentId,
-      meta,
-    },
-    initialMessages,
-    onResponse: (response) => {
-      const newConversationId = response.headers.get("x-conversation-id");
-      if (newConversationId && !conversationId) {
-        setConversationId(newConversationId);
-        onConversationStart?.(newConversationId);
-      }
-    },
-  });
+  const initMessages = chatSettings?.initialMessage && (!initialMessages?.length)
+    ? [
+        {
+          id: "initial-message",
+          role: MessageRole.Assistant,
+          content: chatSettings?.initialMessage,
+          parts: [
+            {
+              type: "text",
+              text: chatSettings?.initialMessage,
+            } as TextPart,
+          ],
+        } as Message,
+      ]
+    : initialMessages;
+
+  const { messages, input, handleInputChange, handleSubmit, setInput, error } =
+    useChat({
+      api: `${API_URL}/api/generate`,
+      body: {
+        conversationId,
+        agentId,
+        meta,
+      },
+      initialMessages: initMessages,
+      onResponse: (response) => {
+        const newConversationId = response.headers.get("x-conversation-id");
+        if (newConversationId && !conversationId) {
+          setConversationId(newConversationId);
+          onConversationStart?.(newConversationId);
+        }
+      },
+    });
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -171,7 +180,6 @@ const Chat = ({
     }
   }, []);
 
-  // Add effect to adjust height when input changes
   useEffect(() => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
@@ -182,8 +190,8 @@ const Chat = ({
         <div className="oak-chat__loading-container">
           <img
             className="oak-chat__loading-logo"
-            src={`${API_URL}/assets/logo.svg`}
-            alt="OAK Logo"
+            src={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
+            alt="Logo"
           />
           <p className="oak-chat__loading-text">One moment, I'm on it..</p>
         </div>
@@ -192,29 +200,10 @@ const Chat = ({
   }
 
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
-  const messagesWithInitMessage =
-    chatSettings?.initialMessage &&
-    (!initialMessages || initialMessages?.length === 0)
-      ? [
-          {
-            id: "initial-message",
-            role: MessageRole.Assistant,
-            content: chatSettings.initialMessage,
-            parts: [
-              {
-                type: "text",
-                text: chatSettings.initialMessage,
-              } as TextPart,
-            ],
-          },
-          ...messages,
-        ]
-      : messages;
-
   return (
     <ChatContext.Provider value={{ isEmbed, chatSettings }}>
       <div id="oak-chat-container" className="oak-chat">
-        {messagesWithInitMessage.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="oak-chat__empty-state">
             {chatSettings?.intro?.title && (
               <h1 className="oak-chat__empty-state-heading">
@@ -237,7 +226,7 @@ const Chat = ({
           <>
             <Messages
               toolNames={toolNames}
-              messages={messagesWithInitMessage}
+              messages={messages}
               error={error?.message}
               avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
             >

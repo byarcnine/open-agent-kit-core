@@ -1,10 +1,13 @@
 import { useEffect } from "react";
+import { MessageRole } from "~/types/chat";
+import "../public/embed/core.css";
 
 export type ChatComponentType = {
   apiUrl?: string;
   meta?: object;
   agentId: string;
   avatarImageURL?: string;
+  initialMessage?: string;
 };
 
 const containerId = "oak-chat-container";
@@ -21,6 +24,7 @@ function ChatModule({
   agentId,
   meta,
   avatarImageURL,
+  initialMessage,
 }: ChatComponentType) {
   useEffect(() => {
     const showError = (message: string) => {
@@ -56,12 +60,27 @@ function ChatModule({
           return;
         }
 
+        const initialMessages = initialMessage ? [
+          {
+            id: "initial-message",
+            role: MessageRole.Assistant,
+            content: initialMessage,
+            parts: [
+              {
+                type: "text",
+                text: initialMessage,
+              },
+            ],
+          },
+        ] : [];
+
         // @ts-ignore
         ChatComponent.renderChatComponent(containerId, {
           agentId,
           apiUrl,
           meta,
           avatarImageURL,
+          initialMessages,
         });
       } catch (e: any) {
         showError(`Error: An unexpected error occurred. ${e.message}`);
@@ -71,7 +90,7 @@ function ChatModule({
     return () => {
       document.body.removeChild(script);
     };
-  }, [apiUrl, agentId, meta]);
+  }, [apiUrl, agentId, meta, initialMessage]);
 
   return <div id={containerId} />;
 }
