@@ -190,8 +190,8 @@ const Chat = ({
         <div className="oak-chat__loading-container">
           <img
             className="oak-chat__loading-logo"
-            src={`${API_URL}/assets/logo.svg`}
-            alt="OAK Logo"
+            src={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
+            alt="Logo"
           />
           <p className="oak-chat__loading-text">One moment, I'm on it..</p>
         </div>
