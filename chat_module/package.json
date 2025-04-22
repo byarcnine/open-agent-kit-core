@@ -1,6 +1,6 @@
 {
   "name": "@open-agent-kit/chat",
-  "version": "0.0.18",
+  "version": "0.0.20",
   "description": "Open Agent Kit - Standalone chat module extracted from OAK core library",
   "main": "chat.bundle.umd.js",
   "module": "chat.bundle.es.js",

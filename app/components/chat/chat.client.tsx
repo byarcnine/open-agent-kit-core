@@ -95,7 +95,7 @@ const Chat = ({
     }
   }, []);
 
-  const initMessages = !initialMessages && chatSettings?.initialMessage
+  const initMessages = chatSettings?.initialMessage && (!initialMessages?.length)
     ? [
         {
           id: "initial-message",
