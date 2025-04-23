@@ -48,15 +48,39 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.4s;
+        text-align: center;
       }
     }
 
     &__input-container {
       margin: 16px;
+      margin-top: 0;
       padding-top: 16px;
       border-top: 1px solid $oak-border-color;
     }
-
+    &__thinking {
+      &-message {
+        font-size: 14px;
+        font-weight: 400;
+        margin-bottom: 16px;
+        animation: fadeInScale 0.3s ease-out;
+        animation-fill-mode: both;
+        margin-left: 70px;
+        color: $oak-color-muted-foreground;
+      }
+      &-dots {
+        display: inline-block;
+        min-width: 2ch;
+        text-align: left;
+        vertical-align: bottom;
+        padding-left: 4px;
+        &::after {
+          content: "\00a0";
+          animation: animate-dots 1.5s infinite steps(1, end);
+          display: inline-block;
+        }
+      }
+    }
     &__form {
       position: relative;
       // display: flex;
@@ -291,16 +315,6 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         justify-content: flex-start;
       }
 
-      &-avatar-fallback {
-        background-color: $oak-color-primary;
-        color: $oak-white;
-        font-size: 12px;
-        font-weight: bold;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-      }
-
       &-content {
         &-container {
           display: flex;
@@ -331,21 +345,32 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         }
       }
 
+      &-iframe-container {
+        position: relative;
+        overflow: hidden;
+        padding-top: 56.25%;
+      }
+
       &-tool-invocations {
         margin-bottom: 1.5rem;
+        padding-left: 16px;
+
         &-marker {
           display: inline-block;
           display: inline-block;
           font-size: 12px;
           font-weight: 600;
           margin-bottom: 8px;
+          display: flex;
+          align-items: center;
+          font-weight: 400;
+          gap: 4px;
         }
       }
 
       &-tool-invocation {
-        border-radius: $oak-border-radius;
+        border-left: 2px solid $oak-color-primary;
         padding: 12px;
-        background-color: $oak-border-color;
         overflow-x: auto;
       }
 
@@ -395,29 +420,16 @@ $oak-error-color: oklch(0.704 0.191 22.216);
     &__message-avatar {
       position: relative;
       display: flex;
-      height: 40px;
-      width: 40px;
+      height: 30px;
+      width: 30px;
       flex-shrink: 0;
       overflow: hidden;
-      border-radius: 50%;
+      margin-top: 8px;
 
       &-image {
         aspect-ratio: 1 / 1;
         height: 100%;
         width: 100%;
-      }
-
-      &-fallback {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background-color: $oak-color-primary;
-        color: $oak-white;
-        font-size: 12px;
-        font-weight: bold;
-        width: 40px;
-        height: 40px;
       }
     }
     &__error-container {
@@ -453,6 +465,24 @@ $oak-error-color: oklch(0.704 0.191 22.216);
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes animate-dots {
+  0% {
+    content: "\00a0";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+  100% {
+    content: "\00a0";
   }
 }
 
@@ -543,6 +573,13 @@ $oak-error-color: oklch(0.704 0.191 22.216);
   }
   ol {
     list-style: decimal;
+  }
+
+  code {
+    span {
+      font-size: 12px;
+      white-space: pre;
+    }
   }
 
   @mixin heading-style($color, $font-weight, $padding-top, $font-size) {

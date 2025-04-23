@@ -87,6 +87,7 @@ model Agent {
   MCPs               MCPs[]
 
   @@map("agent")
+  KnowledgeDocumentTag KnowledgeDocumentTag[]
 }
 
 model Conversation {
@@ -143,10 +144,25 @@ model KnowledgeDocument {
   updatedAt  DateTime              @updatedAt
   embeddings Embedding[]
   status     KnowledgeSourceStatus @default(PENDING)
+  tags       KnowledgeDocumentTag[] @relation("KnowledgeDocumentToTag")
 
   @@unique([agentId, name, provider])
   @@index([agentId])
   @@map("knowledge_document")
+}
+
+model KnowledgeDocumentTag {
+  id                 String           @id @default(cuid())
+  agentId           String
+  agent             Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  name              String
+  color             String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  documents         KnowledgeDocument[] @relation("KnowledgeDocumentToTag")
+
+  @@unique([agentId, name])
+  @@map("knowledge_document_tag")
 }
 
 model Embedding {

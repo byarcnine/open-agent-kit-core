@@ -33,6 +33,10 @@ Object.entries(pluginConfigs).forEach(
     importedPlugins.push({
       ...plugin.default,
       name: packageInfo.name,
+      tools: plugin.default.tools?.map((t) => ({
+        ...t,
+        pluginName: packageInfo.name,
+      })),
     });
   },
 );

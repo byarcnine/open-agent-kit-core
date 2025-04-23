@@ -10,12 +10,16 @@ export const generateSingleMessage =
     prompt: string,
     agentId: string,
     systemPrompt?: string | null, // system prompt override
+    options?: {
+      disableTools?: boolean;
+    },
   ) => {
     const [system = "", model, tools] = await Promise.all([
       systemPrompt || getSystemPrompt("default", agentId),
       getModelForAgent(agentId, config),
       prepareToolsForAgent(agentId, "0", {}),
     ]);
+
     const messages: CoreMessage[] = [
       {
         role: "system",
@@ -28,8 +32,9 @@ export const generateSingleMessage =
     ];
     const completion = await generateText({
       model,
+      toolChoice: options?.disableTools ? "none" : "auto",
       messages,
-      tools: Object.fromEntries(tools.tools),
+      tools: tools?.tools ? Object.fromEntries(tools.tools) : undefined,
     });
     await tools.closeMCPs();
     return completion.text;

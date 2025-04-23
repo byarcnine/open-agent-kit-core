@@ -34,7 +34,6 @@ export const routes = (
           index(`${corePrefix}/agent.$agentId._index.tsx`),
           route("feedback", `${corePrefix}/agent.$agentId.feedback.tsx`),
           route("plugins", `${corePrefix}/agent.$agentId.plugins._index.tsx`),
-          route("knowledge", `${corePrefix}/agent.$agentId.knowledge.tsx`),
           route("prompts", `${corePrefix}/agent.$agentId.prompts._index.tsx`),
           route("settings", `${corePrefix}/agent.$agentId.settings.tsx`),
           route("users", `${corePrefix}/agent.$agentId.users.tsx`),
@@ -60,6 +59,13 @@ export const routes = (
                 }) || []
               )
             ),
+          // Knowledge Routes
+          layout(`${corePrefix}/agent.$agentId.knowledge.tsx`, [
+            ...prefix("knowledge/", [
+              index(`${corePrefix}/agent.$agentId.knowledge.documents.tsx`),
+              route("settings", `${corePrefix}/agent.$agentId.knowledge.settings.tsx`),
+            ]),
+          ]),
         ]),
       ]),
     ]),

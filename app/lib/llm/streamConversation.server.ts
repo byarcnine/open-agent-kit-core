@@ -2,7 +2,6 @@ import { prisma } from "@db/db.server";
 import { getSystemPrompt } from "./systemPrompts.server";
 import {
   appendResponseMessages,
-  convertToCoreMessages,
   smoothStream,
   streamText,
   type Message,
@@ -34,11 +33,7 @@ export const streamConversation = async (
   // Add the user message to the conversation
   const createMessagePromise = prisma.message.create({
     data: {
-      content: JSON.parse(
-        JSON.stringify(
-          convertToCoreMessages([messages[messages.length - 1]])[0],
-        ),
-      ),
+      content: JSON.parse(JSON.stringify([messages[messages.length - 1]][0])),
       conversationId: conversation.id,
       author: "USER",
     },
@@ -61,16 +56,22 @@ export const streamConversation = async (
   let tagLinePromise: Promise<void> | null = null;
   if (!conversation.tagline) {
     tagLinePromise = generateSingleMessage(config)(
-      `What is the main topic of the conversation with the initial message (3-4 words max): ${
-        messages[messages.length - 1].content
-      }`,
+      messages[0].content,
       agentId,
-    ).then(async (r) => {
-      await prisma.conversation.update({
-        where: { id: conversation.id },
-        data: { tagline: r },
+      "What is the conversation about? Tell me in 3-4 words. Only return the tagline, no other text. Only summarize the topic of the conversation. Do not engage in the conversation, just return the tagline. Maintain the prompt language for your output.",
+      {
+        disableTools: true,
+      },
+    )
+      .then(async (r) => {
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { tagline: r.trim() },
+        });
+      })
+      .catch((e) => {
+        console.error("Error generating tagline", e);
       });
-    });
   }
 
   const systemPromptPromise = getSystemPrompt("default", agentId);

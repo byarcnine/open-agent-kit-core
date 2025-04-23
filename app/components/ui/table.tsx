@@ -1,4 +1,6 @@
 import * as React from "react"
+import { ChevronUp, ChevronDown } from "react-feather"
+import { useLocation, useNavigate } from "react-router"
 
 import { cn } from "~/lib/utils"
 
@@ -68,17 +70,49 @@ TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
-  <th
-    ref={ref}
-    className={cn(
-      "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-      className
-    )}
-    {...props}
-  />
-))
+  React.ThHTMLAttributes<HTMLTableCellElement> & {
+    isSortable?: boolean,
+    fieldName?: string
+  }
+>(({ className, isSortable, fieldName, children, ...props }, ref) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentParams = new URLSearchParams(location.search);
+  const currentSortOrder = currentParams.get('sortOrder') === 'asc' ? 'desc' : 'asc';
+
+  const handleSort = () => {
+    if (!isSortable || !fieldName) return;
+    currentParams.set('sortField', fieldName);
+    currentParams.set('sortOrder', currentSortOrder);
+
+    navigate(`${location.pathname}?${currentParams.toString()}`);
+  };
+
+  return (
+    <th
+      ref={ref}
+      className={cn(
+        "h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        isSortable ? "cursor-pointer" : "",
+        className
+      )}
+      onClick={handleSort}
+      {...props}
+    >
+      <div className="flex items-center">
+        {children}
+        {isSortable && (
+          currentSortOrder === 'asc' ? (
+            <ChevronUp className="w-4 h-4 ml-1" />
+          ) : (
+            <ChevronDown className="w-4 h-4 ml-1" />
+          )
+        )}
+      </div>
+    </th>
+  );
+});
 TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
