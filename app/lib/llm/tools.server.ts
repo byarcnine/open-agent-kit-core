@@ -4,7 +4,7 @@ import { getToolsForAgent } from "../tools/tools.server";
 import { prisma } from "@db/db.server";
 import {
   experimental_createMCPClient as createMCPClient,
-  tool,
+  type Message,
   type Tool,
 } from "ai";
 import { Experimental_StdioMCPTransport as StdioMCPTransport } from "ai/mcp-stdio";
@@ -79,6 +79,7 @@ export const prepareToolsForAgent = async (
   agentId: string,
   conversationId: string,
   meta: Record<string, any>,
+  messages: Message[],
 ) => {
   const pluginToolsPromise = getToolsForAgent(agentId).then(async (r) => {
     // get tools ready
@@ -92,6 +93,7 @@ export const prepareToolsForAgent = async (
             meta,
             config: getConfig(),
             provider: OAKProvider(getConfig(), t.pluginName as string),
+            messages,
           }),
         ];
       }),

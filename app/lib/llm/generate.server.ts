@@ -1,4 +1,4 @@
-import { generateText, type CoreMessage } from "ai";
+import { generateText, type CoreMessage, type Message } from "ai";
 import { getSystemPrompt } from "./systemPrompts.server";
 import type { OAKConfig } from "~/types/config";
 import { getModelForAgent } from "./modelManager.server";
@@ -17,7 +17,7 @@ export const generateSingleMessage =
     const [system = "", model, tools] = await Promise.all([
       systemPrompt || getSystemPrompt("default", agentId),
       getModelForAgent(agentId, config),
-      prepareToolsForAgent(agentId, "0", {}),
+      prepareToolsForAgent(agentId, "0", {}, []),
     ]);
 
     const messages: CoreMessage[] = [
@@ -41,10 +41,10 @@ export const generateSingleMessage =
   };
 
 export const generateConversation =
-  (config: OAKConfig) => async (agentId: string, messages: CoreMessage[]) => {
+  (config: OAKConfig) => async (agentId: string, messages: Message[]) => {
     const [model, tools] = await Promise.all([
       getModelForAgent(agentId, config),
-      prepareToolsForAgent(agentId, "0", {}),
+      prepareToolsForAgent(agentId, "0", {}, messages),
     ]);
     const completion = await generateText({
       model,

@@ -75,7 +75,12 @@ export const streamConversation = async (
   }
 
   const systemPromptPromise = getSystemPrompt("default", agentId);
-  const toolsPromise = prepareToolsForAgent(agentId, conversation.id, meta);
+  const toolsPromise = prepareToolsForAgent(
+    agentId,
+    conversation.id,
+    meta,
+    messages,
+  );
 
   const [systemPrompt, tools, model] = await Promise.all([
     systemPromptPromise,
