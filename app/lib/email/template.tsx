@@ -4,7 +4,6 @@ import {
   Column,
   Container,
   Head,
-  Hr,
   Html,
   Img,
   Preview,
@@ -72,10 +71,10 @@ export default OAKEmail;
 export const renderedOAKEmail = async (
   heading: string,
   copy: string,
-  link: { label: string; url: string }
+  link: { label: string; url: string },
 ) => {
   const html = await render(
-    <OAKEmail heading={heading} copy={copy} link={link} />
+    <OAKEmail heading={heading} copy={copy} link={link} />,
   );
   return html;
 };

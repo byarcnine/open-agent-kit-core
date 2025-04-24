@@ -37,10 +37,9 @@ import { useState, useEffect } from "react";
 import { Form } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
-import { experimental_createMCPClient as createMCPClient, tool } from "ai";
-import { Experimental_StdioMCPTransport as StdioMCPTransport } from "ai/mcp-stdio";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Loader, Trash2 } from "react-feather";
+import { createMCPClient } from "~/lib/mcp/client.server";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -151,10 +150,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         });
       } else if (mcp.type === "STDIO") {
         mcpClient = await createMCPClient({
-          transport: new StdioMCPTransport({
+          transport: {
+            type: "stdio",
             command: connectionArgs.command,
-            args: connectionArgs.args ? connectionArgs.args.split(" ") : [],
-          }),
+            args: connectionArgs.args,
+          },
         });
       } else {
         return data(
@@ -299,10 +299,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // Test the MCP connection
       try {
         const mcpClient = await createMCPClient({
-          transport: new StdioMCPTransport({
+          transport: {
             command,
-            args: args ? args.split(" ") : [],
-          }),
+            args: args,
+            type: "stdio",
+          },
         });
 
         // Try to get tools to verify connection
