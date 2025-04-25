@@ -108,7 +108,7 @@ const CardContentSection = ({
 }) => {
   return (
     <div className="flex flex-col space-y-3 mb-6">
-      <div className="font-semibold text-md leading-none tracking-tight mb-3">
+      <div className="font-medium text-md leading-none tracking-tight mb-3">
         {title}
       </div>
       {children}
@@ -251,7 +251,7 @@ const AgentSettings = () => {
 
   return (
     <div className="w-full py-8 px-4 md:p-8 space-y-6">
-      <h1 className="text-3xl font-bold">Agent Settings</h1>
+      <h1 className="text-3xl font-medium">Agent Settings</h1>
       <Card>
         <CardHeader>
           <CardTitle>General Settings</CardTitle>
@@ -542,7 +542,7 @@ const AgentSettings = () => {
               code:
             </p>
 
-            <span className="mb-2 block font-bold text-sm">JS Embed</span>
+            <span className="mb-2 block font-medium text-sm">JS Embed</span>
             <div className="flex flex-row gap-2 mb-4">
               <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-md">
                 {`
@@ -562,7 +562,7 @@ const AgentSettings = () => {
     `}
               </code>
             </div>
-            <span className="mb-2 block font-bold text-sm">iFrame Embed</span>
+            <span className="mb-2 block font-medium text-sm">iFrame Embed</span>
             <div className="flex flex-row gap-2 mb-4">
               <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-md">
                 {`

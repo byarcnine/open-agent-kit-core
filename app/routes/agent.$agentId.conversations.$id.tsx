@@ -46,7 +46,7 @@ const ConversationDetail = () => {
   return (
     <div className="h-full w-full flex flex-col max-h-screen">
       <div className="p-4 border-b">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-medium">
           Conversation{" "}
           <span className="text-base text-muted-foreground">
             #{conversation.id}

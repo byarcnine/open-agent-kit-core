@@ -29,6 +29,7 @@ import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
+import { useState } from "react";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -37,7 +38,7 @@ const CreateAgentSchema = z.object({
     .min(3, "Agent slug is required and must be at least 3 characters")
     .regex(
       /^[a-z0-9-]+$/,
-      "Slug must contain only lowercase letters, numbers, and hyphens"
+      "Slug must contain only lowercase letters, numbers, and hyphens",
     ),
   description: z.string().optional(),
 });
@@ -131,30 +132,55 @@ const Index = () => {
     agent.agentUsers[0]?.role === "OWNER" ||
     agent.agentUsers[0]?.role === "EDITOR";
 
+  const [search, setSearch] = useState("");
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const filteredAgents = search
+    ? agents.filter((agent) =>
+        agent.name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : agents;
+
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col h-full">
-        <div className="flex flex-row flex-wrap items-center justify-between pb-8 gap-4">
-          <h1 className="text-3xl font-bold">My Agents</h1>
+        <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
+          <h1 className="text-3xl font-medium">My Agents</h1>
           {canEditAllAgents && (
             <CreateAgentDialog errors={actionData?.errors} />
           )}
         </div>
+        <div>
+          <Input
+            type="text"
+            placeholder="Find agents..."
+            className="w-full max-w-sm mb-8"
+            value={search}
+            onChange={handleSearch}
+            name="search"
+          />
+        </div>
         <div className="flex-1 flex flex-col">
-          {agents && agents.length === 0 ? (
+          {filteredAgents && filteredAgents.length === 0 ? (
             <NoDataCard
               className="my-auto"
-              headline="No Agents found"
-              description="Start and create your first agent!"
+              headline={search ? "No agents found" : "No agents created"}
+              description={
+                search
+                  ? "Try a different search term"
+                  : "Create your first agent!"
+              }
             >
-              {canEditAllAgents && (
+              {canEditAllAgents && !search && (
                 <CreateAgentDialog errors={actionData?.errors} />
               )}
             </NoDataCard>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 gap-4">
-              {agents &&
-                agents.map((agent) => (
+              {filteredAgents &&
+                filteredAgents.map((agent) => (
                   <Card
                     key={agent.id}
                     className="justify-between flex flex-col"

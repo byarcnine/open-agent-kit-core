@@ -14,7 +14,7 @@ const NoDataCard: React.FC<NoDataCardProps> = (props) => {
     >
       <img src="/assets/logo.svg" alt="No data" className="mx-auto w-10 mb-4" />
       {props.headline && (
-        <h3 className="text-xl font-bold mb-2">{props.headline}</h3>
+        <h3 className="text-xl font-medium mb-2">{props.headline}</h3>
       )}
       <p className="text-base text-muted-foreground">{props.description}</p>
       {props?.children && (

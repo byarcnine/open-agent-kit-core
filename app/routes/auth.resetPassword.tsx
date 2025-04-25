@@ -75,7 +75,7 @@ export default function Screen() {
 
         <div className="w-full max-w-md mx-auto p-8 space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-medium">
               {mode === "reset" ? "Reset Password" : "Request Password Reset"}
             </h1>
             <p className="text-gray-500">

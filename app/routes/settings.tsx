@@ -296,14 +296,14 @@ const Settings = () => {
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">
         <div className="flex justify-between items-center flex-wrap gap-4 mb-8">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold">Global Settings</h1>
+            <h1 className="text-3xl font-medium">Global Settings</h1>
             <p className="text-muted-foreground text-sm">Version {version}</p>
           </div>
         </div>
         <div className="flex flex-col gap-2">
           <div className="rounded border p-4">
             <div className="flex items-center flex-wrap gap-2 mb-4">
-              <h2 className="text-lg font-bold">Manage License</h2>
+              <h2 className="text-lg font-medium">Manage License</h2>
               <div className="flex gap-2">
                 {license.valid && (
                   <Badge className="bg-emerald-500 block">Valid</Badge>
@@ -394,7 +394,7 @@ const Settings = () => {
         <div className="my-6 rounded border p-4">
           <div className="flex flex-col mb-4 gap-2">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-bold">Global Users</h2>
+              <h2 className="text-lg font-medium">Global Users</h2>
               {user.role === "SUPER_ADMIN" && (
                 <InviteUserModal
                   roles={GLOBAL_ROLES}
@@ -468,7 +468,7 @@ const Settings = () => {
             </TableBody>
           </Table>
           <div className="mt-4">
-            <h2 className="text-lg font-bold mb-2">Invites</h2>
+            <h2 className="text-lg font-medium mb-2">Invites</h2>
             <p className="text-muted-foreground text-sm max-w-lg">
               Pending invites are not yet accepted by the user.
             </p>
@@ -506,7 +506,7 @@ const Settings = () => {
         </div>
         <div className="rounded border p-4">
           <div className="flex flex-col mb-4 gap-2">
-            <h2 className="text-lg font-bold">Agent Users</h2>
+            <h2 className="text-lg font-medium">Agent Users</h2>
             <p className="text-muted-foreground text-sm max-w-lg">
               Agent user are specific to agents and can be added within the
               agent. They can only view and edit the assigned agents.

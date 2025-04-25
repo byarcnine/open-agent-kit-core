@@ -26,15 +26,17 @@ const Layout = ({
         <div className="hidden border-r bg-zinc-200/40 md:block">
           <div className="flex h-full max-h-screen flex-col gap-4">
             <div className="flex items-center border-b px-4 py-4">
-              <Link to="/" className="flex flex-col gap-1 font-semibold">
+              <Link to="/" className="flex flex-col gap-1 font-medium">
                 <span className="text-base flex items-center gap-2">
-                  <img
-                    src="/assets/logo.svg"
-                    alt="OAK - Open Agent Kit"
-                    className="w-8"
-                  />
+                  <div className="rounded-md overflow-hidden">
+                    <img
+                      src="/assets/logo.svg"
+                      alt="OAK - Open Agent Kit"
+                      className="w-8"
+                    />
+                  </div>
                   <div className="flex flex-col">
-                    <span>OAK Dashboard</span>
+                    <span>Dashboard</span>
                     {agentName && (
                       <span className="text-xs text-muted-foreground">
                         {agentName}
@@ -80,8 +82,8 @@ const Layout = ({
 
         {/* Mobile Header & Navigation */}
         <div className="md:hidden w-full">
-          <header className="flex items-center justify-between px-4 py-4 bg-zinc-200/40 border-b">
-            <Link to="/" className="flex items-center gap-2 font-semibold">
+          <header className="flex items-center justify-between px-4 py-4 bg-zinc-900 border-b">
+            <Link to="/" className="flex items-center gap-2 font-medium">
               <img
                 src="/assets/logo.svg"
                 alt="OAK - Open Agent Kit"
@@ -101,7 +103,7 @@ const Layout = ({
             </button>
           </header>
           {mobileNavOpen && (
-            <nav className="border-t bg-zinc-200/40">
+            <nav className="border-t bg-zinc-900">
               <div className="px-4 py-4">{navComponent}</div>
               {user && (
                 <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">

@@ -89,7 +89,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <div className="flex h-[100vh] items-center justify-center">
       <div className="rounded-lg border bg-card p-8 text-card-foreground sπhadow-lg">
         <div className="flex flex-col items-center gap-4">
-          <h1 className="text-3xl font-semibold tracking-tight">{message}</h1>
+          <h1 className="text-3xl font-medium tracking-tight">{message}</h1>
           <p className="text-muted-foreground">{details}</p>
           <a
             href="/"

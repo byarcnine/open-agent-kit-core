@@ -24,7 +24,7 @@ const KnowledgeProvider = () => {
 
   return (
     <div className="w-full py-8 px-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-4">Plugins</h1>
+      <h1 className="text-3xl font-medium mb-4">Plugins</h1>
       <div className="text-muted-foreground mb-6 max-w-lg">
         Plugins are used to extend the capabilities of the agent.
         <br />
