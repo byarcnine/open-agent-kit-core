@@ -112,15 +112,17 @@ const ChatOverview = () => {
           {conversationsByDay.map(({ date, conversations }) => (
             <div className="block mb-6 px-3 overflow-auto" key={date}>
               <h2 className="text-sm mb-2 text-muted-foreground">{date}</h2>
-              {conversations.filter(e => e.tagline).map((c) => (
-                <Link
-                  className="py-2 block hover:bg-zinc-200 rounded-md px-2 text-sm text-neutral-900 font-normal"
-                  to={`/chat/${agentId}/${c.id}`}
-                  key={c.id}
-                >
-                  {c.tagline}
-                </Link>
-              ))}
+              {conversations
+                .filter((e) => e)
+                .map((c) => (
+                  <Link
+                    className="py-2 block hover:bg-zinc-200 rounded-md px-2 text-sm text-neutral-900 font-normal"
+                    to={`/chat/${agentId}/${c.id}`}
+                    key={c.id}
+                  >
+                    {c.tagline}
+                  </Link>
+                ))}
             </div>
           ))}
         </div>
