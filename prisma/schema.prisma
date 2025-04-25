@@ -84,6 +84,7 @@ model Agent {
   pluginAvailability PluginAvailability[]
   PluginConfig       PluginConfig[]
   AgentPluginData    AgentPluginData[]
+  MCPs               MCPs[]
 
   @@map("agent")
   KnowledgeDocumentTag KnowledgeDocumentTag[]
@@ -354,4 +355,22 @@ model AgentPluginData {
 
   @@id([agentId, identifier, pluginIdentifier])
   @@map("agent_plugin_data")
+}
+
+enum MCPType {
+  SSE
+  STDIO
+}
+
+model MCPs {
+  id             String   @id @default(cuid())
+  name           String   @default("")
+  type           MCPType
+  agentId        String
+  agent          Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  connectionArgs Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("mcp")
 }
