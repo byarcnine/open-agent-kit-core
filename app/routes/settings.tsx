@@ -306,7 +306,7 @@ const Settings = () => {
               <h2 className="text-lg font-medium">Manage License</h2>
               <div className="flex gap-2">
                 {license.valid && (
-                  <Badge className="bg-emerald-500 block">Valid</Badge>
+                  <Badge className="bg-oak-green block">Valid</Badge>
                 )}
                 {!license.valid && licenseNeeded && (
                   <Badge className="bg-destructive">Invalid</Badge>
@@ -354,7 +354,7 @@ const Settings = () => {
               <div className="flex flex-col gap-2">
                 <Badge
                   className={cn("block", {
-                    "bg-emerald-500":
+                    "bg-oak-green":
                       usageStats.userCount <= MAX_USERS || license.valid,
                     "bg-red-400":
                       usageStats.userCount > MAX_USERS && !license.valid,
@@ -365,7 +365,7 @@ const Settings = () => {
                 </Badge>
                 <Badge
                   className={cn("block", {
-                    "bg-emerald-500":
+                    "bg-oak-green":
                       usageStats.agentCount <= MAX_AGENTS || license.valid,
                     "bg-red-400":
                       usageStats.agentCount > MAX_AGENTS && !license.valid,
@@ -376,7 +376,7 @@ const Settings = () => {
                 </Badge>
                 <Badge
                   className={cn("block", {
-                    "bg-emerald-500":
+                    "bg-oak-green":
                       usageStats.documentsCount <= MAX_DOCUMENTS ||
                       license.valid,
                     "bg-red-400":

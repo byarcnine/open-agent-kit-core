@@ -5,31 +5,22 @@ import {
   redirect,
   useLoaderData,
   Link,
-  Form,
   useActionData,
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { hasAccess, hasPermission } from "~/lib/auth/hasAccess.server";
-import { MessageSquare, Plus, Settings } from "react-feather";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+import { MessageCircle, MessageSquare, Settings } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
-import { Textarea } from "~/components/ui/textarea";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
 import { useState } from "react";
+import { Badge } from "~/components/ui/badge";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -143,6 +134,7 @@ const Index = () => {
       )
     : agents;
 
+  console.log("filteredAgents", filteredAgents);
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col h-full">
@@ -156,13 +148,14 @@ const Index = () => {
           <Input
             type="text"
             placeholder="Find agents..."
-            className="w-full max-w-sm mb-8"
+            className="w-full max-w-sm"
             value={search}
             onChange={handleSearch}
             name="search"
           />
         </div>
-        <div className="flex-1 flex flex-col">
+        <div className="border-t mt-4 mb-8" />
+        <div className="flex-1 flex flex-col pb-8">
           {filteredAgents && filteredAgents.length === 0 ? (
             <NoDataCard
               className="my-auto"
@@ -178,39 +171,41 @@ const Index = () => {
               )}
             </NoDataCard>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 xxl:grid-cols-4 gap-4">
               {filteredAgents &&
                 filteredAgents.map((agent) => (
                   <Card
                     key={agent.id}
                     className="justify-between flex flex-col"
                   >
-                    <CardHeader className="flex flex-col">
-                      <CardTitle>{agent.name}</CardTitle>
-
-                      <p className="text-sm text-muted-foreground">
-                        {agent.description || "No description"}
-                      </p>
+                    <CardHeader className="flex flex-row justify-between">
+                      <div className="flex-1">
+                        <CardTitle>{agent.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {agent.description || "No description"}
+                        </p>
+                      </div>
+                      <div className="ml-auto">
+                        {userCanEdit(agent) && (
+                          <Link className="flex-1" to={`/agent/${agent.id}`}>
+                            <Badge variant="outline">
+                              <Settings className="h-4 w-4" />
+                            </Badge>
+                          </Link>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         <Link
-                          className="block w-full flex-1"
+                          className="block flex-1"
                           to={`/chat/${agent.id}`}
                         >
                           <Button variant="default" className="w-full">
-                            <MessageSquare className="h-4 w-4 mr-2" />
+                            <MessageCircle className="h-4 w-4" />
                             Chat
                           </Button>
                         </Link>
-                        {userCanEdit(agent) && (
-                          <Link className="flex-1" to={`/agent/${agent.id}`}>
-                            <Button variant="outline" className="w-full">
-                              <Settings className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
-                          </Link>
-                        )}
                       </div>
                     </CardContent>
                   </Card>

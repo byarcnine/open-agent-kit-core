@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "react-feather";
+import { XCircle } from "react-feather";
 
 import { cn } from "~/lib/utils";
 
@@ -57,7 +57,7 @@ const DialogHeader = ({
       {...props}
     />
     <DialogPrimitive.Close className="relative rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-      <X className="h-6 w-6" />
+      <XCircle className="h-6 w-6" />
       <span className="sr-only">Close</span>
     </DialogPrimitive.Close>
   </div>
