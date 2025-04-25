@@ -56,7 +56,7 @@ export const streamConversation = async (
   let tagLinePromise: Promise<void> | null = null;
   if (!conversation.tagline) {
     tagLinePromise = generateSingleMessage(config)(
-      messages[0].content,
+      `Summarize in 3-4 words what this conversation is about. "${messages[0].content}"`,
       agentId,
       "What is the conversation about? Tell me in 3-4 words. Only return the tagline, no other text. Only summarize the topic of the conversation. Do not engage in the conversation, just return the tagline. Maintain the prompt language for your output.",
       {
