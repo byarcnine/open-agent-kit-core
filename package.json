@@ -64,7 +64,6 @@
     "mime-types": "^2.1.35",
     "nodemailer": "^6.9.16",
     "pdfreader": "^3.0.7",
-    "prismjs": "^1.30.0",
     "react": "^19.0.0",
     "react-code-blocks": "^0.1.6",
     "react-dom": "^19.0.0",
