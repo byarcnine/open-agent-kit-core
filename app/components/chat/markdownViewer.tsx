@@ -2,13 +2,14 @@ import Markdown from "react-markdown";
 import DOMPurify from "dompurify";
 import { CopyBlock } from "react-code-blocks";
 import type { ChatSettings } from "~/types/chat";
-import type { AnchorHTMLAttributes } from "react";
+import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
 import type { DetailedHTMLProps } from "react";
 import { useContext } from "react";
 import { ChatContext } from "./chat.client";
 import React from "react";
 
 const getYoutubeVideoId = (url: string) => {
+  console.log("url", url);
   const videoId = url.includes("youtube.com")
     ? new URL(url).searchParams.get("v")
     : url.split("/").pop();
@@ -32,6 +33,54 @@ const YouTubeEmbed = React.memo(({ url }: { url: string }) => {
   );
 });
 
+const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
+  const { chatSettings } = useContext(ChatContext);
+
+  if (!chatSettings?.openYoutubeVideosInIframe) {
+    return <p {...props} />;
+  }
+
+  const { children } = props;
+
+  const childArray = React.Children.toArray(children);
+
+  const isYouTubeUrl = (url: string) =>
+    url.includes("youtube.com") || url.includes("youtu.be");
+
+  const isImageUrl = (url: string) =>
+    /\.(jpe?g|png|gif|webp|bmp|svg)(\?.*)?$/i.test(url);
+
+  const enhancedChildren = childArray.map((child, index) => {
+    if (typeof child === "string") {
+      const trimmed = child.trim();
+      if (isYouTubeUrl(trimmed) && chatSettings?.openYoutubeVideosInIframe) {
+        return <YouTubeEmbed key={index} url={trimmed} />;
+      } else if (isImageUrl(trimmed)) {
+        return <img key={index} src={trimmed} alt="" loading="lazy" className="max-w-full h-auto" />;
+      }
+    } else if (React.isValidElement(child)) {
+      const element = child as React.ReactElement<any>;
+      if (typeof element.props?.href === "string") {
+        if (isYouTubeUrl(element.props.href) && chatSettings?.openYoutubeVideosInIframe) {
+          return <YouTubeEmbed key={index} url={element.props.href} />;
+        } else if (isImageUrl(element.props.href)) {
+          return <img key={index} src={element.props.href} alt="" loading="lazy" className="max-w-full h-auto" />;
+        }
+      }
+    }
+    // Handle remaining content
+    if (typeof child === 'string') {
+      const trimmedText = child.trim();
+      return trimmedText.length > 0 ? <p key={index}>{trimmedText}</p> : null;
+    }
+
+    // Pass through non-string elements unchanged
+    return <React.Fragment key={index}>{child}</React.Fragment>;
+  });
+
+  return enhancedChildren;
+};
+
 const renderMarkdownLink = ({
   children,
   href,
@@ -41,12 +90,6 @@ const renderMarkdownLink = ({
   AnchorHTMLAttributes<HTMLAnchorElement>,
   HTMLAnchorElement
 > & { chatSettings: ChatSettings }) => {
-  const isYouTubeLink =
-    href?.includes("youtube.com") || href?.includes("youtu.be");
-  if (isYouTubeLink && chatSettings?.openYoutubeVideosInIframe) {
-    return href ? <YouTubeEmbed url={href} /> : null;
-  }
-
   const isExternalLink =
     href?.includes("http") && !href?.includes(window.location.hostname);
   const openInNewTab =
@@ -66,6 +109,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
   return (
     <Markdown
       components={{
+        p: CustomP,
         a: (props) => renderMarkdownLink({ ...props, chatSettings }),
         code({
           node,
