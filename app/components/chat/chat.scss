@@ -341,6 +341,32 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         justify-content: flex-start;
       }
 
+      &-tool-invocations {
+        font-size: 12px;
+        font-weight: 400;
+        font-style: italic;
+        &-marker {
+          & > svg {
+            width: 16px;
+            height: 16px;
+          }
+        }
+        &-mcp-content {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          & > div {
+            padding-left: 16px;
+            border-left: 2px solid $oak-color-primary;
+          }
+          &-item {
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
+          }
+        }
+      }
+
       &-content {
         &-container {
           display: flex;

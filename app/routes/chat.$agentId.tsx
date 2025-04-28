@@ -5,6 +5,7 @@ import {
   useParams,
   useNavigate,
   type LoaderFunctionArgs,
+  type MetaFunction,
 } from "react-router";
 import { type Conversation, type Message, prisma } from "@db/db.server";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
@@ -66,6 +67,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       id: agentId,
     },
   });
+  if (!agent) {
+    throw new Response("Agent not found", { status: 404 });
+  }
   return {
     conversationsByDay,
     user,
@@ -133,6 +137,13 @@ const ChatOverview = () => {
       <Outlet />
     </Layout>
   );
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: `OAK - ${data?.agent.name}` },
+    { name: "description", content: "Open Agent Kit" },
+  ];
 };
 
 export default ChatOverview;

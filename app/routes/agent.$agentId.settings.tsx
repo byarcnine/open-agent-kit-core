@@ -42,7 +42,6 @@ import {
 } from "~/components/ui/select";
 import type { ModelSettings } from "~/types/llm";
 import { PERMISSIONS } from "~/types/auth";
-import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import CustomCodeEditor from "~/components/CodeEditor/CodeEditor";
 import css from "css";
 
@@ -546,7 +545,6 @@ const AgentSettings = () => {
             </CardContentSection>
             <CardContentSection title="Custom CSS">
               <div className="flex flex-col space-y-2">
-                <ClientOnlyComponent>
                   <CustomCodeEditor
                     value={customCSS}
                     onValueChange={setCustomCSS}
@@ -557,7 +555,6 @@ const AgentSettings = () => {
                       {actionData.errors.customCSS[0]}
                     </p>
                   )}
-                </ClientOnlyComponent>
                 <input
                   type="hidden"
                   id="customCSS"
