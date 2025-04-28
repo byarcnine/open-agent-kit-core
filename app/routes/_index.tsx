@@ -5,30 +5,22 @@ import {
   redirect,
   useLoaderData,
   Link,
-  Form,
   useActionData,
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { hasAccess, hasPermission } from "~/lib/auth/hasAccess.server";
-import { MessageSquare, Plus, Settings } from "react-feather";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+import { MessageCircle, MessageSquare, Settings } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
-import { Textarea } from "~/components/ui/textarea";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
+import { useState } from "react";
+import { Badge } from "~/components/ui/badge";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -37,7 +29,7 @@ const CreateAgentSchema = z.object({
     .min(3, "Agent slug is required and must be at least 3 characters")
     .regex(
       /^[a-z0-9-]+$/,
-      "Slug must contain only lowercase letters, numbers, and hyphens"
+      "Slug must contain only lowercase letters, numbers, and hyphens",
     ),
   description: z.string().optional(),
 });
@@ -68,27 +60,34 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { name, slug } = validation.data;
 
-  const agent = await prisma.agent.create({
-    data: {
-      id: slug,
-      name,
-      description: validation.data.description || null,
-      agentUsers: {
-        create: {
-          userId: user.id,
-          role: "OWNER",
+  try {
+    const agent = await prisma.agent.create({
+      data: {
+        id: slug,
+        name,
+        description: validation.data.description || null,
+        agentUsers: {
+          create: {
+            userId: user.id,
+            role: "OWNER",
+          },
+        },
+        systemPrompts: {
+          create: {
+            key: "default",
+            prompt: "You are a helpful assistant.",
+          },
         },
       },
-      systemPrompts: {
-        create: {
-          key: "default",
-          prompt: "You are a helpful assistant.",
-        },
+    });
+    return redirect(`/agent/${agent.id}`);
+  } catch (error) {
+    return {
+      errors: {
+        slug: ["Agent with this slug already exists"],
       },
-    },
-  });
-
-  return redirect(`/agent/${agent.id}`);
+    };
+  }
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -131,60 +130,86 @@ const Index = () => {
     agent.agentUsers[0]?.role === "OWNER" ||
     agent.agentUsers[0]?.role === "EDITOR";
 
+  const [search, setSearch] = useState("");
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const filteredAgents = search
+    ? agents.filter((agent) =>
+        agent.name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : agents;
+
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col h-full">
-        <div className="flex flex-row flex-wrap items-center justify-between pb-8 gap-4">
-          <h1 className="text-3xl font-bold">My Agents</h1>
+        <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
+          <h1 className="text-3xl font-medium">My Agents</h1>
           {canEditAllAgents && (
             <CreateAgentDialog errors={actionData?.errors} />
           )}
         </div>
-        <div className="flex-1 flex flex-col">
-          {agents && agents.length === 0 ? (
+        <div>
+          <Input
+            autoFocus
+            type="text"
+            placeholder="Find agents..."
+            className="w-full max-w-sm"
+            value={search}
+            onChange={handleSearch}
+            name="search"
+          />
+        </div>
+        <div className="border-t mt-4 mb-8" />
+        <div className="flex-1 flex flex-col pb-8">
+          {filteredAgents && filteredAgents.length === 0 ? (
             <NoDataCard
               className="my-auto"
-              headline="No Agents found"
-              description="Start and create your first agent!"
+              headline={search ? "No agents found" : "No agents created"}
+              description={
+                search
+                  ? "Try a different search term"
+                  : "Create your first agent!"
+              }
             >
-              {canEditAllAgents && (
+              {canEditAllAgents && !search && (
                 <CreateAgentDialog errors={actionData?.errors} />
               )}
             </NoDataCard>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 gap-4">
-              {agents &&
-                agents.map((agent) => (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 xxl:grid-cols-4 gap-4">
+              {filteredAgents &&
+                filteredAgents.map((agent) => (
                   <Card
                     key={agent.id}
                     className="justify-between flex flex-col"
                   >
-                    <CardHeader className="flex flex-col">
-                      <CardTitle>{agent.name}</CardTitle>
-
-                      <p className="text-sm text-muted-foreground">
-                        {agent.description || "No description"}
-                      </p>
+                    <CardHeader className="flex flex-row justify-between">
+                      <div className="flex-1">
+                        <CardTitle>{agent.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {agent.description || "No description"}
+                        </p>
+                      </div>
+                      <div className="ml-auto">
+                        {userCanEdit(agent) && (
+                          <Link className="flex-1" to={`/agent/${agent.id}`}>
+                            <Badge variant="outline">
+                              <Settings className="h-4 w-4" />
+                            </Badge>
+                          </Link>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        <Link
-                          className="block w-full flex-1"
-                          to={`/chat/${agent.id}`}
-                        >
+                        <Link className="block flex-1" to={`/chat/${agent.id}`}>
                           <Button variant="default" className="w-full">
-                            <MessageSquare className="h-4 w-4 mr-2" />
+                            <MessageCircle className="h-4 w-4" />
                             Chat
                           </Button>
                         </Link>
-                        {userCanEdit(agent) && (
-                          <Link className="flex-1" to={`/agent/${agent.id}`}>
-                            <Button variant="outline" className="w-full">
-                              <Settings className="h-4 w-4 mr-2" />
-                              Edit
-                            </Button>
-                          </Link>
-                        )}
                       </div>
                     </CardContent>
                   </Card>

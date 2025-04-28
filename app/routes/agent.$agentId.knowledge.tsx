@@ -58,7 +58,7 @@ const KnowledgeBaseView = () => {
 
   return (
     <div className="p-6 w-full">
-      <h1 className="text-3xl font-bold tracking-tight my-8">Knowledge Base</h1>
+      <h1 className="text-3xl font-medium tracking-tight my-8">Knowledge Base</h1>
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid grid-cols-2 w-fit mb-8">
           {TABS.map((tab) => (

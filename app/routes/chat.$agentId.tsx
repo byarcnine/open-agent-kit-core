@@ -5,6 +5,7 @@ import {
   useParams,
   useNavigate,
   type LoaderFunctionArgs,
+  type MetaFunction,
 } from "react-router";
 import { type Conversation, type Message, prisma } from "@db/db.server";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
@@ -66,6 +67,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       id: agentId,
     },
   });
+  if (!agent) {
+    throw new Response("Agent not found", { status: 404 });
+  }
   return {
     conversationsByDay,
     user,
@@ -112,15 +116,17 @@ const ChatOverview = () => {
           {conversationsByDay.map(({ date, conversations }) => (
             <div className="block mb-6 px-3 overflow-auto" key={date}>
               <h2 className="text-sm mb-2 text-muted-foreground">{date}</h2>
-              {conversations.map((c) => (
-                <Link
-                  className="py-2 block hover:bg-zinc-200 rounded-md px-2 text-sm text-neutral-900 font-normal"
-                  to={`/chat/${agentId}/${c.id}`}
-                  key={c.id}
-                >
-                  {c.tagline}
-                </Link>
-              ))}
+              {conversations
+                .filter((e) => e)
+                .map((c) => (
+                  <Link
+                    className="py-2 block hover:bg-zinc-200 rounded-md px-2 text-sm text-neutral-900 font-normal"
+                    to={`/chat/${agentId}/${c.id}`}
+                    key={c.id}
+                  >
+                    {c.tagline}
+                  </Link>
+                ))}
             </div>
           ))}
         </div>
@@ -131,6 +137,13 @@ const ChatOverview = () => {
       <Outlet />
     </Layout>
   );
+};
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: `OAK - ${data?.agent.name}` },
+    { name: "description", content: "Open Agent Kit" },
+  ];
 };
 
 export default ChatOverview;

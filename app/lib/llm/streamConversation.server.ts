@@ -1,6 +1,5 @@
 import { prisma } from "@db/db.server";
 import { getSystemPrompt } from "./systemPrompts.server";
-import { getToolsForAgent } from "../tools/tools.server";
 import {
   appendResponseMessages,
   smoothStream,
@@ -10,7 +9,7 @@ import {
 import { getConfig } from "../config/config";
 import { getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
-import OAKProvider from "../lib";
+import { prepareToolsForAgent } from "./tools.server";
 
 export const streamConversation = async (
   conversationId: string,
@@ -57,7 +56,7 @@ export const streamConversation = async (
   let tagLinePromise: Promise<void> | null = null;
   if (!conversation.tagline) {
     tagLinePromise = generateSingleMessage(config)(
-      messages[0].content,
+      `Summarize in 3-4 words what this conversation is about. "${messages[0].content}"`,
       agentId,
       "What is the conversation about? Tell me in 3-4 words. Only return the tagline, no other text. Only summarize the topic of the conversation. Do not engage in the conversation, just return the tagline. Maintain the prompt language for your output.",
       {
@@ -76,27 +75,12 @@ export const streamConversation = async (
   }
 
   const systemPromptPromise = getSystemPrompt("default", agentId);
-  const toolsPromise = getToolsForAgent(agentId).then(async (r) => {
-    return Promise.all(
-      r.map(async (t) => {
-        try {
-          return [
-            t.identifier,
-            await t.tool({
-              conversationId: conversation.id,
-              agentId,
-              meta,
-              config: getConfig(),
-              provider: OAKProvider(getConfig(), t.pluginName as string),
-            }),
-          ];
-        } catch (error) {
-          console.error("Error invoking tool", error);
-          return [t.identifier, `Error invoking tool: ${error}`];
-        }
-      }),
-    );
-  });
+  const toolsPromise = prepareToolsForAgent(
+    agentId,
+    conversation.id,
+    meta,
+    messages,
+  );
 
   const [systemPrompt, tools, model] = await Promise.all([
     systemPromptPromise,
@@ -104,14 +88,15 @@ export const streamConversation = async (
     getModelForAgent(agentId, config),
     createMessagePromise,
   ]);
+  const { tools: toolsArray, closeMCPs } = tools;
   return {
     stream: streamText({
       model,
       messages: cleanedMessages,
       system: systemPrompt,
-      tools: Object.fromEntries(tools),
+      tools: { ...Object.fromEntries(toolsArray) },
       toolChoice: "auto",
-      maxSteps: 5,
+      maxSteps: 25,
       experimental_telemetry: {
         isEnabled: false,
       },
@@ -153,18 +138,20 @@ export const streamConversation = async (
           responseMessages: completion.response.messages,
           messages,
         });
-        await prisma.message.create({
-          data: {
-            content: JSON.parse(
-              JSON.stringify(messagesToStore[messagesToStore.length - 1]),
-            ),
-            conversationId: conversation.id,
-            author: "ASSISTANT",
-          },
-        });
-        if (tagLinePromise) {
-          await tagLinePromise;
-        }
+        // close the tools
+        await Promise.all([
+          closeMCPs,
+          prisma.message.create({
+            data: {
+              content: JSON.parse(
+                JSON.stringify(messagesToStore[messagesToStore.length - 1]),
+              ),
+              conversationId: conversation.id,
+              author: "ASSISTANT",
+            },
+          }),
+          tagLinePromise || Promise.resolve(),
+        ]);
       },
     }),
     conversationId: conversation.id,
