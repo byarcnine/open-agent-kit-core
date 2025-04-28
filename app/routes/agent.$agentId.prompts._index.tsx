@@ -89,7 +89,7 @@ const Prompt = () => {
 
   return (
     <div className="py-8 px-4 md:p-8 w-full flex flex-col">
-      <h1 className="text-3xl font-bold mb-4">System Prompt Editor</h1>
+      <h1 className="text-3xl font-medium mb-4">System Prompt Editor</h1>
       <div className="mb-6 text-muted-foreground">
         Edit the system prompt that will be used for this agent.
         <br />
@@ -145,7 +145,7 @@ const Prompt = () => {
       )}
       {prompts && prompts.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Prompt History</h2>
+          <h2 className="text-2xl font-medium mb-4">Prompt History</h2>
           <Table>
             <TableHeader>
               <TableRow>

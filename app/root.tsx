@@ -89,11 +89,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <div className="flex h-[100vh] items-center justify-center">
       <div className="rounded-lg border bg-card p-8 text-card-foreground sπhadow-lg">
         <div className="flex flex-col items-center gap-4">
-          <h1 className="text-3xl font-semibold tracking-tight">{message}</h1>
+          <h1 className="text-3xl font-medium tracking-tight">{message}</h1>
           <p className="text-muted-foreground">{details}</p>
           <a
             href="/"
-            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Go back home
           </a>

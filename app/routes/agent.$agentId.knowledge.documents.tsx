@@ -433,7 +433,7 @@ const TagPopover = React.memo(({ file, tags }: { file: any; tags: any[] }) => {
           side="left"
           align="end"
           sideOffset={4}
-          className="p-2 bg-white rounded-md shadow-lg border w-60 max-h-[300px] overflow-y-auto"
+          className="p-2 bg-white rounded-md border w-60 max-h-[300px] overflow-y-auto"
         >
           <div className="flex flex-col space-y-1">
             {tags.length > 0 ? (

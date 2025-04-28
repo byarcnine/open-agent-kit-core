@@ -117,7 +117,7 @@ const UserSettings = () => {
   return (
     <Layout user={user} navComponent={<OverviewNav user={user} />}>
       <div className="space-y-6 w-full py-8 px-4 md:p-8 overflow-auto">
-        <h1 className="text-3xl font-bold">Personal Settings</h1>
+        <h1 className="text-3xl font-medium">Personal Settings</h1>
         <Card>
           <CardHeader>
             <CardTitle>Profile Settings</CardTitle>
