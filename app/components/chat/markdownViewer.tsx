@@ -9,7 +9,6 @@ import { ChatContext } from "./chat.client";
 import React from "react";
 
 const getYoutubeVideoId = (url: string) => {
-  console.log("url", url);
   const videoId = url.includes("youtube.com")
     ? new URL(url).searchParams.get("v")
     : url.split("/").pop();

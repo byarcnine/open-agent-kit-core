@@ -2,7 +2,6 @@ import React, { useRef, useState, useEffect } from "react";
 import CodeEditor from "react-simple-code-editor";
 import Prism from "prismjs";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
-// import "prismjs/components/prism-css";
 import "prismjs/themes/prism.css";
 
 interface CustomCodeEditorProps {
@@ -35,15 +34,6 @@ const CustomCodeEditor: React.FC<CustomCodeEditorProps> = ({
       }, 0);
     }
   };
-
-  // import prismjs only on client
-  const [isReady, setIsReady] = useState(false);
-
-  // import
-
-  useEffect(() => {
-    import("prismjs").then(() => setIsReady(true));
-  }, []);
 
   return (
     <div
