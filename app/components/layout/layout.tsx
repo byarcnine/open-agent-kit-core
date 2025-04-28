@@ -36,12 +36,10 @@ const Layout = ({
                     />
                   </div>
                   <div className="flex flex-col">
-                    <span>Dashboard</span>
-                    {agentName && (
-                      <span className="text-xs text-muted-foreground">
-                        {agentName}
-                      </span>
-                    )}
+                    <span>{agentName || "OAK"}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {"Agent Dashboard"}
+                    </span>
                   </div>
                 </span>
               </Link>
