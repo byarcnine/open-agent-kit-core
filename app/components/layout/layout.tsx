@@ -47,7 +47,10 @@ const Layout = ({
               </Link>
             </div>
             <div className="flex-1 flex justify-between flex-col overflow-auto scrollbar-none">
-              <div className="overflow-auto scrollbar-none">{navComponent}</div>
+              <div className="overflow-auto scrollbar-none flex-1">
+                {navComponent}
+              </div>
+
               {user && (
                 <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">
                   <Link
@@ -82,7 +85,7 @@ const Layout = ({
 
         {/* Mobile Header & Navigation */}
         <div className="md:hidden w-full">
-          <header className="flex items-center justify-between px-4 py-4 bg-zinc-900 border-b">
+          <header className="flex items-center justify-between px-4 py-4 bg-zinc-200/40 border-b">
             <Link to="/" className="flex items-center gap-2 font-medium">
               <img
                 src="/assets/logo.svg"
@@ -103,7 +106,7 @@ const Layout = ({
             </button>
           </header>
           {mobileNavOpen && (
-            <nav className="border-t bg-zinc-900">
+            <nav className="border-t bg-zinc-200/40 shadow-md">
               <div className="px-4 py-4">{navComponent}</div>
               {user && (
                 <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">

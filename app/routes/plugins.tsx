@@ -60,15 +60,15 @@ export default function Plugins() {
         isGlobal: isGlobal.toString(),
         agentIds: JSON.stringify(agentIds),
       },
-      { method: "POST" }
+      { method: "POST" },
     );
     toast.success(
-      `Successfully updated ${selectedPluginIdentifier} availability`
+      `Successfully updated ${selectedPluginIdentifier} availability`,
     );
   };
 
   return (
-    <Layout navComponent={<OverviewNav user={user} />}>
+    <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">
         <div className="flex flex-row items-center justify-between pb-8">
           <h1 className="text-3xl font-medium">Tools & Plugins</h1>
@@ -134,7 +134,8 @@ export default function Plugins() {
           agents={agents}
           selectedPlugin={
             plugins.find(
-              (t: PluginWithAvailability) => t.name === selectedPluginIdentifier
+              (t: PluginWithAvailability) =>
+                t.name === selectedPluginIdentifier,
             ) || null
           }
           key={selectedPluginIdentifier}
