@@ -105,21 +105,22 @@ const Chat = ({
     }
   }, []);
 
-  const initMessages = chatSettings?.initialMessage && (!initialMessages?.length)
-    ? [
-        {
-          id: "initial-message",
-          role: MessageRole.Assistant,
-          content: chatSettings?.initialMessage,
-          parts: [
-            {
-              type: "text",
-              text: chatSettings?.initialMessage,
-            } as TextPart,
-          ],
-        } as Message,
-      ]
-    : initialMessages;
+  const initMessages =
+    chatSettings?.initialMessage && !initialMessages?.length
+      ? [
+          {
+            id: "initial-message",
+            role: MessageRole.Assistant,
+            content: chatSettings?.initialMessage,
+            parts: [
+              {
+                type: "text",
+                text: chatSettings?.initialMessage,
+              } as TextPart,
+            ],
+          } as Message,
+        ]
+      : initialMessages;
 
   const { messages, input, handleInputChange, handleSubmit, setInput, error } =
     useChat({

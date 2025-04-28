@@ -1,7 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import CodeEditor from "react-simple-code-editor";
 import Prism from "prismjs";
-import "prismjs/components/prism-css";
+import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
+// import "prismjs/components/prism-css";
 import "prismjs/themes/prism.css";
 
 interface CustomCodeEditorProps {
@@ -20,11 +21,10 @@ const HighlightLanguage = {
 const CustomCodeEditor: React.FC<CustomCodeEditorProps> = ({
   value,
   onValueChange,
-  placeholder = "Enter custom CSS",
+  placeholder = "Enter custom code",
   highlight,
 }) => {
   const parentDivRef = useRef<HTMLDivElement>(null);
-  const [customCSS, setCustomCSS] = useState("");
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter") {
@@ -36,29 +36,34 @@ const CustomCodeEditor: React.FC<CustomCodeEditorProps> = ({
     }
   };
 
+  // import prismjs only on client
+  const [isReady, setIsReady] = useState(false);
+
+  // import
+
+  useEffect(() => {
+    import("prismjs").then(() => setIsReady(true));
+  }, []);
+
   return (
     <div
       ref={parentDivRef}
       style={{ minHeight: "100px", maxHeight: "500px", overflowY: "auto" }}
       className="border rounded-md"
     >
-      <CodeEditor
-        value={value}
-        onValueChange={onValueChange}
-        highlight={HighlightLanguage[highlight]}
-        padding={10}
-        className="font-regular text-primary text-sm"
-        placeholder={placeholder}
-        style={{
-          border: "none",
-          outline: "none",
-          boxShadow: "none",
-          outlineColor: "transparent",
-
-        }}
-        // @ts-ignore
-        onKeyDown={handleKeyDown}
-      />
+      <ClientOnlyComponent>
+        <CodeEditor
+          value={value}
+          onValueChange={onValueChange}
+          highlight={HighlightLanguage[highlight]}
+          padding={10}
+          className="font-regular text-primary text-sm"
+          placeholder={placeholder}
+          textareaClassName="focus:outline-none"
+          // @ts-ignore
+          onKeyDown={handleKeyDown}
+        />
+      </ClientOnlyComponent>
     </div>
   );
 };

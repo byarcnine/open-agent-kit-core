@@ -12,6 +12,7 @@ export default defineConfig({
     }),
   ],
   build: {
+    ssr: true,
     outDir: "lib_dist",
     lib: {
       entry: resolve(__dirname, "app/lib/lib.ts"),

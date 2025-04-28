@@ -1,4 +1,4 @@
-import type { Tool } from "ai";
+import type { Message, Tool } from "ai";
 import type { OAKConfig } from "./config";
 import type OAKProvider from "~/lib/lib";
 
@@ -8,6 +8,7 @@ export type ToolParams = {
   config: OAKConfig;
   provider: ReturnType<typeof OAKProvider>;
   meta?: object;
+  messages?: Message[];
 };
 
 export type ToolConfig = {
