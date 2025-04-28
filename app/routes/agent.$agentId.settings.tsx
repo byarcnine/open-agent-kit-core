@@ -13,7 +13,7 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
 import { z } from "zod";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Toaster } from "~/components/ui/sonner";
 import { hasAccess, hasPermission } from "~/lib/auth/hasAccess.server";
@@ -42,6 +42,9 @@ import {
 } from "~/components/ui/select";
 import type { ModelSettings } from "~/types/llm";
 import { PERMISSIONS } from "~/types/auth";
+import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
+import CustomCodeEditor from "~/components/CodeEditor/CodeEditor";
+import css from "css";
 
 const AgentUpdateSchema = z.object({
   name: z
@@ -65,6 +68,23 @@ const ChatSettingsUpdateSchema = z.object({
   openExternalLinksInNewTab: z.boolean(),
   openInternalLinksInNewTab: z.boolean(),
   openYoutubeVideosInIframe: z.boolean(),
+  customCSS: z
+    .string()
+    .nullable()
+    .refine(
+      (value) => {
+        if (!value) return true; // Allow null or empty strings
+        try {
+          const parsedCSS = css.parse(value);
+          return !parsedCSS.stylesheet?.parsingErrors?.length;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Invalid CSS syntax",
+      },
+    ),
   intro: z
     .object({
       title: z.string().nullable(),
@@ -194,6 +214,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       openExternalLinksInNewTab: !!formData.get("openExternalLinksInNewTab"),
       openInternalLinksInNewTab: !!formData.get("openInternalLinksInNewTab"),
       openYoutubeVideosInIframe: !!formData.get("openYoutubeVideosInIframe"),
+      customCSS: formData.get("customCSS")?.toString() || null,
     };
     try {
       const validatedData = ChatSettingsUpdateSchema.parse(rawInput);
@@ -221,7 +242,7 @@ const AgentSettings = () => {
     ? { ...initialChatSettings, ...JSON.parse(agent.chatSettings as string) }
     : initialChatSettings;
 
-
+  const [customCSS, setCustomCSS] = useState(chatSettings?.customCSS || "");
 
   const actionData = useActionData<typeof action>();
 
@@ -232,8 +253,11 @@ const AgentSettings = () => {
   );
 
   useEffect(() => {
-    if (actionData?.errors) return;
-    if (actionData) {
+    if (actionData?.errors) {
+      toast.error(
+        "Failed to update agent settings. Please check field errors.",
+      );
+    } else if (actionData) {
       toast.success("Agent settings updated successfully");
     }
   }, [actionData]);
@@ -482,42 +506,64 @@ const AgentSettings = () => {
               <div className="flex flex-col space-y-2">
                 <Label htmlFor="showDefaultToolsDebugMessages">
                   Show Default Tools Debug Messages
-              </Label>
-              <Switch
-                id="showDefaultToolsDebugMessages"
-                name="showDefaultToolsDebugMessages"
-                defaultChecked={chatSettings?.showDefaultToolsDebugMessages}
-              />
+                </Label>
+                <Switch
+                  id="showDefaultToolsDebugMessages"
+                  name="showDefaultToolsDebugMessages"
+                  defaultChecked={chatSettings?.showDefaultToolsDebugMessages}
+                />
               </div>
               <div className="flex flex-col space-y-2">
                 <Label htmlFor="openExternalLinksInNewTab">
                   Open External Links in New Tab
-              </Label>
-              <Switch
-                id="openExternalLinksInNewTab"
-                name="openExternalLinksInNewTab"
-                defaultChecked={chatSettings?.openExternalLinksInNewTab}
-              />
+                </Label>
+                <Switch
+                  id="openExternalLinksInNewTab"
+                  name="openExternalLinksInNewTab"
+                  defaultChecked={chatSettings?.openExternalLinksInNewTab}
+                />
               </div>
               <div className="flex flex-col space-y-2">
                 <Label htmlFor="openInternalLinksInNewTab">
                   Open Internal Links in New Tab
-              </Label>
-              <Switch
-                id="openInternalLinksInNewTab"
-                name="openInternalLinksInNewTab"
-                defaultChecked={chatSettings?.openInternalLinksInNewTab}
-              />
+                </Label>
+                <Switch
+                  id="openInternalLinksInNewTab"
+                  name="openInternalLinksInNewTab"
+                  defaultChecked={chatSettings?.openInternalLinksInNewTab}
+                />
               </div>
               <div className="flex flex-col space-y-2">
                 <Label htmlFor="openYoutubeVideosInIframe ">
                   Open Youtube Videos in Iframe
-              </Label>
-              <Switch
-                id="openYoutubeVideosInIframe"
-                name="openYoutubeVideosInIframe"
-                defaultChecked={chatSettings?.openYoutubeVideosInIframe}
-              />
+                </Label>
+                <Switch
+                  id="openYoutubeVideosInIframe"
+                  name="openYoutubeVideosInIframe"
+                  defaultChecked={chatSettings?.openYoutubeVideosInIframe}
+                />
+              </div>
+            </CardContentSection>
+            <CardContentSection title="Custom CSS">
+              <div className="flex flex-col space-y-2">
+                <ClientOnlyComponent>
+                  <CustomCodeEditor
+                    value={customCSS}
+                    onValueChange={setCustomCSS}
+                    highlight="CSS"
+                  />
+                  {actionData?.errors?.customCSS && (
+                    <p className="text-sm text-red-500">
+                      {actionData.errors.customCSS[0]}
+                    </p>
+                  )}
+                </ClientOnlyComponent>
+                <input
+                  type="hidden"
+                  id="customCSS"
+                  name="customCSS"
+                  value={customCSS}
+                />
               </div>
             </CardContentSection>
             <Button type="submit">Save Changes</Button>

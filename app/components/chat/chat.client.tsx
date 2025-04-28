@@ -81,6 +81,16 @@ const Chat = ({
     "",
   );
 
+  // inject custom css
+  useEffect(() => {
+    const style = document.createElement("style");
+    const customCSS = chatSettings?.customCSS;
+    if (customCSS) {
+      style.innerHTML = customCSS;
+    }
+    document.head.appendChild(style);
+  }, [chatSettings?.customCSS]);
+
   useEffect(() => {
     if (isEmbed) {
       const startTime = Date.now();

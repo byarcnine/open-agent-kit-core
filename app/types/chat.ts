@@ -14,6 +14,7 @@ export interface ChatSettings {
   openExternalLinksInNewTab?: boolean;
   openInternalLinksInNewTab?: boolean;
   openYoutubeVideosInIframe?: boolean;
+  customCSS?: string;
 }
 
 export enum MessageRole {
