@@ -145,6 +145,7 @@ const Index = () => {
         </div>
         <div>
           <Input
+            autoFocus
             type="text"
             placeholder="Find agents..."
             className="w-full max-w-sm"
@@ -196,10 +197,7 @@ const Index = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        <Link
-                          className="block flex-1"
-                          to={`/chat/${agent.id}`}
-                        >
+                        <Link className="block flex-1" to={`/chat/${agent.id}`}>
                           <Button variant="default" className="w-full">
                             <MessageCircle className="h-4 w-4" />
                             Chat

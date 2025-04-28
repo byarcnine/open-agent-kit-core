@@ -70,7 +70,6 @@ const Chat = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<FileList | undefined>(undefined);
 
-  const [type, setType] = useState("text");
   const [selectedAction, setSelectedAction] = useState<
     "default" | "deep-research" | "search-web"
   >("default");
@@ -341,6 +340,7 @@ const Chat = ({
                       />
                     </div>
                   )}
+                  {/*
                   <button
                     type="button"
                     className={`oak-chat__action-button ${
@@ -361,6 +361,7 @@ const Chat = ({
                     <Globe size={18} />
                     <span>Search Web</span>
                   </button>
+                  */}
                   <button
                     type="submit"
                     disabled={!input}

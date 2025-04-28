@@ -213,6 +213,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         background-color: $oak-color-primary;
         svg {
           stroke: $oak-white;
+          opacity: 1;
         }
         span {
           display: inline-block;
