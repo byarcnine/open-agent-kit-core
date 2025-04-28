@@ -37,7 +37,7 @@ const CreateAgentSchema = z.object({
     .min(3, "Agent slug is required and must be at least 3 characters")
     .regex(
       /^[a-z0-9-]+$/,
-      "Slug must contain only lowercase letters, numbers, and hyphens"
+      "Slug must contain only lowercase letters, numbers, and hyphens",
     ),
   description: z.string().optional(),
 });
@@ -68,27 +68,34 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { name, slug } = validation.data;
 
-  const agent = await prisma.agent.create({
-    data: {
-      id: slug,
-      name,
-      description: validation.data.description || null,
-      agentUsers: {
-        create: {
-          userId: user.id,
-          role: "OWNER",
+  try {
+    const agent = await prisma.agent.create({
+      data: {
+        id: slug,
+        name,
+        description: validation.data.description || null,
+        agentUsers: {
+          create: {
+            userId: user.id,
+            role: "OWNER",
+          },
+        },
+        systemPrompts: {
+          create: {
+            key: "default",
+            prompt: "You are a helpful assistant.",
+          },
         },
       },
-      systemPrompts: {
-        create: {
-          key: "default",
-          prompt: "You are a helpful assistant.",
-        },
+    });
+    return redirect(`/agent/${agent.id}`);
+  } catch (error) {
+    return {
+      errors: {
+        slug: ["Agent with this slug already exists"],
       },
-    },
-  });
-
-  return redirect(`/agent/${agent.id}`);
+    };
+  }
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
