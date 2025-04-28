@@ -326,7 +326,7 @@ const Chat = ({
                   className="oak-chat__text-area"
                 />
 
-                <div className="oak-chat__action-row gap-2">
+                <div className="oak-chat__action-row">
                   {chatSettings?.enableFileUpload && supportedFileTypes && (
                     <div>
                       <button
