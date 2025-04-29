@@ -102,3 +102,14 @@ export const supportedFileTypesForModel = (model: string) => {
       return ["image/*"];
   }
 };
+
+export const getModelContextLimit = (modelId: string): number => {
+  switch (modelId) {
+    case "gpt-4":
+      return 8192;
+    case "gpt-4-0613":
+      return 8192;
+    default:
+      return 128000;
+  }
+};
