@@ -26,28 +26,32 @@ const Layout = ({
         <div className="hidden border-r bg-zinc-200/40 md:block">
           <div className="flex h-full max-h-screen flex-col gap-4">
             <div className="flex items-center border-b px-4 py-4">
-              <Link to="/" className="flex flex-col gap-1 font-medium">
+              <Link
+                to="/"
+                className="flex flex-col gap-1 font-medium w-full overflow-hidden"
+              >
                 <span className="text-base flex items-center gap-2">
-                  <div className="rounded-md overflow-hidden">
+                  <div className="rounded-md overflow-hidden flex-shrink-0">
                     <img
                       src="/assets/logo.svg"
                       alt="OAK - Open Agent Kit"
                       className="w-8"
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <span>Dashboard</span>
-                    {agentName && (
-                      <span className="text-xs text-muted-foreground">
-                        {agentName}
-                      </span>
-                    )}
+                  <div className="flex flex-col flex-1 overflow-hidden">
+                    <span className="truncate">{agentName || "OAK"}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {"Agent Dashboard"}
+                    </span>
                   </div>
                 </span>
               </Link>
             </div>
             <div className="flex-1 flex justify-between flex-col overflow-auto scrollbar-none">
-              <div className="overflow-auto scrollbar-none">{navComponent}</div>
+              <div className="overflow-auto scrollbar-none flex-1">
+                {navComponent}
+              </div>
+
               {user && (
                 <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">
                   <Link
@@ -82,8 +86,8 @@ const Layout = ({
 
         {/* Mobile Header & Navigation */}
         <div className="md:hidden w-full">
-          <header className="flex items-center justify-between px-4 py-4 bg-zinc-900 border-b">
-            <Link to="/" className="flex items-center gap-2 font-medium">
+          <header className="flex items-center justify-between px-4 py-4 bg-zinc-200/40 border-b">
+            <Link to="/" className="flex items-center gap-2">
               <img
                 src="/assets/logo.svg"
                 alt="OAK - Open Agent Kit"
@@ -103,7 +107,7 @@ const Layout = ({
             </button>
           </header>
           {mobileNavOpen && (
-            <nav className="border-t bg-zinc-900">
+            <nav className="border-t bg-zinc-200/40 shadow-md">
               <div className="px-4 py-4">{navComponent}</div>
               {user && (
                 <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">
