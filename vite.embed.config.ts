@@ -24,6 +24,7 @@ export default defineConfig({
           "react-dom": "ReactDOM",
         },
       },
+      external: (id) => /chat_module/.test(id),
     },
   },
 });
