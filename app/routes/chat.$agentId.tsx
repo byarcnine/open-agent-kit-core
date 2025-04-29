@@ -47,7 +47,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       const date = dayjs(c.createdAt).calendar(null, {
         sameDay: "[Today]",
         lastDay: "[Yesterday]",
-        lastWeek: "[Last] dddd",
+        lastWeek: "MMM D, YYYY",
         sameElse: "MMM D, YYYY",
       });
       acc[date] = acc[date] || [];
@@ -114,13 +114,15 @@ const ChatOverview = () => {
             Chats
           </h2>
           {conversationsByDay.map(({ date, conversations }) => (
-            <div className="block mb-4 pb-4 px-3 overflow-auto border-b" key={date}>
-              <h2 className="text-sm mb-2 font-medium text-primary">{date}</h2>
+            <div className="block mb-4 pb-4 overflow-auto border-b" key={date}>
+              <h2 className="text-sm px-3 mb-2 font-medium text-primary">
+                {date}
+              </h2>
               {conversations
-                .filter((e) => e)
+                .filter((e) => e && e.tagline)
                 .map((c) => (
                   <Link
-                    className="py-2 block hover:bg-stone-900 transition-all hover:text-white rounded-md px-2 text-sm text-neutral-900 font-normal"
+                    className="py-2 block hover:bg-stone-900 px-3 transition-all hover:text-white rounded-md text-sm text-neutral-900 font-normal"
                     to={`/chat/${agentId}/${c.id}`}
                     key={c.id}
                   >

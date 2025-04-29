@@ -266,6 +266,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       padding-bottom: 0;
       position: relative;
       overflow-y: auto;
+      overflow-x: hidden;
       height: 100%;
 
       /* Custom scrollbar styles */
