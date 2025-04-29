@@ -31,7 +31,7 @@ const Layout = ({
                 className="flex flex-col gap-1 font-medium w-full overflow-hidden"
               >
                 <span className="text-base flex items-center gap-2">
-                  <div className="rounded-md flex-shrink-0">
+                  <div className="rounded-md overflow-hidden flex-shrink-0">
                     <img
                       src="/assets/logo.svg"
                       alt="OAK - Open Agent Kit"
@@ -87,7 +87,7 @@ const Layout = ({
         {/* Mobile Header & Navigation */}
         <div className="md:hidden w-full">
           <header className="flex items-center justify-between px-4 py-4 bg-zinc-200/40 border-b">
-            <Link to="/" className="flex items-center gap-2 font-medium">
+            <Link to="/" className="flex items-center gap-2">
               <img
                 src="/assets/logo.svg"
                 alt="OAK - Open Agent Kit"

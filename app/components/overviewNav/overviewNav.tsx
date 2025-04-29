@@ -8,14 +8,14 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
   const canChangeGlobalSettings = user.role === "SUPER_ADMIN";
   return (
     <div className="flex flex-col justify-between flex-1 h-full">
-      <nav className="grid items-start md:px-2 text-sm font-medium">
+      <nav className="grid items-start md:px-2 text-sm">
         <Link
           to="/"
           prefetch="intent"
           className={cn(
             "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
             {
-              "bg-zinc-200 text-primary": location.pathname === "/",
+              "bg-stone-900 text-white hover:text-white": location.pathname === "/",
             },
           )}
         >
@@ -30,7 +30,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
               {
-                "bg-zinc-200 text-primary": location.pathname === "/plugins",
+                "bg-stone-900 text-white hover:text-white": location.pathname === "/plugins",
               },
             )}
           >
@@ -39,7 +39,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
           </Link>
         )}
       </nav>
-      <nav className="md:px-2 text-sm font-medium mb-2">
+      <nav className="md:px-2 text-sm mb-2">
         {canChangeGlobalSettings && (
           <Link
             to="/settings"
@@ -47,7 +47,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
               {
-                "bg-zinc-200 text-primary": location.pathname === "/settings",
+                "bg-stone-900 text-white hover:text-white": location.pathname === "/settings",
               },
             )}
           >
