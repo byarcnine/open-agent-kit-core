@@ -24,7 +24,7 @@ import NoDataCard from "~/components/ui/no-data-card";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
-  const agentsPromise = prisma.agent.findMany();
+  const agentsPromise = prisma.agent.findMany({ orderBy: { name: "asc" } });
   const pluginsWithAvailabilityPromise = getPluginsWithAvailability();
   const [agents, plugins] = await Promise.all([
     agentsPromise,
@@ -34,7 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
 
   const formData = await request.formData();
   const pluginIdentifier = formData.get("pluginIdentifier") as string;

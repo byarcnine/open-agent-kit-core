@@ -5,6 +5,8 @@ import {
   type LoaderFunctionArgs,
   useFetcher,
   type ActionFunctionArgs,
+  Link,
+  useSearchParams,
 } from "react-router";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -38,6 +40,15 @@ import * as Popover from "@radix-ui/react-popover";
 import { Button } from "~/components/ui/button";
 import JsonEditorDialog from "~/components/jsonEditorDialog/jsonEditorDialog";
 import React from "react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "~/components/ui/pagination";
 
 dayjs.extend(relativeTime);
 
@@ -170,12 +181,22 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const sortKey = url.searchParams.get("sortField") || "name";
   const sortOrder = url.searchParams.get("sortOrder") || "asc";
+  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  const pageSize = 25;
+  const skip = (page - 1) * pageSize;
 
-  const files = await prisma.knowledgeDocument.findMany({
-    where: { agentId },
-    include: { tags: true },
-    orderBy: { [sortKey]: sortOrder },
-  });
+  const where = { agentId };
+
+  const [totalCount, files] = await prisma.$transaction([
+    prisma.knowledgeDocument.count({ where }),
+    prisma.knowledgeDocument.findMany({
+      where,
+      include: { tags: true },
+      orderBy: { [sortKey]: sortOrder },
+      skip,
+      take: pageSize,
+    }),
+  ]);
 
   const tags = await prisma.knowledgeDocumentTag.findMany({
     where: { agentId },
@@ -187,7 +208,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   );
   const message = session.get("message");
   return data(
-    { files, message, tags },
+    {
+      files,
+      message,
+      tags,
+      totalCount,
+      currentPage: page,
+      pageSize,
+    },
     {
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session),
@@ -197,9 +225,17 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 const DocumentsTab = () => {
-  const loaderData = useLoaderData();
-  const { files = [], message, tags = [] } = loaderData;
+  const loaderData = useLoaderData<typeof loader>();
+  const {
+    files = [],
+    message,
+    tags = [],
+    totalCount = 0,
+    currentPage = 1,
+    pageSize = 25,
+  } = loaderData;
   const { agentId } = useParams();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (message) {
@@ -211,6 +247,33 @@ const DocumentsTab = () => {
     }
   }, [message]);
 
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const getPageUrl = (pageNumber: number) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("page", pageNumber.toString());
+    return `?${newSearchParams.toString()}`;
+  };
+
+  // --- Calculate pagination range ---
+  const pagesToShow = 2; // Number of pages to show on each side of the current page
+  let startPage = Math.max(1, currentPage - pagesToShow);
+  let endPage = Math.min(totalPages, currentPage + pagesToShow);
+
+  // Adjust range if it's too small near the beginning or end
+  if (currentPage - pagesToShow <= 1) {
+    endPage = Math.min(totalPages, 1 + pagesToShow * 2);
+  }
+  if (currentPage + pagesToShow >= totalPages) {
+    startPage = Math.max(1, totalPages - pagesToShow * 2);
+  }
+
+  const pageNumbers = [];
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
+  // --- End calculation ---
+
   return (
     <div>
       <div className="h-[150px]">
@@ -218,31 +281,133 @@ const DocumentsTab = () => {
           {Dropzone && <Dropzone agentId={agentId as string} />}
         </ClientOnlyComponent>
       </div>
-      {files.length > 0 && (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead isSortable fieldName="name">
-                  Name
-                </TableHead>
-                <TableHead fieldName="updatedAt" isSortable>
-                  Last Modified
-                </TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Tags</TableHead>
-                <TableHead>Metadata</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {files.map((file: any) => (
-                <DocumentRow key={file.name} file={file} tags={tags} />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      {files.length > 0 ? (
+        <>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead isSortable fieldName="name">
+                    Name
+                  </TableHead>
+                  <TableHead fieldName="updatedAt" isSortable>
+                    Last Modified
+                  </TableHead>
+                  <TableHead>Provider</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead>Metadata</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {files.map((file: any) => (
+                  <DocumentRow key={file.id} file={file} tags={tags} />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      to={getPageUrl(currentPage - 1)}
+                      preventScrollReset
+                      prefetch="intent"
+                      className={
+                        currentPage <= 1
+                          ? "pointer-events-none opacity-50"
+                          : undefined
+                      }
+                      aria-disabled={currentPage <= 1}
+                      tabIndex={currentPage <= 1 ? -1 : undefined}
+                    />
+                  </PaginationItem>
+
+                  {/* --- Render first page and ellipsis if needed --- */}
+                  {startPage > 1 && (
+                    <>
+                      <PaginationItem>
+                        <PaginationLink
+                          to={getPageUrl(1)}
+                          preventScrollReset
+                          prefetch="intent"
+                          isActive={currentPage === 1}
+                        >
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+                      {startPage > 2 && (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )}
+                    </>
+                  )}
+                  {/* --- End first page and ellipsis --- */}
+
+                  {/* --- Render page numbers in the calculated range --- */}
+                  {pageNumbers.map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        to={getPageUrl(page)}
+                        preventScrollReset
+                        prefetch="intent"
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  {/* --- End page numbers --- */}
+
+                  {/* --- Render last page and ellipsis if needed --- */}
+                  {endPage < totalPages && (
+                    <>
+                      {endPage < totalPages - 1 && (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )}
+                      <PaginationItem>
+                        <PaginationLink
+                          to={getPageUrl(totalPages)}
+                          preventScrollReset
+                          prefetch="intent"
+                          isActive={currentPage === totalPages}
+                        >
+                          {totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    </>
+                  )}
+                  {/* --- End last page and ellipsis --- */}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      to={getPageUrl(currentPage + 1)}
+                      preventScrollReset
+                      prefetch="intent"
+                      className={
+                        currentPage >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : undefined
+                      }
+                      aria-disabled={currentPage >= totalPages}
+                      tabIndex={currentPage >= totalPages ? -1 : undefined}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
+      ) : (
+        !message && (
+          <p className="text-center text-gray-500 mt-4">No documents found.</p>
+        )
       )}
       <Toaster expand={true} />
     </div>
@@ -274,7 +439,7 @@ const DocumentRow = ({ file, tags }: { file: any; tags: any[] }) => {
   };
 
   return (
-    <TableRow key={file.name}>
+    <TableRow key={file.id}>
       <TableCell className="font-medium">{file.name}</TableCell>
       <TableCell className="min-w-[130px] max-w-[300px] truncate">
         {dayjs(file.updatedAt).fromNow()}
