@@ -7,9 +7,10 @@ import {
   type Message,
 } from "ai";
 import { getConfig } from "../config/config";
-import { getModelForAgent } from "./modelManager.server";
+import { getModelContextLimit, getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
 import { prepareToolsForAgent } from "./tools.server";
+import { encoding_for_model, type TiktokenModel } from "tiktoken";
 
 export const streamConversation = async (
   conversationId: string,
@@ -30,6 +31,9 @@ export const streamConversation = async (
   }
   const config = getConfig();
 
+  const modelForAgent = await getModelForAgent(agentId, config);
+  const TOKEN_LIMIT = getModelContextLimit(modelForAgent.modelId) * 0.8;
+
   // Add the user message to the conversation
   const createMessagePromise = prisma.message.create({
     data: {
@@ -39,10 +43,35 @@ export const streamConversation = async (
     },
   });
 
-  // filter out tool results without a result.
-  // this happens if a tools errors out
-  // it break the streamText function otherwise
-  const cleanedMessages = messages.filter((message) => {
+  const calculateTokens = (message: Message): number => {
+    const enc = encoding_for_model(modelForAgent.modelId as TiktokenModel);
+    const tokens = enc.encode(JSON.stringify(message)).length;
+    enc.free();
+    return tokens;
+  };
+
+  const limitMessagesByTokens = (messages: Message[], maxTokens: number): Message[] => {
+    let totalTokens = 0;
+    const limitedMessages: Message[] = [];
+
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      const messageTokens = calculateTokens(message);
+
+      if (totalTokens + messageTokens > maxTokens) {
+        break;
+      }
+
+      limitedMessages.unshift(message);
+      totalTokens += messageTokens;
+    }
+
+    return limitedMessages;
+  };
+
+  const messagesInScope = limitMessagesByTokens(messages, TOKEN_LIMIT);
+
+  const cleanedMessages = messagesInScope.filter((message) => {
     if (message.role === "assistant") {
       return !message.parts?.some(
         (part) =>
@@ -137,7 +166,7 @@ export const streamConversation = async (
         });
         const messagesToStore = appendResponseMessages({
           responseMessages: completion.response.messages,
-          messages,
+          messages: messagesInScope,
         });
         // close the tools
         await Promise.all([

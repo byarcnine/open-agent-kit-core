@@ -32,7 +32,6 @@ const Messages: React.FC<MessagesProps> = ({
             avatarURL={avatarURL}
           />
         ))}
-        <div ref={endRef} className={"oak-chat__scroll-end"} />
       </div>
       {error && (
         <div className="oak-chat__error-container">
@@ -40,6 +39,7 @@ const Messages: React.FC<MessagesProps> = ({
         </div>
       )}
       {children}
+      <div ref={endRef} className={"oak-chat__scroll-end"} />
     </div>
   );
 };
