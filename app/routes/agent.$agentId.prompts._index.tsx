@@ -89,32 +89,29 @@ const Prompt = () => {
 
   return (
     <div className="py-8 px-4 md:p-8 w-full flex flex-col">
-      <h1 className="text-3xl font-bold mb-4">System Prompt Editor</h1>
+      <h1 className="text-3xl mb-4">System Prompt Editor</h1>
       <div className="mb-6 text-muted-foreground">
-        Edit the system prompt that will be used for this agent.
-        <br />
-        Here are some tips for writing effective system prompts:
-        <ul className="list-disc list-inside mt-4">
-          <li>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-4 text-primary">
+          <div className="bg-muted p-2 rounded-md">
             Be clear and concise: Ensure your prompt is easy to understand.
-          </li>
-          <li>
+          </div>
+          <div className="bg-muted p-2 rounded-md">
             Provide context: Give enough background information to guide the
             agent.
-          </li>
-          <li>
+          </div>
+          <div className="bg-muted p-2 rounded-md">
             Specify the desired outcome: Clearly state what you expect from the
             agent.
-          </li>
-          <li>
+          </div>
+          <div className="bg-muted p-2 rounded-md">
             Use proper grammar and spelling: Avoid misunderstandings by using
             correct language.
-          </li>
-          <li>
+          </div>
+          <div className="bg-muted p-2 rounded-md">
             Test and iterate: Continuously refine your prompts based on agent
             performance.
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
 
       <div className="mb-8">
@@ -145,7 +142,7 @@ const Prompt = () => {
       )}
       {prompts && prompts.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Prompt History</h2>
+          <h2 className="text-2xl font-medium mb-4">Prompt History</h2>
           <Table>
             <TableHeader>
               <TableRow>

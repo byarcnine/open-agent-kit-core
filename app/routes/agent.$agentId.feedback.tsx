@@ -40,7 +40,7 @@ const Conversations = () => {
   const { agentId } = useParams();
   return (
     <div className="py-8 px-4 md:p-8 w-full">
-      <h1 className="text-3xl font-bold mb-4">Feedback</h1>
+      <h1 className="text-3xl font-medium mb-4">Feedback</h1>
 
       <div className="text-muted-foreground mb-6 max-w-lg">
         Captures feedback from conversations with this agent.

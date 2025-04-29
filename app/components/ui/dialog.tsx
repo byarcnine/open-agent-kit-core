@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "react-feather";
+import { XCircle } from "react-feather";
 
 import { cn } from "~/lib/utils";
 
@@ -36,7 +36,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 md:grid md:w-full w-10/12 md:max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 rounded-md max-h-[90vh] overflow-hidden",
+        "fixed left-[50%] top-[50%] z-50 md:grid md:w-full w-10/12 md:max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 rounded-md max-h-[90vh] overflow-hidden",
         className
       )}
       {...props}
@@ -57,7 +57,7 @@ const DialogHeader = ({
       {...props}
     />
     <DialogPrimitive.Close className="relative rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-      <X className="h-6 w-6" />
+      <XCircle className="h-6 w-6" />
       <span className="sr-only">Close</span>
     </DialogPrimitive.Close>
   </div>
@@ -84,7 +84,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-xl font-bold", className)}
+    className={cn("text-xl font-medium", className)}
     {...props}
   />
 ));

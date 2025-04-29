@@ -10,11 +10,11 @@ interface NoDataCardProps {
 const NoDataCard: React.FC<NoDataCardProps> = (props) => {
   return (
     <div
-      className={`${props.className} rounded-md border bg-card text-card-foreground shadow px-6 py-6 md:py-20 text-center`}
+      className={`${props.className} rounded-md border bg-card text-card-foreground px-6 py-6 md:py-20 text-center`}
     >
       <img src="/assets/logo.svg" alt="No data" className="mx-auto w-10 mb-4" />
       {props.headline && (
-        <h3 className="text-xl font-bold mb-2">{props.headline}</h3>
+        <h3 className="text-xl font-medium mb-2">{props.headline}</h3>
       )}
       <p className="text-base text-muted-foreground">{props.description}</p>
       {props?.children && (

@@ -24,7 +24,7 @@ import NoDataCard from "~/components/ui/no-data-card";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
-  const agentsPromise = prisma.agent.findMany();
+  const agentsPromise = prisma.agent.findMany({ orderBy: { name: "asc" } });
   const pluginsWithAvailabilityPromise = getPluginsWithAvailability();
   const [agents, plugins] = await Promise.all([
     agentsPromise,
@@ -34,7 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
 
   const formData = await request.formData();
   const pluginIdentifier = formData.get("pluginIdentifier") as string;
@@ -60,18 +60,18 @@ export default function Plugins() {
         isGlobal: isGlobal.toString(),
         agentIds: JSON.stringify(agentIds),
       },
-      { method: "POST" }
+      { method: "POST" },
     );
     toast.success(
-      `Successfully updated ${selectedPluginIdentifier} availability`
+      `Successfully updated ${selectedPluginIdentifier} availability`,
     );
   };
 
   return (
-    <Layout navComponent={<OverviewNav user={user} />}>
+    <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">
         <div className="flex flex-row items-center justify-between pb-8">
-          <h1 className="text-3xl font-bold">Tools & Plugins</h1>
+          <h1 className="text-3xl font-medium">Tools & Plugins</h1>
         </div>
         <div className="flex flex-col flex-1">
           {!plugins || plugins.length === 0 ? (
@@ -110,7 +110,7 @@ export default function Plugins() {
                         </Badge>
                       )}
                       {!plugin.isGlobal && plugin.agents && (
-                        <h3 className="text-xs mb-2 text-muted-foreground font-semibold">
+                        <h3 className="text-xs mb-2 text-muted-foreground font-medium">
                           Available for Agents:
                         </h3>
                       )}
@@ -134,7 +134,8 @@ export default function Plugins() {
           agents={agents}
           selectedPlugin={
             plugins.find(
-              (t: PluginWithAvailability) => t.name === selectedPluginIdentifier
+              (t: PluginWithAvailability) =>
+                t.name === selectedPluginIdentifier,
             ) || null
           }
           key={selectedPluginIdentifier}

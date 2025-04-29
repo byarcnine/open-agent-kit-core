@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
-import { Plus } from "react-feather";
+import { PlusCircle } from "react-feather";
 import { Form } from "react-router";
 import { useEffect, useState } from "react";
 import slugify from "slugify";
@@ -28,7 +28,11 @@ const CreateAgentDialog = ({
   useEffect(() => {
     if (name) {
       setSlugFromName(
-        slugify(name, { lower: true, strict: true, remove: /[*+~.()'"!:@\&]/g })
+        slugify(name, {
+          lower: true,
+          strict: true,
+          remove: /[*+~.()'"!:@\&]/g,
+        }),
       );
     }
   }, [name]);
@@ -36,14 +40,14 @@ const CreateAgentDialog = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button variant="green">
+          <PlusCircle className="h-4 w-4" />
           New Agent
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Agent</DialogTitle>
+          <DialogTitle>Configure New Agent</DialogTitle>
         </DialogHeader>
         <Form method="post" className="space-y-4">
           <div className="space-y-2">
@@ -86,7 +90,7 @@ const CreateAgentDialog = ({
               placeholder="Optional agent description"
             />
           </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" variant="green" className="w-full">
             Create Agent
           </Button>
         </Form>

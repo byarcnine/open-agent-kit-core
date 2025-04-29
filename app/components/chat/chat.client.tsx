@@ -3,7 +3,14 @@ import React from "react";
 import { useChat, type Message } from "@ai-sdk/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Textarea } from "../ui/textarea";
-import { ArrowUp, FileText, Plus, XCircle } from "react-feather";
+import {
+  ArrowUp,
+  Compass,
+  FileText,
+  Globe,
+  Plus,
+  XCircle,
+} from "react-feather";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
 import { MessageRole, type ChatSettings } from "~/types/chat";
@@ -62,6 +69,10 @@ const Chat = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<FileList | undefined>(undefined);
+
+  const [selectedAction, setSelectedAction] = useState<
+    "default" | "deep-research" | "search-web"
+  >("default");
 
   const supportedFileTypes = chatSettings?.supportedFileTypes || [];
 
@@ -122,23 +133,30 @@ const Chat = ({
         ]
       : initialMessages;
 
-  const { messages, input, handleInputChange, handleSubmit, setInput, error } =
-    useChat({
-      api: `${API_URL}/api/generate`,
-      body: {
-        conversationId,
-        agentId,
-        meta,
-      },
-      initialMessages: initMessages,
-      onResponse: (response) => {
-        const newConversationId = response.headers.get("x-conversation-id");
-        if (newConversationId && !conversationId) {
-          setConversationId(newConversationId);
-          onConversationStart?.(newConversationId);
-        }
-      },
-    });
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    setInput,
+    status,
+    error,
+  } = useChat({
+    api: `${API_URL}/api/generate`,
+    body: {
+      conversationId,
+      agentId,
+      meta,
+    },
+    initialMessages: initMessages,
+    onResponse: (response) => {
+      const newConversationId = response.headers.get("x-conversation-id");
+      if (newConversationId && !conversationId) {
+        setConversationId(newConversationId);
+        onConversationStart?.(newConversationId);
+      }
+    },
+  });
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -190,6 +208,17 @@ const Chat = ({
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, []);
+
+  const handleSelectedAction = (
+    action: "default" | "deep-research" | "search-web",
+  ) => {
+    if (selectedAction === action) {
+      setSelectedAction("default");
+      return;
+    } else {
+      setSelectedAction(action);
+    }
+  };
 
   useEffect(() => {
     adjustTextareaHeight();
@@ -309,11 +338,10 @@ const Chat = ({
                     <div>
                       <button
                         type="button"
-                        className="oak-chat__file-upload-button"
+                        className="oak-chat__action-button"
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        <Plus size={15} />
-                        <span>Upload File</span>
+                        <Plus size={18} />
                       </button>
                       <input
                         multiple
@@ -329,6 +357,28 @@ const Chat = ({
                       />
                     </div>
                   )}
+                  {/*
+                  <button
+                    type="button"
+                    className={`oak-chat__action-button ${
+                      selectedAction === "deep-research" ? "active" : ""
+                    }`}
+                    onClick={() => handleSelectedAction("deep-research")}
+                  >
+                    <Compass size={18} />
+                    <span>Deep Research</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`oak-chat__action-button ${
+                      selectedAction === "search-web" ? "active" : ""
+                    }`}
+                    onClick={() => handleSelectedAction("search-web")}
+                  >
+                    <Globe size={18} />
+                    <span>Search Web</span>
+                  </button>
+                  */}
                   <button
                     type="submit"
                     disabled={!input}
