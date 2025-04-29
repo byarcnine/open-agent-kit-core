@@ -47,7 +47,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       const date = dayjs(c.createdAt).calendar(null, {
         sameDay: "[Today]",
         lastDay: "[Yesterday]",
-        lastWeek: "[Last] dddd",
+        lastWeek: "MMM D, YYYY",
         sameElse: "MMM D, YYYY",
       });
       acc[date] = acc[date] || [];
@@ -100,27 +100,29 @@ const ChatOverview = () => {
   return (
     <Layout
       navComponent={
-        <div className="md:px-2 text-sm font-medium">
+        <div className="md:px-2 text-sm">
           <Link
-            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all hover:text-primary bg-zinc-200 text-primary mb-8"
+            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-stone-900 text-white hover:text-white mb-8"
             to={`/chat/${agentId}`}
             reloadDocument
           >
             <PlusCircle className="h-4 w-4" />
             New Conversation
           </Link>
-          <h2 className="text-muted-foreground mb-4 flex items-center gap-2 px-3 py-2 border-b">
+          <h2 className="text-primary mb-4 flex items-center gap-2 px-3 py-2 border-b">
             <MessageCircle className="h-4 w-4" />
             Chats
           </h2>
           {conversationsByDay.map(({ date, conversations }) => (
-            <div className="block mb-6 px-3 overflow-auto" key={date}>
-              <h2 className="text-sm mb-2 text-muted-foreground">{date}</h2>
+            <div className="block mb-4 pb-4 overflow-auto border-b" key={date}>
+              <h2 className="text-sm px-3 mb-2 font-medium text-primary">
+                {date}
+              </h2>
               {conversations
-                .filter((e) => e)
+                .filter((e) => e && e.tagline)
                 .map((c) => (
                   <Link
-                    className="py-2 block hover:bg-zinc-200 rounded-md px-2 text-sm text-neutral-900 font-normal"
+                    className="py-2 block hover:bg-stone-900 px-3 transition-all hover:text-white rounded-md text-sm text-neutral-900 font-normal"
                     to={`/chat/${agentId}/${c.id}`}
                     key={c.id}
                   >

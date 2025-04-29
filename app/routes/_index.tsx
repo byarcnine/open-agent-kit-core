@@ -10,7 +10,7 @@ import {
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { hasAccess, hasPermission } from "~/lib/auth/hasAccess.server";
-import { MessageCircle, MessageSquare, Settings } from "react-feather";
+import { MessageCircle, Settings } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
@@ -178,7 +178,7 @@ const Index = () => {
               )}
             </NoDataCard>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 xxl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
               {filteredAgents &&
                 filteredAgents.map((agent) => (
                   <Card
@@ -204,7 +204,7 @@ const Index = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
-                        <Link className="block flex-1" to={`/chat/${agent.id}`}>
+                        <Link className="block " to={`/chat/${agent.id}`}>
                           <Button variant="default" className="w-full">
                             <MessageCircle className="h-4 w-4" />
                             Chat
