@@ -133,23 +133,30 @@ const Chat = ({
         ]
       : initialMessages;
 
-  const { messages, input, handleInputChange, handleSubmit, setInput, error } =
-    useChat({
-      api: `${API_URL}/api/generate`,
-      body: {
-        conversationId,
-        agentId,
-        meta,
-      },
-      initialMessages: initMessages,
-      onResponse: (response) => {
-        const newConversationId = response.headers.get("x-conversation-id");
-        if (newConversationId && !conversationId) {
-          setConversationId(newConversationId);
-          onConversationStart?.(newConversationId);
-        }
-      },
-    });
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    setInput,
+    status,
+    error,
+  } = useChat({
+    api: `${API_URL}/api/generate`,
+    body: {
+      conversationId,
+      agentId,
+      meta,
+    },
+    initialMessages: initMessages,
+    onResponse: (response) => {
+      const newConversationId = response.headers.get("x-conversation-id");
+      if (newConversationId && !conversationId) {
+        setConversationId(newConversationId);
+        onConversationStart?.(newConversationId);
+      }
+    },
+  });
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
