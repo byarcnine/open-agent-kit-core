@@ -39,11 +39,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         orderBy: {
           createdAt: "asc",
         },
+        select: {
+          createdAt: true
+        }
       },
     },
   });
   const dayGroupedConversations = conversations.reduce(
-    (acc: { [key: string]: (Conversation & { messages: Message[] })[] }, c) => {
+    (acc: { [key: string]: (Conversation & { messages: { createdAt: Date }[] })[] }, c) => {
       const date = dayjs(c.createdAt).calendar(null, {
         sameDay: "[Today]",
         lastDay: "[Yesterday]",
@@ -70,6 +73,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!agent) {
     throw new Response("Agent not found", { status: 404 });
   }
+
   return {
     conversationsByDay,
     user,
