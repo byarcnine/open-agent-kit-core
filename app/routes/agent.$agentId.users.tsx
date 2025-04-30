@@ -181,7 +181,7 @@ const AgentUsersView = () => {
   return (
     <div className="py-8 px-4 md:p-8 w-full">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Users</h1>
+        <h1 className="text-3xl font-medium">Users</h1>
         <InviteUserModal
           roles={AGENT_ROLES.filter(
             (role) => userAgentRole === "OWNER" || role.name !== "OWNER" // only owners can set others as owners

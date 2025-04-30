@@ -32,7 +32,7 @@ export const loader = async ({
   }
   const toolNames = toolNameIdentifierList();
   const initialMessages = conversation.messages.map(
-    (message) => message.content as unknown as Message
+    (message) => message.content as unknown as Message,
   );
   const chatSettings = await getChatSettings(agentId);
   return { conversation, initialMessages, toolNames, chatSettings };
@@ -45,8 +45,8 @@ const ConversationDetail = () => {
 
   return (
     <div className="h-full w-full flex flex-col max-h-screen">
-      <div className="p-4 border-b">
-        <h1 className="text-3xl font-bold">
+      <div className="p-4 border-b sticky top-0 bg-white z-10 flex-shrink-0">
+        <h1 className="text-2xl font-medium">
           Conversation{" "}
           <span className="text-base text-muted-foreground">
             #{conversation.id}
@@ -56,18 +56,20 @@ const ConversationDetail = () => {
           Started {dayjs(conversation.createdAt).fromNow()}
         </p>
       </div>
-      <ClientOnlyComponent>
-        {Chat && (
-          <Chat
-            initialConversationId={conversation.id}
-            initialMessages={initialMessages}
-            disableInput
-            agentId={agentId as string}
-            toolNamesList={toolNames}
-            agentChatSettings={chatSettings}
-          />
-        )}
-      </ClientOnlyComponent>
+      <div className="flex flex-col flex-1 overflow-hidden py-4">
+        <ClientOnlyComponent>
+          {Chat && (
+            <Chat
+              initialConversationId={conversation.id}
+              initialMessages={initialMessages}
+              disableInput
+              agentId={agentId as string}
+              toolNamesList={toolNames}
+              agentChatSettings={chatSettings}
+            />
+          )}
+        </ClientOnlyComponent>
+      </div>
     </div>
   );
 };

@@ -22,14 +22,14 @@ export const AdminNav = ({
   const { agentId } = useParams();
   const location = useLocation();
   return (
-    <nav className="grid items-start md:px-2 text-sm font-medium lg:px-4">
+    <nav className="grid items-start md:px-2 text-sm lg:px-4">
       <Link
         to={`/agent/${agentId}`}
         prefetch="intent"
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary":
+            "bg-stone-900 text-white hover:text-white":
               location.pathname === `/agent/${agentId}`,
           },
         )}
@@ -43,9 +43,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/conversations`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/conversations`),
           },
         )}
       >
@@ -58,9 +57,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/prompts`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/prompts`),
           },
         )}
       >
@@ -73,9 +71,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/knowledge`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/knowledge`),
           },
         )}
       >
@@ -88,9 +85,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/feedback`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/feedback`),
           },
         )}
       >
@@ -103,9 +99,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/plugins`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/plugins`),
           },
         )}
       >
@@ -122,7 +117,8 @@ export const AdminNav = ({
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
               {
-                "bg-zinc-200 text-primary": location.pathname.includes(href),
+                "bg-stone-900 text-white hover:text-white":
+                  location.pathname.includes(href),
               },
             )}
           >
@@ -138,9 +134,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/users`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/users`),
           },
         )}
       >
@@ -153,9 +148,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/agent/${agentId}/settings`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/settings`),
           },
         )}
       >
@@ -170,9 +164,8 @@ export const AdminNav = ({
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
-            "bg-zinc-200 text-primary": location.pathname.includes(
-              `/chat/${agentId}`,
-            ),
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/chat/${agentId}`),
           },
         )}
       >
