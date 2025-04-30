@@ -78,7 +78,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 const ChatOverview = () => {
-  const { agentId } = useParams();
+  const { agentId, conversationId } = useParams();
   const { conversationsByDay, agent, user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
@@ -122,7 +122,7 @@ const ChatOverview = () => {
                 .filter((e) => e && e.tagline)
                 .map((c) => (
                   <Link
-                    className="py-2 block hover:bg-stone-900 px-3 transition-all hover:text-white rounded-md text-sm text-neutral-900 font-normal"
+                    className={`py-2 block px-3 transition-all rounded-md text-sm font-normal ${conversationId === c.id ? 'bg-stone-900 text-white' : 'hover:bg-stone-900 hover:text-white text-neutral-900'}`}
                     to={`/chat/${agentId}/${c.id}`}
                     key={c.id}
                   >
