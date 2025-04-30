@@ -6,8 +6,9 @@ import {
   useNavigate,
   type LoaderFunctionArgs,
   type MetaFunction,
+  useFetcher,
 } from "react-router";
-import { type Conversation, type Message, prisma } from "@db/db.server";
+import { type Conversation, prisma } from "@db/db.server";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -15,8 +16,7 @@ import calendar from "dayjs/plugin/calendar";
 import Layout from "~/components/layout/layout";
 import { MessageCircle, PlusCircle } from "react-feather";
 import { PERMISSIONS } from "~/types/auth";
-import { useEffect } from "react";
-
+import { useEffect, useState } from "react";
 // Initialize the plugins
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
@@ -40,13 +40,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           createdAt: "asc",
         },
         select: {
-          createdAt: true
-        }
+          createdAt: true,
+        },
       },
     },
   });
   const dayGroupedConversations = conversations.reduce(
-    (acc: { [key: string]: (Conversation & { messages: { createdAt: Date }[] })[] }, c) => {
+    (
+      acc: {
+        [key: string]: (Conversation & { messages: { createdAt: Date }[] })[];
+      },
+      c,
+    ) => {
       const date = dayjs(c.createdAt).calendar(null, {
         sameDay: "[Today]",
         lastDay: "[Yesterday]",
@@ -85,6 +90,9 @@ const ChatOverview = () => {
   const { agentId, conversationId } = useParams();
   const { conversationsByDay, agent, user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const fetcher = useFetcher();
+  const [editMode, setEditMode] = useState<string | null>(null);
+  const [newTagline, setNewTagline] = useState<string>("");
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -92,21 +100,32 @@ const ChatOverview = () => {
         event.preventDefault();
         navigate(`/chat/${agentId}`, { replace: true });
       }
+      if (editMode && event.key === "Enter") {
+        event.preventDefault();
+        handleTaglineChange(editMode, newTagline);
+      }
     };
 
     document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [agentId, navigate, editMode, newTagline]);
 
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [agentId, navigate]);
+  const handleDoubleClick = (conversationId: string) => setEditMode(conversationId);
+
+  const handleTaglineChange = (conversationId: string, newTagline: string) => {
+    fetcher.submit(
+      { conversationId, newTagline },
+      { method: "post", action: `/chat/${agentId}` }
+    );
+    setEditMode(null);
+  };
 
   return (
     <Layout
       navComponent={
         <div className="md:px-2 text-sm">
           <Link
-            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-stone-900 text-white hover:text-white mb-8"
+            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-oak-green text-accent-foreground hover:bg-oak-green/90 mb-8"
             to={`/chat/${agentId}`}
             reloadDocument
           >
@@ -125,13 +144,29 @@ const ChatOverview = () => {
               {conversations
                 .filter((e) => e && e.tagline)
                 .map((c) => (
-                  <Link
-                    className={`py-2 block px-3 transition-all rounded-md text-sm font-normal ${conversationId === c.id ? 'bg-stone-900 text-white' : 'hover:bg-stone-900 hover:text-white text-neutral-900'}`}
-                    to={`/chat/${agentId}/${c.id}`}
-                    key={c.id}
-                  >
-                    {c.tagline}
-                  </Link>
+                  editMode === c.id ? (
+                    <input
+                      type="text"
+                      className={`w-full py-2 block px-3 transition-all rounded-md text-sm font-normal ${conversationId === c.id ? "bg-stone-900 text-white" : "hover:bg-stone-900 hover:text-white text-neutral-900"}`}
+                      defaultValue={c.tagline || ""}
+                      key={c.id}
+                      onChange={(e) => setNewTagline(e.target.value)}
+                      onBlur={(e) => handleTaglineChange(c.id, e.target.value)}
+                      autoFocus
+                    />
+                  ) : (
+                    <Link
+                      className={`py-2 block px-3 transition-all rounded-md text-sm font-normal ${conversationId === c.id ? "bg-stone-900 text-white" : "hover:bg-stone-900 hover:text-white text-neutral-900"}`}
+                      to={`/chat/${agentId}/${c.id}`}
+                      key={c.id}
+                      onDoubleClick={(e) => {
+                        e.preventDefault();
+                        handleDoubleClick(c.id);
+                      }}
+                    >
+                      {c.tagline}
+                    </Link>
+                  )
                 ))}
             </div>
           ))}
