@@ -143,6 +143,12 @@ const ChatOverview = () => {
       { conversationId, newTagline, intent: Intent.UPDATE_TAGLINE },
       { method: "post", action: `/chat/${agentId}` },
     );
+    // change label in allConversations
+    setAllConversations((prev) =>
+      prev.map((c) =>
+        c.id === conversationId ? { ...c, tagline: newTagline } : c,
+      ),
+    );
     setEditMode(null);
   };
 
