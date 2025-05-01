@@ -17,34 +17,14 @@ import Layout from "~/components/layout/layout";
 import { MessageCircle, PlusCircle } from "react-feather";
 import { PERMISSIONS } from "~/types/auth";
 import { useEffect, useState } from "react";
+import { Intent } from "./chat.$agentId._index";
+import { loadConversations } from "./utils/chat";
+import { Button } from "~/components/ui/button";
 // Initialize the plugins
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { agentId } = params;
-  const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
-  const conversations = await prisma.conversation.findMany({
-    where: {
-      agentId,
-      userId: user?.id,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 25,
-    include: {
-      messages: {
-        take: 1,
-        orderBy: {
-          createdAt: "asc",
-        },
-        select: {
-          createdAt: true,
-        },
-      },
-    },
-  });
+export const getConversationsByDay = (conversations: (Conversation & { messages: { createdAt: Date }[] })[]) => {
   const dayGroupedConversations = conversations.reduce(
     (
       acc: {
@@ -64,12 +44,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
     {},
   );
-  const conversationsByDay = Object.keys(dayGroupedConversations).map(
+  return Object.keys(dayGroupedConversations).map(
     (key) => ({
       date: key,
       conversations: dayGroupedConversations[key],
     }),
   );
+};
+
+const CONVERSATIONS_PER_PAGE = 25;
+
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { agentId } = params;
+
+  const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
+  const conversations = await loadConversations({ page: 1, agentId: agentId as string, userId: user.id, take: CONVERSATIONS_PER_PAGE });
   const agent = await prisma.agent.findUnique({
     where: {
       id: agentId,
@@ -80,7 +69,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   return {
-    conversationsByDay,
+    conversations,
     user,
     agent,
   };
@@ -88,11 +77,47 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 const ChatOverview = () => {
   const { agentId, conversationId } = useParams();
-  const { conversationsByDay, agent, user } = useLoaderData<typeof loader>();
+  const { conversations, agent, user } = useLoaderData<typeof loader>();
+
+  const [allConversations, setAllConversations] = useState(conversations);
+  const [currentConversationsByDay, setCurrentConversationsByDay] =
+    useState(getConversationsByDay(conversations));
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const [editMode, setEditMode] = useState<string | null>(null);
   const [newTagline, setNewTagline] = useState<string>("");
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [allConversationsLoaded, setAllConversationsLoaded] = useState(conversations.length < CONVERSATIONS_PER_PAGE);
+  const [page, setPage] = useState(1);
+
+  const loadMoreConversations = () => {
+    if (isLoadingMore || fetcher.state !== "idle") return;
+    setIsLoadingMore(true);
+    fetcher.load(`/chat/${agentId}/loadMoreConversations?page=${page + 1}`);
+    setPage((prev) => prev + 1);
+  };
+
+  useEffect(() => {
+    if (fetcher.data?.conversations?.length) {
+      setAllConversations((prev) => [
+        ...prev,
+        ...fetcher.data.conversations,
+      ]);
+    }
+    if (fetcher.data?.conversations?.length < CONVERSATIONS_PER_PAGE) {
+      setAllConversationsLoaded(true);
+    }
+  }, [fetcher.data]);
+
+  useEffect(() => {
+    setCurrentConversationsByDay(getConversationsByDay(allConversations));
+  }, [allConversations]);
+
+  useEffect(() => {
+    if (fetcher.state === "idle") {
+      setIsLoadingMore(false);
+    }
+  }, [fetcher.state]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -110,12 +135,13 @@ const ChatOverview = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [agentId, navigate, editMode, newTagline]);
 
-  const handleDoubleClick = (conversationId: string) => setEditMode(conversationId);
+  const handleDoubleClick = (conversationId: string) =>
+    setEditMode(conversationId);
 
   const handleTaglineChange = (conversationId: string, newTagline: string) => {
     fetcher.submit(
-      { conversationId, newTagline },
-      { method: "post", action: `/chat/${agentId}` }
+      { conversationId, newTagline, intent: Intent.UPDATE_TAGLINE },
+      { method: "post", action: `/chat/${agentId}` },
     );
     setEditMode(null);
   };
@@ -136,14 +162,14 @@ const ChatOverview = () => {
             <MessageCircle className="h-4 w-4" />
             Chats
           </h2>
-          {conversationsByDay.map(({ date, conversations }) => (
+          {currentConversationsByDay.map(({ date, conversations }) => (
             <div className="block mb-4 pb-4 overflow-auto border-b" key={date}>
               <h2 className="text-sm px-3 mb-2 font-medium text-primary">
                 {date}
               </h2>
               {conversations
                 .filter((e) => e && e.tagline)
-                .map((c) => (
+                .map((c) =>
                   editMode === c.id ? (
                     <input
                       type="text"
@@ -166,10 +192,20 @@ const ChatOverview = () => {
                     >
                       {c.tagline}
                     </Link>
-                  )
-                ))}
+                  ),
+                )}
             </div>
           ))}
+          {!allConversationsLoaded && (
+            <Button
+              variant="outline"
+              className="w-full mb-8"
+              onClick={loadMoreConversations}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? "Loading..." : "Load More"}
+            </Button>
+          )}
         </div>
       }
       user={user}

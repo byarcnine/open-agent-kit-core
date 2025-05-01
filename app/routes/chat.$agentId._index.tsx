@@ -1,4 +1,10 @@
-import { data, useLoaderData, useParams, useRevalidator, type ActionFunctionArgs } from "react-router";
+import {
+  data,
+  useLoaderData,
+  useParams,
+  useRevalidator,
+  type ActionFunctionArgs,
+} from "react-router";
 import Chat from "~/components/chat/chat.client";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
@@ -7,25 +13,39 @@ import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import { prisma } from "@db/db.server";
 import { PERMISSIONS } from "~/types/auth";
 
+export enum Intent {
+  UPDATE_TAGLINE = "updateTagline",
+}
+
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { agentId } = params;
+
   const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
   if (!user) {
     return data({ success: false, error: "Unauthorized" }, { status: 401 });
   }
   const formData = await request.formData();
-  const conversationId = formData.get("conversationId");
-  const newTagline = formData.get("newTagline");
+  const intent = formData.get("intent");
+  switch (intent) {
+    case Intent.UPDATE_TAGLINE:
+      const conversationId = formData.get("conversationId");
+      const newTagline = formData.get("newTagline");
 
-  try {
-    await prisma.conversation.update({
-      where: { id: conversationId as string },
-      data: { tagline: newTagline as string },
-    });
-  } catch (error) {
-    return data({ success: false, error: "Failed to update tagline" }, { status: 500 });
+      try {
+        await prisma.conversation.update({
+          where: { id: conversationId as string },
+          data: { tagline: newTagline as string },
+        });
+      } catch (error) {
+        return data(
+          { success: false, error: "Failed to update tagline" },
+          { status: 500 },
+        );
+      }
+      break;
+    default:
+      return data({ success: false, error: "Invalid intent" }, { status: 400 });
   }
-
   return data({ success: true });
 };
 

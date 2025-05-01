@@ -77,6 +77,7 @@ export const routes = (
         `${corePrefix}/chat.$agentId.$conversationId.tsx`
       ),
     ]),
+    route("chat/:agentId/loadMoreConversations", `${corePrefix}/chat.$agentId.loadMoreConversations.tsx`),
 
     // Other routes
     route("invite/:id", `${corePrefix}/invite.$id.tsx`),
