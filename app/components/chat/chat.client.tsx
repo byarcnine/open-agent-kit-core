@@ -202,9 +202,6 @@ const Chat = ({
   ) => {
     event.preventDefault();
     // Prevent the file input from opening again
-    if (fileInputRef.current) {
-      fileInputRef.current.blur();
-    }
     if (event.target.files && event.target.files.length > 0) {
       const selectedFiles = event.target.files;
       const dataTransfer = new DataTransfer();
@@ -311,6 +308,12 @@ const Chat = ({
   useEffect(() => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
+
+  const handleFileButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   if (!chatSettingsLoaded && isEmbed) {
     return (
@@ -434,7 +437,7 @@ const Chat = ({
                       <button
                         type="button"
                         className="oak-chat__action-button"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={handleFileButtonClick}
                       >
                         <Plus size={18} />
                       </button>
