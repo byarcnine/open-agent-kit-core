@@ -23,8 +23,8 @@ export const streamConversation = async (
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({
-        data: { agentId, userId, customIdentifier },
-      });
+      data: { agentId, userId, customIdentifier },
+    });
 
   if (!conversation) {
     throw new Error("Conversation not found");
@@ -45,7 +45,16 @@ export const streamConversation = async (
 
   const calculateTokens = (message: Message): number => {
     const enc = encoding_for_model(modelForAgent.modelId as TiktokenModel);
-    const tokens = enc.encode(JSON.stringify(message)).length;
+    const messageWithoutAttachments = {
+      ...message,
+      ...(message.experimental_attachments && {
+        experimental_attachments: message.experimental_attachments.map((attachment) => ({
+          ...attachment,
+          url: "",
+        })),
+      }),
+    };
+    const tokens = enc.encode(JSON.stringify(messageWithoutAttachments)).length;
     enc.free();
     return tokens;
   };
