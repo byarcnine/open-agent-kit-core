@@ -65,6 +65,7 @@ const Chat = ({
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
+
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -246,6 +247,34 @@ const Chat = ({
     });
   };
 
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    const droppedFiles = event.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      const dataTransfer = new DataTransfer();
+      if (files && files.length > 0) {
+        Array.from(files).forEach((file) => {
+          dataTransfer.items.add(file);
+        });
+      }
+      for (let i = 0; i < droppedFiles.length; i++) {
+        const file = droppedFiles[i];
+        const alreadyAdded = Array.from(dataTransfer.files).some(
+          (f) => f.name === file.name && f.size === file.size,
+        );
+        if (!alreadyAdded) {
+          dataTransfer.items.add(file);
+        }
+      }
+      setFiles(dataTransfer.files);
+    }
+  };
+
   useEffect(() => {
     const isSuggestedQuestion =
       chatSettings?.suggestedQuestions?.includes(input);
@@ -301,7 +330,12 @@ const Chat = ({
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
   return (
     <ChatContext.Provider value={{ isEmbed, chatSettings }}>
-      <div id="oak-chat-container" className="oak-chat">
+      <div
+        id="oak-chat-container"
+        className={`oak-chat`}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         {messages.length === 0 ? (
           <div className="oak-chat__empty-state">
             {chatSettings?.intro?.title && (
@@ -381,16 +415,18 @@ const Chat = ({
                     ))}
                   </div>
                 )}
-                <Textarea
-                  ref={textareaRef}
-                  onKeyDown={handleKeyDown}
-                  name="prompt"
-                  value={input}
-                  rows={chatSettings?.textAreaInitialRows || 2}
-                  onChange={handleInputChange}
-                  placeholder="Type your message..."
-                  className="oak-chat__text-area"
-                />
+                <div>
+                  <Textarea
+                    ref={textareaRef}
+                    onKeyDown={handleKeyDown}
+                    name="prompt"
+                    value={input}
+                    rows={chatSettings?.textAreaInitialRows || 2}
+                    onChange={handleInputChange}
+                    placeholder="Type your message..."
+                    className="oak-chat__text-area"
+                  />
+                </div>
 
                 <div className="oak-chat__action-row">
                   {chatSettings?.enableFileUpload && supportedFileTypes && (
