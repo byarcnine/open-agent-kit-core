@@ -158,6 +158,27 @@ const Chat = ({
     },
   });
 
+  const clearFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setFiles(undefined);
+  };
+
+  const handleFormSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (input.trim() === "") {
+        return;
+      }
+      handleSubmit(event, {
+        experimental_attachments: files,
+      });
+      clearFileInput();
+    },
+    [handleSubmit, input, files],
+  );
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {
@@ -165,14 +186,47 @@ const Chat = ({
         handleSubmit(event, {
           experimental_attachments: files,
         });
-        setFiles(undefined);
+        clearFileInput();
       }
     },
-    [handleSubmit],
+    [handleSubmit, files],
   );
 
   const handleCardSelect = (question: string) => {
     setInput(question);
+  };
+
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    event.preventDefault();
+    // Prevent the file input from opening again
+    if (fileInputRef.current) {
+      fileInputRef.current.blur();
+    }
+    if (event.target.files && event.target.files.length > 0) {
+      const selectedFiles = event.target.files;
+      const dataTransfer = new DataTransfer();
+
+      // If files already exist, keep them and add new ones (avoid duplicates)
+      if (files && files.length > 0) {
+        Array.from(files).forEach((file) => {
+          dataTransfer.items.add(file);
+        });
+      }
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        // Avoid adding duplicates by name and size
+        const alreadyAdded = Array.from(dataTransfer.files).some(
+          (f) => f.name === file.name && f.size === file.size,
+        );
+        if (!alreadyAdded) {
+          dataTransfer.items.add(file);
+        }
+      }
+      setFiles(dataTransfer.files);
+    }
   };
 
   const clearSelectedFile = (fileName: string) => {
@@ -183,6 +237,11 @@ const Chat = ({
       );
       const dataTransfer = new DataTransfer();
       updatedFiles.forEach((file) => dataTransfer.items.add(file));
+
+      if (updatedFiles.length === 0) {
+        clearFileInput();
+      }
+
       return dataTransfer.files;
     });
   };
@@ -284,7 +343,7 @@ const Chat = ({
             <div className="oak-chat__input-container">
               <form
                 ref={formRef}
-                onSubmit={handleSubmit}
+                onSubmit={handleFormSubmit}
                 className="oak-chat__form"
               >
                 {files && (
@@ -349,11 +408,7 @@ const Chat = ({
                         accept={supportedFileTypes.join(",")}
                         ref={fileInputRef}
                         style={{ display: "none" }}
-                        onChange={(event) => {
-                          if (event.target.files) {
-                            setFiles(event.target.files);
-                          }
-                        }}
+                        onChange={handleFileInputChange}
                       />
                     </div>
                   )}
