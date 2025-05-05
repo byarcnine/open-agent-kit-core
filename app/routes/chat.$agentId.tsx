@@ -179,7 +179,7 @@ const ChatOverview = () => {
                   editMode === c.id ? (
                     <input
                       type="text"
-                      className={`w-full py-2 block px-3 transition-all rounded-md text-sm font-normal ${conversationId === c.id ? "bg-stone-900 text-white" : "hover:bg-stone-900 hover:text-white text-neutral-900"}`}
+                      className={`w-full py-2 block px-3 transition-all rounded-md text-sm font-normal focus:outline-none ${conversationId === c.id ? "bg-stone-900 text-white" : "text-neutral-900"}`}
                       defaultValue={c.tagline || ""}
                       key={c.id}
                       onChange={(e) => setNewTagline(e.target.value)}
