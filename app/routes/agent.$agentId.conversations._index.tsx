@@ -27,6 +27,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     take: 50,
     where: {
       agentId: agentId,
+      archived: false,
     },
     select: {
       id: true,
