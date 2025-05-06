@@ -250,6 +250,9 @@ const Chat = ({
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    if (!chatSettings?.enableFileUpload) {
+      return;
+    }
 
     const droppedFiles = event.dataTransfer.files;
     if (droppedFiles && droppedFiles.length > 0) {
