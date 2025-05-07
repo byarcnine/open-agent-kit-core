@@ -65,7 +65,13 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     });
     if (conversation) {
       messages = conversation.messages.map(
-        (message) => message.content as unknown as Message
+        (message) => {
+          const messageContent = message.content as unknown as Message;
+          return {
+            ...messageContent,
+            id: message.id,
+          } as Message;
+        }
       );
     }
   }

@@ -8,9 +8,9 @@ import { useContext } from "react";
 import { ChatContext } from "./chat.client";
 import React from "react";
 import remarkGfm from "remark-gfm";
+import { atomOneLight } from "react-code-blocks";
 
 const getYoutubeVideoId = (url: string) => {
-  console.log("url", url);
   const videoId = url.includes("youtube.com")
     ? new URL(url).searchParams.get("v")
     : url.split("/").pop();
@@ -151,6 +151,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
               language={match[1]}
               showLineNumbers={false}
               codeBlock
+              theme={atomOneLight}
             />
           ) : (
             <code className={className} {...props}>
