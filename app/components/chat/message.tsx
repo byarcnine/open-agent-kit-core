@@ -51,14 +51,14 @@ const Message: React.FC<MessageProps> = React.memo(
         setTimeout(() => setCopied(false), 1000);
       });
     };
-
+    const isUserMessage = message.role === "user";
     return (
       <div
         className={`oak-chat__message oak-chat__message--${
-          message.role === "user" ? "user" : "assistant"
+          isUserMessage ? "user" : "assistant"
         }`}
       >
-        {message.role === "assistant" && (
+        {!isUserMessage && (
           <Avatar className="oak-chat__message-avatar">
             <img src={avatarURL} alt="OAK Logo" />
           </Avatar>
@@ -174,12 +174,17 @@ const Message: React.FC<MessageProps> = React.memo(
                     message.role === "user" ? "user" : "assistant"
                   } relative group`}
                 >
-                  <MarkdownViewer text={part.text} />
+                  {!isUserMessage && <MarkdownViewer text={part.text} />}
+                  {isUserMessage && (
+                    <div className="oak-chat__message-content-container-text">
+                      {part.text}
+                    </div>
+                  )}
                   {chatSettings?.showMessageToolBar &&
                     message.role === "assistant" && (
                       <button
                         onClick={() => handleCopy(part.text)}
-                        className="copy-button opacity-30 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        className="oak-chat__message-content--copy-button"
                       >
                         {copied ? <Check size={16} /> : <Copy size={16} />}
                       </button>

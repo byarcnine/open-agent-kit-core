@@ -52,7 +52,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   try {
-    const { stream, conversationId } = await streamConversation(
+    const { stream, conversationId, embedSessionId } = await streamConversation(
       clientConversationId,
       agentId,
       userId,
@@ -63,6 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return stream.toDataStreamResponse({
       headers: {
         "x-conversation-id": conversationId,
+        ...(embedSessionId ? { "x-embed-session-id": embedSessionId } : {}),
         ...corsHeaders,
       },
       getErrorMessage(error) {

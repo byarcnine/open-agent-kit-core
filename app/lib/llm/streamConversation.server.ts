@@ -1,4 +1,4 @@
-import { prisma } from "@db/db.server";
+import { prisma, type Conversation } from "@db/db.server";
 import { getSystemPrompt } from "./systemPrompts.server";
 import {
   appendResponseMessages,
@@ -11,6 +11,7 @@ import { getModelContextLimit, getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
 import { prepareToolsForAgent } from "./tools.server";
 import { encoding_for_model, type TiktokenModel } from "tiktoken";
+import cuid2 from "@paralleldrive/cuid2";
 
 export const streamConversation = async (
   conversationId: string,
@@ -20,11 +21,17 @@ export const streamConversation = async (
   messages: Message[],
   meta: Record<string, any>,
 ) => {
-  const conversation = conversationId
-    ? await prisma.conversation.findUnique({ where: { id: conversationId } })
-    : await prisma.conversation.create({
-      data: { agentId, userId, customIdentifier },
+
+  let conversation: Conversation | null = null;
+  if (conversationId) {
+    conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+  }
+  if (!conversation) {
+    const embedSessionId = userId ? undefined : cuid2.createId();
+    conversation = await prisma.conversation.create({
+      data: { agentId, userId, customIdentifier, embedSessionId },
     });
+  }
 
   if (!conversation) {
     throw new Error("Conversation not found");
@@ -44,22 +51,34 @@ export const streamConversation = async (
   });
 
   const calculateTokens = (message: Message): number => {
-    const enc = encoding_for_model(modelForAgent.modelId as TiktokenModel);
-    const messageWithoutAttachments = {
-      ...message,
-      ...(message.experimental_attachments && {
-        experimental_attachments: message.experimental_attachments.map((attachment) => ({
-          ...attachment,
-          url: "",
-        })),
-      }),
-    };
-    const tokens = enc.encode(JSON.stringify(messageWithoutAttachments)).length;
-    enc.free();
-    return tokens;
+    try {
+      const enc = encoding_for_model(modelForAgent.modelId as TiktokenModel);
+      const messageWithoutAttachments = {
+        ...message,
+        ...(message.experimental_attachments && {
+          experimental_attachments: message.experimental_attachments.map(
+            (attachment) => ({
+              ...attachment,
+              url: "",
+            }),
+          ),
+        }),
+      };
+      const tokens = enc.encode(
+        JSON.stringify(messageWithoutAttachments),
+      ).length;
+      enc.free();
+      return tokens;
+    } catch (error) {
+      console.error("Error calculating tokens", error);
+      return 0;
+    }
   };
 
-  const limitMessagesByTokens = (messages: Message[], maxTokens: number): Message[] => {
+  const limitMessagesByTokens = (
+    messages: Message[],
+    maxTokens: number,
+  ): Message[] => {
     let totalTokens = 0;
     const limitedMessages: Message[] = [];
 
@@ -194,5 +213,6 @@ export const streamConversation = async (
       },
     }),
     conversationId: conversation.id,
+    embedSessionId: conversation.embedSessionId,
   };
 };

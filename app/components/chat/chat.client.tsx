@@ -31,6 +31,7 @@ interface TextPart {
 }
 
 const OAK_CONVERSATION_ID_KEY = "oak_conversation_id";
+const OAK_EMBED_SESSION_ID_KEY = "oak_embed_session_id";
 
 const Chat = ({
   onConversationStart,
@@ -57,8 +58,6 @@ const Chat = ({
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
 }) => {
-
-
   const conversationIdFromSessionStorage = sessionStorage.getItem(
     OAK_CONVERSATION_ID_KEY,
   );
@@ -75,13 +74,33 @@ const Chat = ({
   const [chatSettings, setChatSettings] = useState<ChatSettings>(
     agentChatSettings || initialChatSettings,
   );
+
+  const [initMessages, setInitMessages] = useState<Message[]>(
+    chatSettings?.initialMessage && !initialMessages?.length
+      ? [
+          {
+            id: "initial-message",
+            role: MessageRole.Assistant,
+            content: chatSettings?.initialMessage,
+            parts: [
+              {
+                type: "text",
+                text: chatSettings?.initialMessage,
+              } as TextPart,
+            ],
+          } as Message,
+        ]
+      : initialMessages || [],
+  );
+
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
+
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<FileList | undefined>(undefined);
+  const [files, setFiles] = useState<File[]>([]);
 
   const [selectedAction, setSelectedAction] = useState<
     "default" | "deep-research" | "search-web"
@@ -107,12 +126,26 @@ const Chat = ({
   useEffect(() => {
     if (isEmbed) {
       const startTime = Date.now();
-      fetch(`${API_URL}/api/agentChatSettings/${agentId}`)
+      const embedSessionId = sessionStorage.getItem(OAK_EMBED_SESSION_ID_KEY);
+      const headers: HeadersInit = {};
+      if (conversationId) {
+        headers["x-conversation-id"] = conversationId;
+      }
+      if (embedSessionId) {
+        headers["x-embed-session-id"] = embedSessionId;
+      }
+
+      fetch(`${API_URL}/api/agentChatSettings/${agentId}`, {
+        headers,
+      })
         .then((res) => res.json())
         .then((data) => {
           setChatSettings(data.chatSettings || chatSettings);
           setToolNames(data.toolNames);
 
+          if (data.messages) {
+            setInitMessages(data.messages);
+          }
           const elapsedTime = Date.now() - startTime;
           const remainingTime = Math.max(1500 - elapsedTime, 0);
 
@@ -129,22 +162,11 @@ const Chat = ({
     }
   }, []);
 
-  const initMessages =
-    chatSettings?.initialMessage && !initialMessages?.length
-      ? [
-          {
-            id: "initial-message",
-            role: MessageRole.Assistant,
-            content: chatSettings?.initialMessage,
-            parts: [
-              {
-                type: "text",
-                text: chatSettings?.initialMessage,
-              } as TextPart,
-            ],
-          } as Message,
-        ]
-      : initialMessages;
+  const createFileList = (filesArray: File[]): FileList => {
+    const dataTransfer = new DataTransfer();
+    filesArray.forEach((file) => dataTransfer.items.add(file));
+    return dataTransfer.files;
+  };
 
   const {
     messages,
@@ -164,39 +186,111 @@ const Chat = ({
     initialMessages: initMessages,
     onResponse: (response) => {
       const newConversationId = response.headers.get("x-conversation-id");
+      const embedSessionId = response.headers.get("x-embed-session-id");
       if (newConversationId && !conversationId) {
         setConversationId(newConversationId);
         onConversationStart?.(newConversationId);
       }
+      if (embedSessionId) {
+        sessionStorage.setItem(OAK_EMBED_SESSION_ID_KEY, embedSessionId);
+      }
     },
   });
+
+  const clearFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setFiles([]);
+  };
+
+  const handleFormSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (input.trim() === "") {
+        return;
+      }
+      handleSubmit(event, {
+        experimental_attachments: files.length
+          ? createFileList(files)
+          : undefined,
+      });
+      textareaRef.current?.blur();
+      clearFileInput();
+    },
+    [handleSubmit, input, files],
+  );
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         handleSubmit(event, {
-          experimental_attachments: files,
+          experimental_attachments: files.length
+            ? createFileList(files)
+            : undefined,
         });
-        setFiles(undefined);
+        textareaRef.current?.blur();
+        clearFileInput();
       }
     },
-    [handleSubmit],
+    [handleSubmit, files],
   );
 
   const handleCardSelect = (question: string) => {
     setInput(question);
   };
 
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    event.preventDefault();
+    if (event.target.files && event.target.files.length > 0) {
+      const newFiles = Array.from(event.target.files);
+      setFiles((prevFiles) => {
+        const merged = [...prevFiles];
+        newFiles.forEach((file) => {
+          const exists = merged.some(
+            (f) => f.name === file.name && f.size === file.size,
+          );
+          if (!exists) {
+            merged.push(file);
+          }
+        });
+        return merged;
+      });
+    }
+  };
+
   const clearSelectedFile = (fileName: string) => {
+    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (!chatSettings?.enableFileUpload) {
+      return;
+    }
+
+    const droppedFiles = Array.from(event.dataTransfer.files);
     setFiles((prevFiles) => {
-      if (!prevFiles) return prevFiles;
-      const updatedFiles = Array.from(prevFiles).filter(
-        (file) => file.name !== fileName,
-      );
-      const dataTransfer = new DataTransfer();
-      updatedFiles.forEach((file) => dataTransfer.items.add(file));
-      return dataTransfer.files;
+      const merged = [...prevFiles];
+      droppedFiles.forEach((file) => {
+        const exists = merged.some(
+          (f) => f.name === file.name && f.size === file.size,
+        );
+        if (!exists) {
+          merged.push(file);
+        }
+      });
+      return merged;
     });
   };
 
@@ -205,7 +299,9 @@ const Chat = ({
       chatSettings?.suggestedQuestions?.includes(input);
     if (isSuggestedQuestion) {
       handleSubmit(event, {
-        experimental_attachments: files,
+        experimental_attachments: files.length
+          ? createFileList(files)
+          : undefined,
       });
     }
   }, [input, handleSubmit]);
@@ -238,10 +334,16 @@ const Chat = ({
   }, [input, adjustTextareaHeight]);
 
   useEffect(() => {
-    if (conversationId) {
+    if (conversationId && isEmbed) {
       sessionStorage.setItem(OAK_CONVERSATION_ID_KEY, conversationId);
     }
-  }, [conversationId]);
+  }, [conversationId, isEmbed]);
+
+  const handleFileButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   if (!chatSettingsLoaded && isEmbed) {
     return (
@@ -261,7 +363,12 @@ const Chat = ({
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
   return (
     <ChatContext.Provider value={{ isEmbed, chatSettings }}>
-      <div id="oak-chat-container" className="oak-chat">
+      <div
+        id="oak-chat-container"
+        className={`oak-chat`}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         {messages.length === 0 ? (
           <div className="oak-chat__empty-state">
             {chatSettings?.intro?.title && (
@@ -303,12 +410,12 @@ const Chat = ({
             <div className="oak-chat__input-container">
               <form
                 ref={formRef}
-                onSubmit={handleSubmit}
+                onSubmit={handleFormSubmit}
                 className="oak-chat__form"
               >
-                {files && (
+                {files.length > 0 && (
                   <div className="oak-chat__file-thumbnails">
-                    {Array.from(files).map((file) => (
+                    {files.map((file) => (
                       <div
                         key={file.name}
                         className="oak-chat__file-thumbnails__item"
@@ -341,16 +448,18 @@ const Chat = ({
                     ))}
                   </div>
                 )}
-                <Textarea
-                  ref={textareaRef}
-                  onKeyDown={handleKeyDown}
-                  name="prompt"
-                  value={input}
-                  rows={chatSettings?.textAreaInitialRows || 2}
-                  onChange={handleInputChange}
-                  placeholder="Type your message..."
-                  className="oak-chat__text-area"
-                />
+                <div className="oak-chat__text-area-container">
+                  <Textarea
+                    ref={textareaRef}
+                    onKeyDown={handleKeyDown}
+                    name="prompt"
+                    value={input}
+                    rows={chatSettings?.textAreaInitialRows || 2}
+                    onChange={handleInputChange}
+                    placeholder="Type your message..."
+                    className="oak-chat__text-area"
+                  />
+                </div>
 
                 <div className="oak-chat__action-row">
                   {chatSettings?.enableFileUpload && supportedFileTypes && (
@@ -358,7 +467,7 @@ const Chat = ({
                       <button
                         type="button"
                         className="oak-chat__action-button"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={handleFileButtonClick}
                       >
                         <Plus size={18} />
                       </button>
@@ -368,11 +477,7 @@ const Chat = ({
                         accept={supportedFileTypes.join(",")}
                         ref={fileInputRef}
                         style={{ display: "none" }}
-                        onChange={(event) => {
-                          if (event.target.files) {
-                            setFiles(event.target.files);
-                          }
-                        }}
+                        onChange={handleFileInputChange}
                       />
                     </div>
                   )}
