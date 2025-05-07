@@ -19,7 +19,7 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Button } from "~/components/ui/button";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import MarkdownEdit from "~/components/markdownedit/markdownedit.client";
 import { toast } from "sonner";
 import NoDataCard from "~/components/ui/no-data-card";
@@ -226,6 +226,8 @@ const Prompt = () => {
     return "bg-red-500";
   };
 
+  const initialPrompt = useRef(markdown);
+
   return (
     <div className="py-8 px-4 md:p-8 w-full flex flex-col">
       <h1 className="text-3xl mb-4">System Prompt Editor</h1>
@@ -262,7 +264,7 @@ const Prompt = () => {
             <ClientOnlyComponent>
               {MarkdownEdit && (
                 <MarkdownEdit
-                  prompt={markdown}
+                  prompt={initialPrompt.current}
                   onChange={setMarkdown}
                   key={editorKey}
                 />
