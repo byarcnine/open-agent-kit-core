@@ -9,6 +9,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const page = parseInt(url.searchParams.get("page") || "1");
   const take = parseInt(url.searchParams.get("take") || "25");
   const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
-  const conversations = await loadConversations({ page, agentId: agentId as string, userId: user.id, take });
+  const conversations = await loadConversations({ page, agentId: agentId as string, userId: user.id, take, archived: false });
   return { conversations };
 };

@@ -59,7 +59,7 @@ export const streamConversation = async (
   const config = getConfig();
 
   const modelForAgent = await getModelForAgent(agentId, config);
-  const TOKEN_LIMIT = getModelContextLimit(modelForAgent.modelId) * 0.8;
+  const TOKEN_LIMIT = getModelContextLimit(modelForAgent.model.modelId) * 0.8;
 
   // Add the user message to the conversation
   const createMessagePromise = prisma.message.create({
@@ -73,7 +73,7 @@ export const streamConversation = async (
   const messagesInScope = limitMessagesByTokens(
     messages,
     TOKEN_LIMIT,
-    modelForAgent.modelId,
+    modelForAgent.model.modelId,
   );
 
   const cleanedMessages = messagesInScope.filter((message) => {
@@ -126,7 +126,8 @@ export const streamConversation = async (
 
   return {
     stream: streamText({
-      model,
+      model: model.model,
+      temperature: model.settings.temperature || 0.7,
       messages: cleanedMessages,
       system: systemPrompt,
       tools: { ...Object.fromEntries(toolsArray) },
@@ -148,7 +149,7 @@ export const streamConversation = async (
               year: new Date().getFullYear(),
               month: new Date().getMonth() + 1,
               day: new Date().getDate(),
-              modelId: model.modelId,
+              modelId: model.model.modelId,
             },
           },
           create: {
@@ -156,7 +157,7 @@ export const streamConversation = async (
             month: new Date().getMonth() + 1,
             day: new Date().getDate(),
             tokens: usage,
-            modelId: model.modelId,
+            modelId: model.model.modelId,
             agent: {
               connect: {
                 id: agentId,
@@ -193,11 +194,11 @@ export const streamConversation = async (
     tokens: {
       messages: calculateTokensForMessages(
         messagesInScope,
-        modelForAgent.modelId,
+        modelForAgent.model.modelId,
       ),
       systemPrompt: calculateTokensString(
         systemPrompt ?? "",
-        modelForAgent.modelId,
+        modelForAgent.model.modelId,
       ),
     },
   };
