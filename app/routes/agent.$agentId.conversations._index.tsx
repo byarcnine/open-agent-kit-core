@@ -53,7 +53,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 const Conversations = () => {
   const { conversations } = useLoaderData<typeof loader>();
   const { agentId } = useParams();
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<typeof loader>();
   const [showArchived, setShowArchived] = useState(false);
 
   const handleCheckboxChange = () => {
@@ -63,8 +63,7 @@ const Conversations = () => {
     );
   };
 
-  const updatedConversations =
-    (fetcher.data?.conversations as Conversation[]) || conversations;
+  const updatedConversations = fetcher.data?.conversations || conversations;
 
   return (
     <div className="py-8 px-4 md:p-8 w-full">
