@@ -65,10 +65,11 @@ const Chat = ({
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
+
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<FileList | undefined>(undefined);
+  const [files, setFiles] = useState<File[]>([]);
 
   const [selectedAction, setSelectedAction] = useState<
     "default" | "deep-research" | "search-web"
@@ -133,6 +134,12 @@ const Chat = ({
         ]
       : initialMessages;
 
+  const createFileList = (filesArray: File[]): FileList => {
+    const dataTransfer = new DataTransfer();
+    filesArray.forEach((file) => dataTransfer.items.add(file));
+    return dataTransfer.files;
+  };
+
   const {
     messages,
     input,
@@ -162,7 +169,7 @@ const Chat = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    setFiles(undefined);
+    setFiles([]);
   };
 
   const handleFormSubmit = useCallback(
@@ -172,8 +179,11 @@ const Chat = ({
         return;
       }
       handleSubmit(event, {
-        experimental_attachments: files,
+        experimental_attachments: files.length
+          ? createFileList(files)
+          : undefined,
       });
+      textareaRef.current?.blur();
       clearFileInput();
     },
     [handleSubmit, input, files],
@@ -184,8 +194,11 @@ const Chat = ({
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         handleSubmit(event, {
-          experimental_attachments: files,
+          experimental_attachments: files.length
+            ? createFileList(files)
+            : undefined,
         });
+        textareaRef.current?.blur();
         clearFileInput();
       }
     },
@@ -200,49 +213,52 @@ const Chat = ({
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     event.preventDefault();
-    // Prevent the file input from opening again
-    if (fileInputRef.current) {
-      fileInputRef.current.blur();
-    }
     if (event.target.files && event.target.files.length > 0) {
-      const selectedFiles = event.target.files;
-      const dataTransfer = new DataTransfer();
-
-      // If files already exist, keep them and add new ones (avoid duplicates)
-      if (files && files.length > 0) {
-        Array.from(files).forEach((file) => {
-          dataTransfer.items.add(file);
+      const newFiles = Array.from(event.target.files);
+      setFiles((prevFiles) => {
+        const merged = [...prevFiles];
+        newFiles.forEach((file) => {
+          const exists = merged.some(
+            (f) => f.name === file.name && f.size === file.size,
+          );
+          if (!exists) {
+            merged.push(file);
+          }
         });
-      }
-
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        // Avoid adding duplicates by name and size
-        const alreadyAdded = Array.from(dataTransfer.files).some(
-          (f) => f.name === file.name && f.size === file.size,
-        );
-        if (!alreadyAdded) {
-          dataTransfer.items.add(file);
-        }
-      }
-      setFiles(dataTransfer.files);
+        return merged;
+      });
     }
   };
 
   const clearSelectedFile = (fileName: string) => {
+    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (!chatSettings?.enableFileUpload) {
+      return;
+    }
+
+    const droppedFiles = Array.from(event.dataTransfer.files);
     setFiles((prevFiles) => {
-      if (!prevFiles) return prevFiles;
-      const updatedFiles = Array.from(prevFiles).filter(
-        (file) => file.name !== fileName,
-      );
-      const dataTransfer = new DataTransfer();
-      updatedFiles.forEach((file) => dataTransfer.items.add(file));
-
-      if (updatedFiles.length === 0) {
-        clearFileInput();
-      }
-
-      return dataTransfer.files;
+      const merged = [...prevFiles];
+      droppedFiles.forEach((file) => {
+        const exists = merged.some(
+          (f) => f.name === file.name && f.size === file.size,
+        );
+        if (!exists) {
+          merged.push(file);
+        }
+      });
+      return merged;
     });
   };
 
@@ -251,7 +267,9 @@ const Chat = ({
       chatSettings?.suggestedQuestions?.includes(input);
     if (isSuggestedQuestion) {
       handleSubmit(event, {
-        experimental_attachments: files,
+        experimental_attachments: files.length
+          ? createFileList(files)
+          : undefined,
       });
     }
   }, [input, handleSubmit]);
@@ -283,6 +301,12 @@ const Chat = ({
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
 
+  const handleFileButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   if (!chatSettingsLoaded && isEmbed) {
     return (
       <div id="oak-chat-container" className="oak-chat">
@@ -301,7 +325,12 @@ const Chat = ({
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
   return (
     <ChatContext.Provider value={{ isEmbed, chatSettings }}>
-      <div id="oak-chat-container" className="oak-chat">
+      <div
+        id="oak-chat-container"
+        className={`oak-chat`}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         {messages.length === 0 ? (
           <div className="oak-chat__empty-state">
             {chatSettings?.intro?.title && (
@@ -346,9 +375,9 @@ const Chat = ({
                 onSubmit={handleFormSubmit}
                 className="oak-chat__form"
               >
-                {files && (
+                {files.length > 0 && (
                   <div className="oak-chat__file-thumbnails">
-                    {Array.from(files).map((file) => (
+                    {files.map((file) => (
                       <div
                         key={file.name}
                         className="oak-chat__file-thumbnails__item"
@@ -381,16 +410,18 @@ const Chat = ({
                     ))}
                   </div>
                 )}
-                <Textarea
-                  ref={textareaRef}
-                  onKeyDown={handleKeyDown}
-                  name="prompt"
-                  value={input}
-                  rows={chatSettings?.textAreaInitialRows || 2}
-                  onChange={handleInputChange}
-                  placeholder="Type your message..."
-                  className="oak-chat__text-area"
-                />
+                <div>
+                  <Textarea
+                    ref={textareaRef}
+                    onKeyDown={handleKeyDown}
+                    name="prompt"
+                    value={input}
+                    rows={chatSettings?.textAreaInitialRows || 2}
+                    onChange={handleInputChange}
+                    placeholder="Type your message..."
+                    className="oak-chat__text-area"
+                  />
+                </div>
 
                 <div className="oak-chat__action-row">
                   {chatSettings?.enableFileUpload && supportedFileTypes && (
@@ -398,7 +429,7 @@ const Chat = ({
                       <button
                         type="button"
                         className="oak-chat__action-button"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={handleFileButtonClick}
                       >
                         <Plus size={18} />
                       </button>
