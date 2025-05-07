@@ -15,6 +15,7 @@ import { PERMISSIONS } from "~/types/auth";
 
 export enum Intent {
   UPDATE_TAGLINE = "updateTagline",
+  ARCHIVE_CONVERSATION = "archiveConversation",
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -27,7 +28,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
   switch (intent) {
-    case Intent.UPDATE_TAGLINE:
+    case Intent.UPDATE_TAGLINE: {
       const conversationId = formData.get("conversationId");
       const newTagline = formData.get("newTagline");
 
@@ -43,6 +44,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         );
       }
       break;
+    }
+    case Intent.ARCHIVE_CONVERSATION: {
+      const conversationId = formData.get("conversationId");
+      await prisma.conversation.update({
+        where: { id: conversationId as string },
+        data: { archived: true },
+      });
+      break;
+    }
     default:
       return data({ success: false, error: "Invalid intent" }, { status: 400 });
   }
