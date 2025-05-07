@@ -179,8 +179,11 @@ const Chat = ({
         return;
       }
       handleSubmit(event, {
-        experimental_attachments: files.length ? createFileList(files) : undefined,
+        experimental_attachments: files.length
+          ? createFileList(files)
+          : undefined,
       });
+      textareaRef.current?.blur();
       clearFileInput();
     },
     [handleSubmit, input, files],
@@ -191,8 +194,11 @@ const Chat = ({
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         handleSubmit(event, {
-          experimental_attachments: files.length ? createFileList(files) : undefined,
+          experimental_attachments: files.length
+            ? createFileList(files)
+            : undefined,
         });
+        textareaRef.current?.blur();
         clearFileInput();
       }
     },
@@ -225,9 +231,7 @@ const Chat = ({
   };
 
   const clearSelectedFile = (fileName: string) => {
-    setFiles((prevFiles) =>
-      prevFiles.filter((file) => file.name !== fileName),
-    );
+    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -263,7 +267,9 @@ const Chat = ({
       chatSettings?.suggestedQuestions?.includes(input);
     if (isSuggestedQuestion) {
       handleSubmit(event, {
-        experimental_attachments: files.length ? createFileList(files) : undefined,
+        experimental_attachments: files.length
+          ? createFileList(files)
+          : undefined,
       });
     }
   }, [input, handleSubmit]);
