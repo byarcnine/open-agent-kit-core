@@ -39,6 +39,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       createdAt: true,
       updatedAt: true,
       tagline: true,
+      userId: true,
+      user: {
+        select: {
+          email: true,
+        },
+      },
     },
   });
   return { conversations };
@@ -83,6 +89,7 @@ const Conversations = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Custom Id</TableHead>
                 <TableHead>Initial Message</TableHead>
+                <TableHead>User</TableHead>
                 <TableHead>Created At</TableHead>
               </TableRow>
             </TableHeader>
@@ -101,6 +108,9 @@ const Conversations = () => {
                   </TableCell>
                   <TableCell className="max-w-[300px] truncate">
                     {conversation.tagline}
+                  </TableCell>
+                  <TableCell>
+                    {conversation.user?.email || "Anonymous"}
                   </TableCell>
                   <TableCell>
                     {dayjs(conversation.createdAt).fromNow()}
