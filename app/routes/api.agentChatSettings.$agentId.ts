@@ -37,7 +37,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const embedSessionId = request.headers.get("x-embed-session-id");
 
   let messages: Message[] = [];
-  if (conversationId) {
+  if (conversationId && embedSessionId) {
     const conversation = await prisma.conversation.findUnique({
       where: {
         id: conversationId,
@@ -52,9 +52,13 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       },
     });
     if (conversation) {
-      messages = conversation.messages;
+      messages = conversation.messages.map(
+        (message) => message.content as unknown as Message
+      );
     }
   }
+
+
 
   const toolNames = toolNameIdentifierList();
 

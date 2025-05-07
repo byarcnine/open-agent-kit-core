@@ -1,9 +1,10 @@
-import { prisma } from "@db/db.server";
+import { prisma, type Conversation } from "@db/db.server";
 import {
   Link,
   useLoaderData,
   useParams,
   type LoaderFunctionArgs,
+  useFetcher,
 } from "react-router";
 import {
   Table,
@@ -16,17 +17,21 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import NoDataCard from "~/components/ui/no-data-card";
+import { useState } from "react";
+import Checkbox from "~/components/ui/checkbox";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
+  const showArchived = request.url.includes("showArchived=true");
   const conversations = await prisma.conversation.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,
     where: {
       agentId: agentId,
+      archived: showArchived,
     },
     select: {
       id: true,
@@ -34,6 +39,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       createdAt: true,
       updatedAt: true,
       tagline: true,
+      userId: true,
+      user: {
+        select: {
+          email: true,
+        },
+      },
     },
   });
   return { conversations };
@@ -42,14 +53,34 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 const Conversations = () => {
   const { conversations } = useLoaderData<typeof loader>();
   const { agentId } = useParams();
+  const fetcher = useFetcher<typeof loader>();
+  const [showArchived, setShowArchived] = useState(false);
+
+  const handleCheckboxChange = () => {
+    setShowArchived((prev) => !prev);
+    fetcher.load(
+      `/agent/${agentId}/conversations?showArchived=${!showArchived}`,
+    );
+  };
+
+  const updatedConversations = fetcher.data?.conversations || conversations;
+
   return (
     <div className="py-8 px-4 md:p-8 w-full">
       <h1 className="text-3xl font-medium mb-8">Agent Conversations</h1>
 
-      {(!conversations || conversations.length === 0) && (
+      <div className="mb-4 text-sm flex justify-end">
+        <Checkbox
+          checked={showArchived}
+          onCheckedChange={handleCheckboxChange}
+          label="Show Archived"
+        />
+      </div>
+
+      {(!updatedConversations || updatedConversations.length === 0) && (
         <NoDataCard description="No conversations found for this agent." />
       )}
-      {conversations && conversations.length > 0 && (
+      {updatedConversations && updatedConversations.length > 0 && (
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -57,11 +88,12 @@ const Conversations = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Custom Id</TableHead>
                 <TableHead>Initial Message</TableHead>
+                <TableHead>User</TableHead>
                 <TableHead>Created At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {conversations.map((conversation) => (
+              {updatedConversations.map((conversation) => (
                 <TableRow key={conversation.id}>
                   <TableCell className="font-medium">
                     <Link
@@ -75,6 +107,9 @@ const Conversations = () => {
                   </TableCell>
                   <TableCell className="max-w-[300px] truncate">
                     {conversation.tagline}
+                  </TableCell>
+                  <TableCell>
+                    {conversation.user?.email || "Anonymous"}
                   </TableCell>
                   <TableCell>
                     {dayjs(conversation.createdAt).fromNow()}

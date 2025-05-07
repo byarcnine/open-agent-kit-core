@@ -75,24 +75,6 @@ const Chat = ({
     agentChatSettings || initialChatSettings,
   );
 
-  const [initMessages, setInitMessages] = useState<Message[]>(
-    chatSettings?.initialMessage && !initialMessages?.length
-      ? [
-          {
-            id: "initial-message",
-            role: MessageRole.Assistant,
-            content: chatSettings?.initialMessage,
-            parts: [
-              {
-                type: "text",
-                text: chatSettings?.initialMessage,
-              } as TextPart,
-            ],
-          } as Message,
-        ]
-      : initialMessages || [],
-  );
-
   const [toolNames, setToolNames] =
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
@@ -144,7 +126,7 @@ const Chat = ({
           setToolNames(data.toolNames);
 
           if (data.messages) {
-            setInitMessages(data.messages);
+            setMessages(data.messages);
           }
           const elapsedTime = Date.now() - startTime;
           const remainingTime = Math.max(1500 - elapsedTime, 0);
@@ -162,6 +144,23 @@ const Chat = ({
     }
   }, []);
 
+  const initMessages =
+    chatSettings?.initialMessage && !initialMessages?.length
+      ? [
+          {
+            id: "initial-message",
+            role: MessageRole.Assistant,
+            content: chatSettings?.initialMessage,
+            parts: [
+              {
+                type: "text",
+                text: chatSettings?.initialMessage,
+              } as TextPart,
+            ],
+          } as Message,
+        ]
+      : initialMessages || [];
+
   const createFileList = (filesArray: File[]): FileList => {
     const dataTransfer = new DataTransfer();
     filesArray.forEach((file) => dataTransfer.items.add(file));
@@ -176,6 +175,7 @@ const Chat = ({
     setInput,
     status,
     error,
+    setMessages,
   } = useChat({
     api: `${API_URL}/api/generate`,
     body: {
