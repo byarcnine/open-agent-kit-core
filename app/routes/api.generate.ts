@@ -7,6 +7,7 @@ import { canUserAccessAgent } from "~/lib/auth/hasAccess.server";
 import { getSession } from "~/lib/auth/auth.server";
 import { streamConversation } from "~/lib/llm/streamConversation.server";
 import { getCorsHeaderForAgent } from "./utils";
+import jwt from 'jsonwebtoken';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -52,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   try {
-    const { stream, conversationId, embedSessionId } = await streamConversation(
+    const { stream, conversationId } = await streamConversation(
       clientConversationId,
       agentId,
       userId,
@@ -60,10 +61,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       body.messages,
       meta
     );
+
+    let oakSessionToken = session?.user.id || clientConversationId ?
+      undefined :
+      jwt.sign({ conversationId }, process.env.APP_SECRET || "" as string, { expiresIn: '24h' });
+
     return stream.toDataStreamResponse({
       headers: {
         "x-conversation-id": conversationId,
-        ...(embedSessionId ? { "x-embed-session-id": embedSessionId } : {}),
+        ...(oakSessionToken ? { "x-oak-session-token": oakSessionToken } : {}),
         ...corsHeaders,
       },
       getErrorMessage(error) {

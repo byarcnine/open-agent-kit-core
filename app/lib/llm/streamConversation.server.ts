@@ -11,7 +11,6 @@ import { getModelContextLimit, getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
 import { prepareToolsForAgent } from "./tools.server";
 import { encoding_for_model, type TiktokenModel } from "tiktoken";
-import cuid2 from "@paralleldrive/cuid2";
 
 export const streamConversation = async (
   conversationId: string,
@@ -22,16 +21,11 @@ export const streamConversation = async (
   meta: Record<string, any>,
 ) => {
 
-  let conversation: Conversation | null = null;
-  if (conversationId) {
-    conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
-  }
-  if (!conversation) {
-    const embedSessionId = userId ? undefined : cuid2.createId();
-    conversation = await prisma.conversation.create({
-      data: { agentId, userId, customIdentifier, embedSessionId },
+  const conversation = conversationId ?
+    await prisma.conversation.findUnique({ where: { id: conversationId } }) :
+    await prisma.conversation.create({
+      data: { agentId, userId, customIdentifier },
     });
-  }
 
   if (!conversation) {
     throw new Error("Conversation not found");
@@ -216,6 +210,5 @@ export const streamConversation = async (
       },
     }),
     conversationId: conversation.id,
-    embedSessionId: conversation.embedSessionId,
   };
 };

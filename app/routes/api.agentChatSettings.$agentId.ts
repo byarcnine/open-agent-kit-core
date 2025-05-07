@@ -3,6 +3,8 @@ import type { LoaderFunction } from "react-router";
 import { getCorsHeaderForAgent } from "./utils";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import { getChatSettings } from "~/lib/llm/chat.server";
+import jwt from 'jsonwebtoken';
+
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const corsHeaders = await getCorsHeaderForAgent(
@@ -33,15 +35,25 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     );
   }
 
-  const conversationId = request.headers.get("x-conversation-id");
-  const embedSessionId = request.headers.get("x-embed-session-id");
+  const sessionToken = request.headers.get("x-oak-session-token");
+  let conversationId: string | undefined;
+  if (sessionToken) {
+    try {
+      const decoded = jwt.verify(sessionToken, process.env.APP_SECRET as string);
+      if (typeof decoded === "object" && decoded !== null && "conversationId" in decoded) {
+        conversationId = decoded.conversationId as string;
+      }
+    } catch (error) {
+      console.error("Error verifying session token:", error);
+    }
+  }
+
 
   let messages: Message[] = [];
-  if (conversationId && embedSessionId) {
+  if (conversationId) {
     const conversation = await prisma.conversation.findUnique({
       where: {
         id: conversationId,
-        embedSessionId,
       },
       include: {
         messages: {
@@ -58,12 +70,10 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     }
   }
 
-
-
   const toolNames = toolNameIdentifierList();
 
   const chatSettings = await getChatSettings(agentId as string);
-  return new Response(JSON.stringify({ chatSettings, toolNames, messages }), {
+  return new Response(JSON.stringify({ chatSettings, toolNames, messages, sessionValid: !!conversationId }), {
     headers: {
       "Content-Type": "application/json",
       ...corsHeaders,

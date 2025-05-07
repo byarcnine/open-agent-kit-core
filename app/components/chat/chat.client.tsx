@@ -30,8 +30,7 @@ interface TextPart {
   text: string;
 }
 
-const OAK_CONVERSATION_ID_KEY = "oak_conversation_id";
-const OAK_EMBED_SESSION_ID_KEY = "oak_embed_session_id";
+const OAK_SESSION_TOKEN_KEY = "oak_session_token";
 
 const Chat = ({
   onConversationStart,
@@ -58,17 +57,9 @@ const Chat = ({
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
 }) => {
-  const conversationIdFromSessionStorage = sessionStorage.getItem(
-    OAK_CONVERSATION_ID_KEY,
-  );
-
-  const initConversationId =
-    isEmbed && conversationIdFromSessionStorage
-      ? conversationIdFromSessionStorage
-      : initialConversationId;
 
   const [conversationId, setConversationId] = useState<string | undefined>(
-    initConversationId,
+    initialConversationId,
   );
 
   const [chatSettings, setChatSettings] = useState<ChatSettings>(
@@ -108,13 +99,10 @@ const Chat = ({
   useEffect(() => {
     if (isEmbed) {
       const startTime = Date.now();
-      const embedSessionId = sessionStorage.getItem(OAK_EMBED_SESSION_ID_KEY);
+      const oakSessionToken = sessionStorage.getItem(OAK_SESSION_TOKEN_KEY);
       const headers: HeadersInit = {};
-      if (conversationId) {
-        headers["x-conversation-id"] = conversationId;
-      }
-      if (embedSessionId) {
-        headers["x-embed-session-id"] = embedSessionId;
+      if (oakSessionToken) {
+        headers["x-oak-session-token"] = oakSessionToken;
       }
 
       fetch(`${API_URL}/api/agentChatSettings/${agentId}`, {
@@ -124,6 +112,11 @@ const Chat = ({
         .then((data) => {
           setChatSettings(data.chatSettings || chatSettings);
           setToolNames(data.toolNames);
+
+          if (!data.sessionValid) {
+            setConversationId(undefined);
+            sessionStorage.removeItem(OAK_SESSION_TOKEN_KEY);
+          }
 
           if (data.messages) {
             setMessages(data.messages);
@@ -186,13 +179,13 @@ const Chat = ({
     initialMessages: initMessages,
     onResponse: (response) => {
       const newConversationId = response.headers.get("x-conversation-id");
-      const embedSessionId = response.headers.get("x-embed-session-id");
+      const oakSessionToken = response.headers.get("x-oak-session-token");
       if (newConversationId && !conversationId) {
         setConversationId(newConversationId);
         onConversationStart?.(newConversationId);
       }
-      if (embedSessionId) {
-        sessionStorage.setItem(OAK_EMBED_SESSION_ID_KEY, embedSessionId);
+      if (oakSessionToken) {
+        sessionStorage.setItem(OAK_SESSION_TOKEN_KEY, oakSessionToken);
       }
     },
   });
@@ -332,12 +325,6 @@ const Chat = ({
   useEffect(() => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
-
-  useEffect(() => {
-    if (conversationId && isEmbed) {
-      sessionStorage.setItem(OAK_CONVERSATION_ID_KEY, conversationId);
-    }
-  }, [conversationId, isEmbed]);
 
   const handleFileButtonClick = () => {
     if (fileInputRef.current) {
