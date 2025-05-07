@@ -30,6 +30,8 @@ interface TextPart {
   text: string;
 }
 
+const OAK_CONVERSATION_ID_KEY = "oak_conversation_id";
+
 const Chat = ({
   onConversationStart,
   initialMessages,
@@ -55,8 +57,19 @@ const Chat = ({
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
 }) => {
+
+
+  const conversationIdFromSessionStorage = sessionStorage.getItem(
+    OAK_CONVERSATION_ID_KEY,
+  );
+
+  const initConversationId =
+    isEmbed && conversationIdFromSessionStorage
+      ? conversationIdFromSessionStorage
+      : initialConversationId;
+
   const [conversationId, setConversationId] = useState<string | undefined>(
-    initialConversationId,
+    initConversationId,
   );
 
   const [chatSettings, setChatSettings] = useState<ChatSettings>(
@@ -223,6 +236,12 @@ const Chat = ({
   useEffect(() => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
+
+  useEffect(() => {
+    if (conversationId) {
+      sessionStorage.setItem(OAK_CONVERSATION_ID_KEY, conversationId);
+    }
+  }, [conversationId]);
 
   if (!chatSettingsLoaded && isEmbed) {
     return (
