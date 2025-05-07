@@ -44,23 +44,30 @@ export const streamConversation = async (
   });
 
   const calculateTokens = (message: Message): number => {
-    const enc = encoding_for_model(
-      modelForAgent.model.modelId as TiktokenModel,
-    );
-    const messageWithoutAttachments = {
-      ...message,
-      ...(message.experimental_attachments && {
-        experimental_attachments: message.experimental_attachments.map(
-          (attachment) => ({
-            ...attachment,
-            url: "",
-          }),
-        ),
-      }),
-    };
-    const tokens = enc.encode(JSON.stringify(messageWithoutAttachments)).length;
-    enc.free();
-    return tokens;
+    try {
+      const enc = encoding_for_model(
+        modelForAgent.model.modelId as TiktokenModel,
+      );
+      const messageWithoutAttachments = {
+        ...message,
+        ...(message.experimental_attachments && {
+          experimental_attachments: message.experimental_attachments.map(
+            (attachment) => ({
+              ...attachment,
+              url: "",
+            }),
+          ),
+        }),
+      };
+      const tokens = enc.encode(
+        JSON.stringify(messageWithoutAttachments),
+      ).length;
+      enc.free();
+      return tokens;
+    } catch (error) {
+      console.error("Error calculating tokens", error);
+      return 0;
+    }
   };
 
   const limitMessagesByTokens = (
