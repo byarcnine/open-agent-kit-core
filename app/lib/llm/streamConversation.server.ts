@@ -10,7 +10,34 @@ import { getConfig } from "../config/config";
 import { getModelContextLimit, getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
 import { prepareToolsForAgent } from "./tools.server";
-import { encoding_for_model, type TiktokenModel } from "tiktoken";
+import {
+  calculateTokensForMessage,
+  calculateTokensForMessages,
+  calculateTokensString,
+} from "./tokenCounter.server";
+
+const limitMessagesByTokens = (
+  messages: Message[],
+  maxTokens: number,
+  modelId: string,
+): Message[] => {
+  let totalTokens = 0;
+  const limitedMessages: Message[] = [];
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    const messageTokens = calculateTokensForMessage(message, modelId);
+
+    if (totalTokens + messageTokens > maxTokens) {
+      break;
+    }
+
+    limitedMessages.unshift(message);
+    totalTokens += messageTokens;
+  }
+
+  return limitedMessages;
+};
 
 export const streamConversation = async (
   conversationId: string,
@@ -23,8 +50,8 @@ export const streamConversation = async (
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({
-      data: { agentId, userId, customIdentifier },
-    });
+        data: { agentId, userId, customIdentifier },
+      });
 
   if (!conversation) {
     throw new Error("Conversation not found");
@@ -43,42 +70,11 @@ export const streamConversation = async (
     },
   });
 
-  const calculateTokens = (message: Message): number => {
-    const enc = encoding_for_model(modelForAgent.modelId as TiktokenModel);
-    const messageWithoutAttachments = {
-      ...message,
-      ...(message.experimental_attachments && {
-        experimental_attachments: message.experimental_attachments.map((attachment) => ({
-          ...attachment,
-          url: "",
-        })),
-      }),
-    };
-    const tokens = enc.encode(JSON.stringify(messageWithoutAttachments)).length;
-    enc.free();
-    return tokens;
-  };
-
-  const limitMessagesByTokens = (messages: Message[], maxTokens: number): Message[] => {
-    let totalTokens = 0;
-    const limitedMessages: Message[] = [];
-
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      const messageTokens = calculateTokens(message);
-
-      if (totalTokens + messageTokens > maxTokens) {
-        break;
-      }
-
-      limitedMessages.unshift(message);
-      totalTokens += messageTokens;
-    }
-
-    return limitedMessages;
-  };
-
-  const messagesInScope = limitMessagesByTokens(messages, TOKEN_LIMIT);
+  const messagesInScope = limitMessagesByTokens(
+    messages,
+    TOKEN_LIMIT,
+    modelForAgent.modelId,
+  );
 
   const cleanedMessages = messagesInScope.filter((message) => {
     if (message.role === "assistant") {
@@ -194,5 +190,15 @@ export const streamConversation = async (
       },
     }),
     conversationId: conversation.id,
+    tokens: {
+      messages: calculateTokensForMessages(
+        messagesInScope,
+        modelForAgent.modelId,
+      ),
+      systemPrompt: calculateTokensString(
+        systemPrompt ?? "",
+        modelForAgent.modelId,
+      ),
+    },
   };
 };

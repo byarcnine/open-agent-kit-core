@@ -5,6 +5,7 @@ import {
   useParams,
   data,
   useActionData,
+  useFetcher,
   type ActionFunctionArgs,
 } from "react-router";
 import {
@@ -18,12 +19,12 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Button } from "~/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import MarkdownEdit from "~/components/markdownedit/markdownedit.client";
 import { toast } from "sonner";
 import NoDataCard from "~/components/ui/no-data-card";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
-import { Repeat } from "react-feather";
+import { Loader, Repeat } from "react-feather";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +32,9 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Toaster } from "~/components/ui/sonner";
+import { calculateTokensString } from "~/lib/llm/tokenCounter.server";
+import type { ModelSettings } from "~/types/llm";
+import debounce from "debounce";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -51,41 +55,176 @@ export const loader = async ({ params }: { params: { agentId: string } }) => {
   return { prompts };
 };
 
+// Define a more specific type for the action's return
+type ActionData = {
+  success: boolean;
+  intent: "calculateTokens" | "savePrompt" | "error";
+  promptTokens?: number;
+  error?: string;
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  const prompt = formData.get("prompt") as string;
-  const agentId = formData.get("agentId") as string;
-  if (!prompt || !agentId) {
-    return data({ error: "Prompt & agentId is required" }, { status: 400 });
+  const intent = formData.get("intent");
+
+  if (intent === "calculateTokens") {
+    const prompt = formData.get("prompt") as string;
+    const agentId = formData.get("agentId") as string;
+
+    if (!prompt && typeof prompt !== "string") {
+      // ensure prompt is a string, even if empty
+      return data(
+        {
+          error: "Prompt is required for token calculation",
+          success: false,
+          promptTokens: 0,
+          intent: "calculateTokens" as const,
+        },
+        { status: 400 },
+      );
+    }
+
+    const agent = await prisma.agent.findUnique({
+      where: {
+        id: agentId,
+      },
+    });
+
+    // Model can be optional for calculateTokensString if it has a default
+    const promptTokens = calculateTokensString(
+      prompt,
+      (agent?.modelSettings as ModelSettings)?.model,
+    );
+    return data({
+      success: true,
+      promptTokens,
+      intent: "calculateTokens" as const,
+    });
   }
 
-  await prisma.systemPrompt.create({
-    data: {
-      key: "default", // this can be extended later to support multiple prompts per agent instance
-      agentId: agentId,
-      prompt: prompt,
-    },
-  });
+  // Existing logic for saving the prompt - now with intent: "savePrompt"
+  if (intent === "savePrompt") {
+    const prompt = formData.get("prompt") as string;
+    const agentId = formData.get("agentId") as string;
+    if (!prompt || !agentId) {
+      return data(
+        {
+          error: "Prompt & agentId is required",
+          success: false,
+          intent: "savePrompt" as const,
+        },
+        { status: 400 },
+      );
+    }
 
-  return true;
+    const agent = await prisma.agent.findUnique({
+      where: {
+        id: agentId,
+      },
+    });
+
+    if (!agent) {
+      return data(
+        {
+          error: "Agent not found",
+          success: false,
+          intent: "savePrompt" as const,
+        },
+        { status: 400 },
+      );
+    }
+
+    const promptTokens = calculateTokensString(
+      // This token count is for the saved prompt
+      prompt,
+      (agent.modelSettings as ModelSettings)?.model,
+    );
+
+    await prisma.systemPrompt.create({
+      data: {
+        key: "default",
+        agentId: agentId,
+        prompt: prompt,
+      },
+    });
+
+    return {
+      success: true,
+      promptTokens, // This is from the save action
+      intent: "savePrompt" as const,
+    };
+  }
+
+  // Fallback for unknown or missing intent
+  return data(
+    { error: "Invalid intent", success: false, intent: "error" as const },
+    { status: 400 },
+  );
 };
 
 const Prompt = () => {
   const { prompts } = useLoaderData<typeof loader>();
   const { agentId } = useParams();
-  const [markdown, setMarkdown] = useState(prompts[0]?.prompt);
+  const [markdown, setMarkdown] = useState(prompts[0]?.prompt || "");
   const [editorKey, setEditorKey] = useState(0);
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<ActionData>();
+  const fetcher = useFetcher<ActionData>();
+  const [tokenCount, setTokenCount] = useState<number | null>(null);
+
   const handleRevert = (promptText: string) => {
     setMarkdown(promptText);
     setEditorKey((prev) => prev + 1);
   };
 
   useEffect(() => {
-    if (actionData === true) {
+    if (actionData?.intent === "savePrompt" && actionData.success) {
       toast.success("Prompt saved successfully");
+    } else if (actionData?.intent === "savePrompt" && actionData.error) {
+      toast.error(actionData.error);
     }
   }, [actionData]);
+
+  const { submit } = fetcher;
+
+  // Debounced function to calculate tokens, memoized with useCallback
+  const calculateTokensDebounced = useCallback(
+    debounce((currentMarkdown: string, currentAgentId?: string) => {
+      if (currentAgentId) {
+        const formData = new FormData();
+        formData.append("prompt", currentMarkdown);
+        formData.append("intent", "calculateTokens");
+        formData.append("agentId", currentAgentId);
+        submit(formData, { method: "post" });
+      }
+    }, 500),
+    [submit],
+  );
+
+  useEffect(() => {
+    if (markdown !== undefined && agentId) {
+      calculateTokensDebounced(markdown, agentId);
+    }
+  }, [markdown, agentId, calculateTokensDebounced]);
+
+  useEffect(() => {
+    if (fetcher.data?.intent === "calculateTokens") {
+      if (fetcher.data.success) {
+        setTokenCount(fetcher.data.promptTokens ?? null);
+      } else if (fetcher.data.error) {
+        // Display error from token calculation if any, perhaps with a toast
+        console.error("Token calculation error:", fetcher.data.error);
+        toast.error(`Token calculation: ${fetcher.data.error}`);
+        setTokenCount(null); // Reset or indicate error
+      }
+    }
+  }, [fetcher.data, fetcher.state]);
+
+  const getTokenColor = (tokens: number | null): string => {
+    if (tokens === null) return "bg-gray-300"; // Default or loading state
+    if (tokens <= 1000) return "bg-green-500";
+    if (tokens <= 1500) return "bg-yellow-500";
+    return "bg-red-500";
+  };
 
   return (
     <div className="py-8 px-4 md:p-8 w-full flex flex-col">
@@ -119,6 +258,7 @@ const Prompt = () => {
           <div>
             <input type="hidden" name="agentId" value={agentId} />
             <input type="hidden" name="prompt" value={markdown} />
+            <input type="hidden" name="intent" value="savePrompt" />
             <ClientOnlyComponent>
               {MarkdownEdit && (
                 <MarkdownEdit
@@ -129,7 +269,21 @@ const Prompt = () => {
               )}
             </ClientOnlyComponent>
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {tokenCount !== null && (
+              <div className="flex items-center">
+                <p className="text-sm text-muted-foreground mr-2">
+                  Token Count: {tokenCount}
+                </p>
+                <div
+                  className={`w-3 h-3 rounded-full ${getTokenColor(tokenCount)} mr-2`}
+                  title={`Token count: ${tokenCount}`}
+                />
+                {fetcher.state === "submitting" && (
+                  <Loader className="inline-block animate-spin" size={16} />
+                )}
+              </div>
+            )}
             <Button type="submit">Save Changes</Button>
           </div>
         </Form>
