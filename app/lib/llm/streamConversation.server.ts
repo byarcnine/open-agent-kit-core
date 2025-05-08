@@ -10,7 +10,34 @@ import { getConfig } from "../config/config";
 import { getModelContextLimit, getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
 import { prepareToolsForAgent } from "./tools.server";
-import { encoding_for_model, type TiktokenModel } from "tiktoken";
+import {
+  calculateTokensForMessage,
+  calculateTokensForMessages,
+  calculateTokensString,
+} from "./tokenCounter.server";
+
+const limitMessagesByTokens = (
+  messages: Message[],
+  maxTokens: number,
+  modelId: string,
+): Message[] => {
+  let totalTokens = 0;
+  const limitedMessages: Message[] = [];
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    const messageTokens = calculateTokensForMessage(message, modelId);
+
+    if (totalTokens + messageTokens > maxTokens) {
+      break;
+    }
+
+    limitedMessages.unshift(message);
+    totalTokens += messageTokens;
+  }
+
+  return limitedMessages;
+};
 
 export const streamConversation = async (
   conversationId: string,
@@ -44,56 +71,11 @@ export const streamConversation = async (
     },
   });
 
-  const calculateTokens = (message: Message): number => {
-    try {
-      const enc = encoding_for_model(
-        modelForAgent.model.modelId as TiktokenModel,
-      );
-      const messageWithoutAttachments = {
-        ...message,
-        ...(message.experimental_attachments && {
-          experimental_attachments: message.experimental_attachments.map(
-            (attachment) => ({
-              ...attachment,
-              url: "",
-            }),
-          ),
-        }),
-      };
-      const tokens = enc.encode(
-        JSON.stringify(messageWithoutAttachments),
-      ).length;
-      enc.free();
-      return tokens;
-    } catch (error) {
-      console.error("Error calculating tokens", error);
-      return 0;
-    }
-  };
-
-  const limitMessagesByTokens = (
-    messages: Message[],
-    maxTokens: number,
-  ): Message[] => {
-    let totalTokens = 0;
-    const limitedMessages: Message[] = [];
-
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      const messageTokens = calculateTokens(message);
-
-      if (totalTokens + messageTokens > maxTokens) {
-        break;
-      }
-
-      limitedMessages.unshift(message);
-      totalTokens += messageTokens;
-    }
-
-    return limitedMessages;
-  };
-
-  const messagesInScope = limitMessagesByTokens(messages, TOKEN_LIMIT);
+  const messagesInScope = limitMessagesByTokens(
+    messages,
+    TOKEN_LIMIT,
+    modelForAgent.model.modelId,
+  );
 
   const cleanedMessages = messagesInScope.filter((message) => {
     if (message.role === "assistant") {
@@ -146,7 +128,7 @@ export const streamConversation = async (
   return {
     stream: streamText({
       model: model.model,
-      temperature: model.settings.temperature || 0.7,
+      temperature: model.settings?.temperature || 0.7,
       messages: cleanedMessages,
       system: systemPrompt,
       tools: { ...Object.fromEntries(toolsArray) },
@@ -210,5 +192,15 @@ export const streamConversation = async (
       },
     }),
     conversationId: conversation.id,
+    tokens: {
+      messages: calculateTokensForMessages(
+        messagesInScope,
+        modelForAgent.model.modelId,
+      ),
+      systemPrompt: calculateTokensString(
+        systemPrompt ?? "",
+        modelForAgent.model.modelId,
+      ),
+    },
   };
 };

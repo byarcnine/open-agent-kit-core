@@ -20,13 +20,12 @@ const Messages: React.FC<MessagesProps> = ({
   children,
 }) => {
   const [containerRef, endRef] = useScrollToBottom<HTMLDivElement>();
-
   return (
     <div className={"oak-chat__messages"}>
       <div ref={containerRef}>
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <Message
-            key={message.id}
+            key={message.id || index}
             message={message}
             toolNames={toolNames}
             avatarURL={avatarURL}

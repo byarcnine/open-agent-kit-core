@@ -72,7 +72,7 @@ export const getModelForAgent = async (agentId: string, config: OAKConfig) => {
         getDefaultModel(config);
       return {
         model: provider,
-        settings: agent.modelSettings as ModelSettings,
+        settings: agent.modelSettings as ModelSettings | undefined,
       };
     }
   }

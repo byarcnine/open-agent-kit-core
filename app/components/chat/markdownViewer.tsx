@@ -1,14 +1,14 @@
 import Markdown from "react-markdown";
 import DOMPurify from "dompurify";
-import { CopyBlock } from "react-code-blocks";
+import { CopyBlock, atomOneLight } from "react-code-blocks";
 import type { ChatSettings } from "~/types/chat";
 import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
 import type { DetailedHTMLProps } from "react";
 import { useContext } from "react";
 import { ChatContext } from "./chat.client";
 import React from "react";
+import { decode } from "html-entities";
 import remarkGfm from "remark-gfm";
-import { atomOneLight } from "react-code-blocks";
 
 const getYoutubeVideoId = (url: string) => {
   const videoId = url.includes("youtube.com")
@@ -147,10 +147,9 @@ const MarkdownViewer = ({ text }: { text: string }) => {
           const match = /language-(\w+)/.exec(className || "");
           return !inline && match ? (
             <CopyBlock
-              text={String(children).replace(/\n$/, "")}
+              text={decode(String(children).replace(/\n$/, ""))}
               language={match[1]}
               showLineNumbers={false}
-              codeBlock
               theme={atomOneLight}
             />
           ) : (
