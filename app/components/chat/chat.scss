@@ -275,8 +275,8 @@ $oak-error-color: oklch(0.704 0.191 22.216);
     &__footer-note {
       font-size: 12.8px;
       color: $oak-color-muted-foreground;
-      margin-top: 8px;
-      padding: 8px;
+      padding: 20px;
+      padding-top: 0;
       text-align: center;
       white-space: pre-wrap;
     }

@@ -2,19 +2,11 @@ import "./chat.scss";
 import React from "react";
 import { useChat, type Message } from "@ai-sdk/react";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Textarea } from "../ui/textarea";
-import {
-  ArrowUp,
-  Compass,
-  FileText,
-  Globe,
-  Plus,
-  XCircle,
-} from "react-feather";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
 import { MessageRole, type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
+import ChatInput from "./chatInput";
 
 interface ChatContextType {
   isEmbed: boolean;
@@ -31,104 +23,6 @@ interface TextPart {
 }
 
 const OAK_SESSION_TOKEN_KEY = "oak_session_token";
-
-const ChatInput = React.memo(
-  ({
-    input,
-    handleInputChange,
-    handleKeyDown,
-    handleFormSubmit,
-    textareaRef,
-    fileInputRef,
-    files,
-    clearSelectedFile,
-    handleFileInputChange,
-    handleFileButtonClick,
-    supportedFileTypes,
-    chatSettings,
-  }: any) => {
-    return (
-      <div className="oak-chat__input-container">
-        <form onSubmit={handleFormSubmit} className="oak-chat__form">
-          {files.length > 0 && (
-            <div className="oak-chat__file-thumbnails">
-              {files.map((file: File) => (
-                <div
-                  key={file.name}
-                  className="oak-chat__file-thumbnails__item"
-                >
-                  {file.type.startsWith("image/") && (
-                    <img src={URL.createObjectURL(file)} alt={file.name} />
-                  )}
-                  {file.type === "application/pdf" && (
-                    <div className="oak-chat__file-thumbnails__item--pdf">
-                      <div className="oak-chat__file-thumbnails__item--pdf-icon">
-                        <FileText size={20} />
-                      </div>
-                      <div>
-                        <span>{file.name}</span>
-                        <span>PDF</span>
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    className="oak-chat__file-remove-button"
-                    onClick={() => clearSelectedFile(file.name)}
-                  >
-                    <XCircle size={20} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="oak-chat__text-area-container">
-            <Textarea
-              ref={textareaRef}
-              onKeyDown={handleKeyDown}
-              name="prompt"
-              value={input}
-              rows={chatSettings?.textAreaInitialRows || 2}
-              onChange={handleInputChange}
-              placeholder="Type your message..."
-              className="oak-chat__text-area"
-            />
-          </div>
-
-          <div className="oak-chat__action-row">
-            {chatSettings?.enableFileUpload && supportedFileTypes && (
-              <div>
-                <button
-                  type="button"
-                  className="oak-chat__action-button"
-                  onClick={handleFileButtonClick}
-                >
-                  <Plus size={18} />
-                </button>
-                <input
-                  multiple
-                  type="file"
-                  accept={supportedFileTypes.join(",")}
-                  ref={fileInputRef}
-                  style={{ display: "none" }}
-                  onChange={handleFileInputChange}
-                />
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={!input}
-              className="oak-chat__submit-button"
-            >
-              <ArrowUp size={20} />
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  },
-);
 
 const Chat = ({
   onConversationStart,
@@ -504,13 +398,13 @@ const Chat = ({
               handleInputChange={handleInputChange}
               handleKeyDown={handleKeyDown}
               handleFormSubmit={handleFormSubmit}
-              textareaRef={textareaRef}
-              fileInputRef={fileInputRef}
+              textareaRef={textareaRef as React.RefObject<HTMLTextAreaElement>}
+              fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
               supportedFileTypes={supportedFileTypes}
               chatSettings={chatSettings}
               handleFileInputChange={handleFileInputChange}
               handleFileButtonClick={handleFileButtonClick}
-              handleCardSelect={handleCardSelect}
+              onClearFile={clearSelectedFile}
             />
             {chatSettings?.footerNote && (
               <p className="oak-chat__footer-note">
