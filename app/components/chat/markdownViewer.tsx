@@ -1,12 +1,13 @@
 import Markdown from "react-markdown";
 import DOMPurify from "dompurify";
-import { CopyBlock } from "react-code-blocks";
+import { CopyBlock, atomOneLight } from "react-code-blocks";
 import type { ChatSettings } from "~/types/chat";
 import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
 import type { DetailedHTMLProps } from "react";
 import { useContext } from "react";
 import { ChatContext } from "./chat.client";
 import React from "react";
+import { decode } from "html-entities";
 
 const getYoutubeVideoId = (url: string) => {
   console.log("url", url);
@@ -56,20 +57,39 @@ const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
       if (isYouTubeUrl(trimmed) && chatSettings?.openYoutubeVideosInIframe) {
         return <YouTubeEmbed key={index} url={trimmed} />;
       } else if (isImageUrl(trimmed)) {
-        return <img key={index} src={trimmed} alt="" loading="lazy" className="max-w-full h-auto" />;
+        return (
+          <img
+            key={index}
+            src={trimmed}
+            alt=""
+            loading="lazy"
+            className="max-w-full h-auto"
+          />
+        );
       }
     } else if (React.isValidElement(child)) {
       const element = child as React.ReactElement<any>;
       if (typeof element.props?.href === "string") {
-        if (isYouTubeUrl(element.props.href) && chatSettings?.openYoutubeVideosInIframe) {
+        if (
+          isYouTubeUrl(element.props.href) &&
+          chatSettings?.openYoutubeVideosInIframe
+        ) {
           return <YouTubeEmbed key={index} url={element.props.href} />;
         } else if (isImageUrl(element.props.href)) {
-          return <img key={index} src={element.props.href} alt="" loading="lazy" className="max-w-full h-auto" />;
+          return (
+            <img
+              key={index}
+              src={element.props.href}
+              alt=""
+              loading="lazy"
+              className="max-w-full h-auto"
+            />
+          );
         }
       }
     }
     // Handle remaining content
-    if (typeof child === 'string') {
+    if (typeof child === "string") {
       const trimmedText = child.trim();
       return trimmedText.length > 0 ? <p key={index}>{trimmedText}</p> : null;
     }
@@ -126,10 +146,10 @@ const MarkdownViewer = ({ text }: { text: string }) => {
           const match = /language-(\w+)/.exec(className || "");
           return !inline && match ? (
             <CopyBlock
-              text={String(children).replace(/\n$/, "")}
+              text={decode(String(children).replace(/\n$/, ""))}
               language={match[1]}
               showLineNumbers={false}
-              codeBlock
+              theme={atomOneLight}
             />
           ) : (
             <code className={className} {...props}>
