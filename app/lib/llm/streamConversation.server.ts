@@ -47,12 +47,11 @@ export const streamConversation = async (
   messages: Message[],
   meta: Record<string, any>,
 ) => {
-
-  const conversation = conversationId ?
-    await prisma.conversation.findUnique({ where: { id: conversationId } }) :
-    await prisma.conversation.create({
-      data: { agentId, userId, customIdentifier },
-    });
+  const conversation = conversationId
+    ? await prisma.conversation.findUnique({ where: { id: conversationId } })
+    : await prisma.conversation.create({
+        data: { agentId, userId, customIdentifier },
+      });
 
   if (!conversation) {
     throw new Error("Conversation not found");
@@ -128,7 +127,7 @@ export const streamConversation = async (
   return {
     stream: streamText({
       model: model.model,
-      temperature: model.settings?.temperature || 0.7,
+      temperature: model.settings?.temperature ?? 0.7,
       messages: cleanedMessages,
       system: systemPrompt,
       tools: { ...Object.fromEntries(toolsArray) },
