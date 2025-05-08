@@ -143,7 +143,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
               theme={atomOneLight}
             />
           ) : (
-            <code className={className} {...props}>
+            <code className={`${className} whitespace-pre-wrap break-words`} {...props}>
               {children}
             </code>
           );
