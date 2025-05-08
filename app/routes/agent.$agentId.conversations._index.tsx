@@ -22,7 +22,6 @@ import { useState, useEffect } from "react";
 import Checkbox from "~/components/ui/checkbox";
 import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
 
-// Add this line near the top of the file
 dayjs.extend(relativeTime);
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -31,7 +30,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const showArchivedQueryParam =
     url.searchParams.get("showArchived") === "true";
   const page = parseInt(url.searchParams.get("page") || "1", 10);
-  const pageSize = 25; // Or make this configurable
+  const pageSize = 25;
   const skip = (page - 1) * pageSize;
 
   const where = {
@@ -82,7 +81,6 @@ const Conversations = () => {
     initialLoaderData.showArchivedQueryParam || false,
   );
 
-  // Effect to update showArchived state when loader data (from fetcher or initial load) changes
   useEffect(() => {
     const currentShowArchivedParam =
       fetcher.data?.showArchivedQueryParam ??
@@ -97,8 +95,6 @@ const Conversations = () => {
 
   const handleCheckboxChange = () => {
     const newShowArchived = !showArchived;
-    // No need to call setShowArchived here, it will be updated by the useEffect
-    // when fetcher.data changes or if we decide to update it optimistically.
 
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.set("showArchived", String(newShowArchived));
