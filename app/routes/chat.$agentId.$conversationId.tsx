@@ -24,8 +24,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (conversation.userId !== user.id) {
     throw new Response("Unauthorized", { status: 403 });
   }
+
   const initialMessages: Message[] = conversation.messages.map(
-    (message) => message.content as unknown as Message
+    (message) => {
+      const messageContent = message.content as unknown as Message;
+      return {
+        ...messageContent,
+        id: message.id,
+      } as Message;
+    }
   );
   const toolNames = toolNameIdentifierList();
   const chatSettings = await getChatSettings(agentId);
