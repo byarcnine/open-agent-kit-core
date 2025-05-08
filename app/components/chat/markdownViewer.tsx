@@ -8,6 +8,7 @@ import { useContext } from "react";
 import { ChatContext } from "./chat.client";
 import React from "react";
 import { decode } from "html-entities";
+import remarkGfm from "remark-gfm";
 
 const getYoutubeVideoId = (url: string) => {
   console.log("url", url);
@@ -128,6 +129,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
   const { chatSettings } = useContext(ChatContext);
   return (
     <Markdown
+      remarkPlugins={[remarkGfm]}
       components={{
         p: CustomP,
         a: (props) => renderMarkdownLink({ ...props, chatSettings }),

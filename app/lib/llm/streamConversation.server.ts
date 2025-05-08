@@ -23,8 +23,8 @@ export const streamConversation = async (
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({
-      data: { agentId, userId, customIdentifier },
-    });
+        data: { agentId, userId, customIdentifier },
+      });
 
   if (!conversation) {
     throw new Error("Conversation not found");
@@ -32,7 +32,7 @@ export const streamConversation = async (
   const config = getConfig();
 
   const modelForAgent = await getModelForAgent(agentId, config);
-  const TOKEN_LIMIT = getModelContextLimit(modelForAgent.modelId) * 0.8;
+  const TOKEN_LIMIT = getModelContextLimit(modelForAgent.model.modelId) * 0.8;
 
   // Add the user message to the conversation
   const createMessagePromise = prisma.message.create({
@@ -44,22 +44,36 @@ export const streamConversation = async (
   });
 
   const calculateTokens = (message: Message): number => {
-    const enc = encoding_for_model(modelForAgent.modelId as TiktokenModel);
-    const messageWithoutAttachments = {
-      ...message,
-      ...(message.experimental_attachments && {
-        experimental_attachments: message.experimental_attachments.map((attachment) => ({
-          ...attachment,
-          url: "",
-        })),
-      }),
-    };
-    const tokens = enc.encode(JSON.stringify(messageWithoutAttachments)).length;
-    enc.free();
-    return tokens;
+    try {
+      const enc = encoding_for_model(
+        modelForAgent.model.modelId as TiktokenModel,
+      );
+      const messageWithoutAttachments = {
+        ...message,
+        ...(message.experimental_attachments && {
+          experimental_attachments: message.experimental_attachments.map(
+            (attachment) => ({
+              ...attachment,
+              url: "",
+            }),
+          ),
+        }),
+      };
+      const tokens = enc.encode(
+        JSON.stringify(messageWithoutAttachments),
+      ).length;
+      enc.free();
+      return tokens;
+    } catch (error) {
+      console.error("Error calculating tokens", error);
+      return 0;
+    }
   };
 
-  const limitMessagesByTokens = (messages: Message[], maxTokens: number): Message[] => {
+  const limitMessagesByTokens = (
+    messages: Message[],
+    maxTokens: number,
+  ): Message[] => {
     let totalTokens = 0;
     const limitedMessages: Message[] = [];
 
@@ -130,7 +144,8 @@ export const streamConversation = async (
 
   return {
     stream: streamText({
-      model,
+      model: model.model,
+      temperature: model.settings.temperature || 0.7,
       messages: cleanedMessages,
       system: systemPrompt,
       tools: { ...Object.fromEntries(toolsArray) },
@@ -152,7 +167,7 @@ export const streamConversation = async (
               year: new Date().getFullYear(),
               month: new Date().getMonth() + 1,
               day: new Date().getDate(),
-              modelId: model.modelId,
+              modelId: model.model.modelId,
             },
           },
           create: {
@@ -160,7 +175,7 @@ export const streamConversation = async (
             month: new Date().getMonth() + 1,
             day: new Date().getDate(),
             tokens: usage,
-            modelId: model.modelId,
+            modelId: model.model.modelId,
             agent: {
               connect: {
                 id: agentId,
