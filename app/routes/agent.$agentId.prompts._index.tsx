@@ -31,6 +31,8 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Toaster } from "~/components/ui/sonner";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { PERMISSIONS } from "~/types/auth";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -55,6 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const prompt = formData.get("prompt") as string;
   const agentId = formData.get("agentId") as string;
+  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
   if (!prompt || !agentId) {
     return data({ error: "Prompt & agentId is required" }, { status: 400 });
   }

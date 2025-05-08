@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData } from "react-router";
+import { Outlet, useLoaderData, type ActionFunctionArgs } from "react-router";
 import Layout from "~/components/layout/layout";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { type LoaderFunctionArgs, type MetaFunction } from "react-router";
@@ -21,6 +21,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
   return { user, agent, pluginMenuItems };
 };
+
 const Agent = () => {
   const loaderData = useLoaderData<typeof loader>();
   const { user, agent, pluginMenuItems } = loaderData;

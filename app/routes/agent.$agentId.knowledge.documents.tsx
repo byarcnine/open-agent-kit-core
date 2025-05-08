@@ -5,7 +5,6 @@ import {
   type LoaderFunctionArgs,
   useFetcher,
   type ActionFunctionArgs,
-  Link,
   useSearchParams,
 } from "react-router";
 import { useEffect, useState } from "react";
@@ -40,15 +39,8 @@ import * as Popover from "@radix-ui/react-popover";
 import { Button } from "~/components/ui/button";
 import JsonEditorDialog from "~/components/jsonEditorDialog/jsonEditorDialog";
 import React from "react";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "~/components/ui/pagination";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { PERMISSIONS } from "~/types/auth";
 import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
 
 dayjs.extend(relativeTime);
@@ -65,6 +57,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie"),
   );
+  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
   try {
     const clonedRequest = request.clone();
 
