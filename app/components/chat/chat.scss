@@ -30,6 +30,13 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       z-index: 1;
       width: 100%;
       margin: 0 auto;
+      padding-left: 30px;
+      padding-right: 30px;
+
+      @media (min-width: 768px) {
+        padding-left: 0;
+        padding-right: 0;
+      }
 
       &-heading {
         font-size: 24px;
@@ -122,7 +129,6 @@ $oak-error-color: oklch(0.704 0.191 22.216);
           justify-content: center;
           gap: 8px;
           padding: 8px 40px 8px 8px;
-
           border-radius: $oak-border-radius;
           font-size: 24px;
           height: 64px;
@@ -137,6 +143,14 @@ $oak-error-color: oklch(0.704 0.191 22.216);
             display: flex;
             flex-direction: column;
             font-size: 12.8px;
+            max-width: 100px;
+
+            span:first-of-type {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              display: block;
+            }
           }
         }
       }
@@ -183,8 +197,12 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       margin: 0;
       background: transparent;
       font-family: inherit;
-      font-size: 14.4px;
+      font-size: 16px;
       max-height: 300px;
+
+      @media (min-width: 768px) {
+        font-size: 14.4px;
+      }
       &::-webkit-scrollbar {
         display: none;
       }
