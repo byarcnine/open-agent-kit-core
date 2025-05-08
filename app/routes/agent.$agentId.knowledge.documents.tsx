@@ -49,6 +49,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { PERMISSIONS } from "~/types/auth";
 
 dayjs.extend(relativeTime);
 
@@ -64,6 +66,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie"),
   );
+  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
   try {
     const clonedRequest = request.clone();
 
