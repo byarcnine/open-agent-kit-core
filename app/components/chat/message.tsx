@@ -184,7 +184,7 @@ const Message: React.FC<MessageProps> = React.memo(
                     message.role === "assistant" && (
                       <button
                         onClick={() => handleCopy(part.text)}
-                        className="copy-button opacity-30 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        className="oak-chat__message-content--copy-button"
                       >
                         {copied ? <Check size={16} /> : <Copy size={16} />}
                       </button>

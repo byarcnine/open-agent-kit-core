@@ -1,4 +1,4 @@
-import { prisma } from "@db/db.server";
+import { prisma, type Conversation } from "@db/db.server";
 import { getSystemPrompt } from "./systemPrompts.server";
 import {
   appendResponseMessages,
@@ -47,11 +47,12 @@ export const streamConversation = async (
   messages: Message[],
   meta: Record<string, any>,
 ) => {
-  const conversation = conversationId
-    ? await prisma.conversation.findUnique({ where: { id: conversationId } })
-    : await prisma.conversation.create({
-        data: { agentId, userId, customIdentifier },
-      });
+
+  const conversation = conversationId ?
+    await prisma.conversation.findUnique({ where: { id: conversationId } }) :
+    await prisma.conversation.create({
+      data: { agentId, userId, customIdentifier },
+    });
 
   if (!conversation) {
     throw new Error("Conversation not found");
