@@ -64,6 +64,7 @@
     "dayjs": "^1.11.13",
     "debounce": "^2.2.0",
     "dompurify": "^3.2.1",
+    "html-entities": "^2.6.0",
     "isbot": "^5.1.23",
     "mammoth": "^1.9.0",
     "mime-types": "^2.1.35",

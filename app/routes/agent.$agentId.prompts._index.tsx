@@ -35,6 +35,8 @@ import { Toaster } from "~/components/ui/sonner";
 import { calculateTokensString } from "~/lib/llm/tokenCounter.server";
 import type { ModelSettings } from "~/types/llm";
 import debounce from "debounce";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { PERMISSIONS } from "~/types/auth";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -66,6 +68,9 @@ type ActionData = {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  const agentId = formData.get("agentId") as string;
+  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
 
   if (intent === "calculateTokens") {
     const prompt = formData.get("prompt") as string;
@@ -101,11 +106,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       intent: "calculateTokens" as const,
     });
   }
-
   // Existing logic for saving the prompt - now with intent: "savePrompt"
   if (intent === "savePrompt") {
     const prompt = formData.get("prompt") as string;
-    const agentId = formData.get("agentId") as string;
     if (!prompt || !agentId) {
       return data(
         {
