@@ -49,6 +49,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
+import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
 
 dayjs.extend(relativeTime);
 
@@ -307,102 +308,11 @@ const DocumentsTab = () => {
               </TableBody>
             </Table>
           </div>
-          {totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      to={getPageUrl(currentPage - 1)}
-                      preventScrollReset
-                      prefetch="intent"
-                      className={
-                        currentPage <= 1
-                          ? "pointer-events-none opacity-50"
-                          : undefined
-                      }
-                      aria-disabled={currentPage <= 1}
-                      tabIndex={currentPage <= 1 ? -1 : undefined}
-                    />
-                  </PaginationItem>
-
-                  {/* --- Render first page and ellipsis if needed --- */}
-                  {startPage > 1 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationLink
-                          to={getPageUrl(1)}
-                          preventScrollReset
-                          prefetch="intent"
-                          isActive={currentPage === 1}
-                        >
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-                      {startPage > 2 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                    </>
-                  )}
-                  {/* --- End first page and ellipsis --- */}
-
-                  {/* --- Render page numbers in the calculated range --- */}
-                  {pageNumbers.map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        to={getPageUrl(page)}
-                        preventScrollReset
-                        prefetch="intent"
-                        isActive={currentPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  {/* --- End page numbers --- */}
-
-                  {/* --- Render last page and ellipsis if needed --- */}
-                  {endPage < totalPages && (
-                    <>
-                      {endPage < totalPages - 1 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                      <PaginationItem>
-                        <PaginationLink
-                          to={getPageUrl(totalPages)}
-                          preventScrollReset
-                          prefetch="intent"
-                          isActive={currentPage === totalPages}
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-                  {/* --- End last page and ellipsis --- */}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      to={getPageUrl(currentPage + 1)}
-                      preventScrollReset
-                      prefetch="intent"
-                      className={
-                        currentPage >= totalPages
-                          ? "pointer-events-none opacity-50"
-                          : undefined
-                      }
-                      aria-disabled={currentPage >= totalPages}
-                      tabIndex={currentPage >= totalPages ? -1 : undefined}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+          <PaginationBlock
+            currentPage={currentPage}
+            totalCount={totalCount}
+            pageSize={pageSize}
+          />
         </>
       ) : (
         !message && (
