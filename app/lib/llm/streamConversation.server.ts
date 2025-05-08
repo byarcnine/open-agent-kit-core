@@ -145,7 +145,7 @@ export const streamConversation = async (
   return {
     stream: streamText({
       model: model.model,
-      temperature: model.settings.temperature || 0.7,
+      temperature: model.settings?.temperature || 0.7,
       messages: cleanedMessages,
       system: systemPrompt,
       tools: { ...Object.fromEntries(toolsArray) },
