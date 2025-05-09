@@ -34,10 +34,10 @@ const YouTubeEmbed = React.memo(({ url }: { url: string }) => {
   );
 });
 
-const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
-  const { chatSettings } = useContext(ChatContext);
-  const { children } = props;
-
+function enhanceChildrenWithMedia(
+  children: React.ReactNode,
+  chatSettings: ChatSettings | undefined
+) {
   const isYouTubeUrl = (url: string) =>
     url.includes("youtube.com") || url.includes("youtu.be");
 
@@ -84,11 +84,29 @@ const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
       ),
   );
 
+  return { enhancedChildren, hasBlock };
+}
+
+const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
+  const { chatSettings } = useContext(ChatContext);
+  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(props.children, chatSettings);
+
   if (hasBlock) {
     return <>{enhancedChildren}</>;
   }
 
   return <p {...props}>{enhancedChildren}</p>;
+};
+
+const CustomLI = (props: HTMLAttributes<HTMLLIElement>) => {
+  const { chatSettings } = useContext(ChatContext);
+  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(props.children, chatSettings);
+
+  if (hasBlock) {
+    return <>{enhancedChildren}</>;
+  }
+
+  return <li {...props}>{enhancedChildren}</li>;
 };
 
 const renderMarkdownLink = ({
@@ -121,6 +139,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
       remarkPlugins={[remarkGfm]}
       components={{
         p: CustomP,
+        li: CustomLI,
         a: (props) => renderMarkdownLink({ ...props, chatSettings }),
         code({
           node,
@@ -141,6 +160,10 @@ const MarkdownViewer = ({ text }: { text: string }) => {
               language={match[1]}
               showLineNumbers={false}
               theme={atomOneLight}
+              customStyle={{
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+              }}
             />
           ) : (
             <code className={`${className} whitespace-pre-wrap break-words`} {...props}>
