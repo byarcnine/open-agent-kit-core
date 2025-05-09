@@ -34,24 +34,19 @@ const YouTubeEmbed = React.memo(({ url }: { url: string }) => {
   );
 });
 
-const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
-  const { chatSettings } = useContext(ChatContext);
-
-  if (!chatSettings?.openYoutubeVideosInIframe) {
-    return <p {...props} />;
-  }
-
-  const { children } = props;
-
-  const childArray = React.Children.toArray(children);
-
+function enhanceChildrenWithMedia(
+  children: React.ReactNode,
+  chatSettings: ChatSettings | undefined
+) {
   const isYouTubeUrl = (url: string) =>
     url.includes("youtube.com") || url.includes("youtu.be");
 
   const isImageUrl = (url: string) =>
     /\.(jpe?g|png|gif|webp|bmp|svg)(\?.*)?$/i.test(url);
 
-  const enhancedChildren = childArray.map((child, index) => {
+  const childArray = React.Children.toArray(children);
+
+  const enhancedChildren = childArray.flatMap((child, index) => {
     if (typeof child === "string") {
       const trimmed = child.trim();
       if (isYouTubeUrl(trimmed) && chatSettings?.openYoutubeVideosInIframe) {
@@ -69,36 +64,49 @@ const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
       }
     } else if (React.isValidElement(child)) {
       const element = child as React.ReactElement<any>;
-      if (typeof element.props?.href === "string") {
-        if (
-          isYouTubeUrl(element.props.href) &&
-          chatSettings?.openYoutubeVideosInIframe
-        ) {
-          return <YouTubeEmbed key={index} url={element.props.href} />;
-        } else if (isImageUrl(element.props.href)) {
-          return (
-            <img
-              key={index}
-              src={element.props.href}
-              alt=""
-              loading="lazy"
-              className="max-w-full h-auto"
-            />
-          );
-        }
+      if (
+        typeof element.props.href === "string" &&
+        isYouTubeUrl(element.props.href) &&
+        chatSettings?.openYoutubeVideosInIframe
+      ) {
+        return <YouTubeEmbed key={index} url={element.props.href} />;
       }
+      return child;
     }
-    // Handle remaining content
-    if (typeof child === "string") {
-      const trimmedText = child.trim();
-      return trimmedText.length > 0 ? <p key={index}>{trimmedText}</p> : null;
-    }
-
-    // Pass through non-string elements unchanged
-    return <React.Fragment key={index}>{child}</React.Fragment>;
+    return child;
   });
 
-  return enhancedChildren;
+  const hasBlock = enhancedChildren.some(
+    (child) =>
+      React.isValidElement(child) &&
+      ["div", "iframe", "img"].includes(
+        typeof child.type === "string" ? child.type : "",
+      ),
+  );
+
+  return { enhancedChildren, hasBlock };
+}
+
+const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
+  const { chatSettings } = useContext(ChatContext);
+  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(props.children, chatSettings);
+
+  if (hasBlock) {
+    return <>{enhancedChildren}</>;
+  }
+
+  return <p {...props}>{enhancedChildren}</p>;
+};
+
+const CustomLI = (props: HTMLAttributes<HTMLLIElement>) => {
+  const { chatSettings } = useContext(ChatContext);
+  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(props.children, chatSettings);
+
+  if (hasBlock) {
+    return <>{enhancedChildren}</>;
+  }
+
+  return <li {...props}>{enhancedChildren}</li>;
 };
 
 const renderMarkdownLink = ({
@@ -131,6 +139,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
       remarkPlugins={[remarkGfm]}
       components={{
         p: CustomP,
+        li: CustomLI,
         a: (props) => renderMarkdownLink({ ...props, chatSettings }),
         code({
           node,
@@ -151,9 +160,13 @@ const MarkdownViewer = ({ text }: { text: string }) => {
               language={match[1]}
               showLineNumbers={false}
               theme={atomOneLight}
+              customStyle={{
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+              }}
             />
           ) : (
-            <code className={className} {...props}>
+            <code className={`${className} whitespace-pre-wrap break-words`} {...props}>
               {children}
             </code>
           );
