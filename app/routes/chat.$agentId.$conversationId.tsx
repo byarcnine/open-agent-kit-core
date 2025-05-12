@@ -11,11 +11,11 @@ import { Suspense } from "react";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
-  const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
+  await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
   const { conversationId } = params;
-  const initialMessages = prisma.conversation
+  const initialMessagesPromise = prisma.conversation
     .findUnique({
-      where: { id: conversationId, agentId, userId: user.id },
+      where: { id: conversationId, agentId },
       include: {
         messages: true,
       },
@@ -24,15 +24,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       if (!conversation) {
         throw new Response("Not Found", { status: 404 });
       }
-
-      return conversation.messages.map(
-        (message) => message.content as unknown as Message,
-      ) satisfies Message[];
+      return conversation.messages.map((message) => {
+        const messageContent = message.content as unknown as Message;
+        return {
+          ...messageContent,
+          id: message.id,
+        } as Message;
+      });
     });
+
   const toolNames = toolNameIdentifierList();
   const chatSettings = await getChatSettings(agentId);
   return {
-    initialMessages,
+    initialMessagesPromise,
     conversationId,
     agentId: agentId as string,
     toolNames,
@@ -41,11 +45,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export default function Index() {
-  const { initialMessages, conversationId, agentId, toolNames, chatSettings } =
-    useLoaderData<typeof loader>();
+  const {
+    initialMessagesPromise,
+    conversationId,
+    agentId,
+    toolNames,
+    chatSettings,
+  } = useLoaderData<typeof loader>();
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <Await resolve={initialMessages}>
+      <Await resolve={initialMessagesPromise}>
         {(initialMessages) => (
           <ClientOnlyComponent>
             {Chat && (
