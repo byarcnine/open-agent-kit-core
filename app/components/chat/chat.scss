@@ -102,7 +102,29 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       //   border: 2px solid $oak-color-primary;
       // }
     }
-
+    &__scroll-down-indicator {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $oak-color-primary;
+      font-size: 24px;
+      font-weight: 500;
+      background-color: $oak-white;
+      border-radius: 50%;
+      padding: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
     &__file-thumbnails {
       position: relative;
       display: flex;
@@ -304,6 +326,11 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         border-radius: 5px;
         border: 1px solid transparent;
       }
+    }
+
+    &__messages-container-wrapper {
+      position: relative;
+      overflow-y: auto;
     }
 
     &__scroll-end {

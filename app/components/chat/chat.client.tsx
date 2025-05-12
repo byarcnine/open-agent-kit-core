@@ -380,14 +380,8 @@ const Chat = ({
               messages={messages}
               error={error?.message}
               avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
-            >
-              {status === "submitted" && (
-                <p className="oak-chat__thinking-message">
-                  Thinking
-                  <span className="oak-chat__thinking-dots" />
-                </p>
-              )}
-            </Messages>
+              status={status}
+            />
           </>
         )}
         {!disableInput && (

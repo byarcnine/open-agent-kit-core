@@ -39,10 +39,12 @@ interface MessageProps {
   message: MessageType;
   toolNames: Record<string, string>;
   avatarURL: string;
+  requiresScrollPadding?: boolean;
+  scrollPadding?: number;
 }
 
 const Message: React.FC<MessageProps> = React.memo(
-  ({ message, toolNames, avatarURL }) => {
+  ({ message, toolNames, avatarURL, requiresScrollPadding, scrollPadding }) => {
     const [copied, setCopied] = useState(false);
     const { chatSettings } = useContext(ChatContext);
     const handleCopy = (text: string) => {
@@ -57,6 +59,9 @@ const Message: React.FC<MessageProps> = React.memo(
         className={`oak-chat__message oak-chat__message--${
           isUserMessage ? "user" : "assistant"
         }`}
+        style={{
+          minHeight: requiresScrollPadding ? scrollPadding : undefined,
+        }}
       >
         {!isUserMessage && (
           <Avatar className="oak-chat__message-avatar">

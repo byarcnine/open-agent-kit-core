@@ -2,95 +2,103 @@ import {
   useEffect,
   useRef,
   type RefObject,
-  useState,
   useCallback,
+  useState,
 } from "react";
 
-const SCROLL_THRESHOLD = 100; // pixels from bottom to consider "at bottom"
-const SCROLL_DEBOUNCE = 150; // ms to wait before considering scroll stopped
-
-export function useScrollToBottom<T extends HTMLElement>(): [
-  RefObject<T | null>,
-  RefObject<T | null>,
-] {
+export function useScrollToBottom<T extends HTMLElement>(status?: string) {
   const containerRef = useRef<T>(null);
   const endRef = useRef<T>(null);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
-  const isScrollingRef = useRef(false);
+  const [hasSentMessage, setHasSentMessage] = useState(false);
+  const [scrollPadding, setScrollPadding] = useState(0);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+
+  const checkIfCanScrollDown = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const isScrollable = container.scrollHeight > container.clientHeight;
+    const isAtBottom =
+      container.scrollHeight - container.scrollTop <=
+      container.clientHeight + 20;
+    setCanScrollDown(isScrollable && !isAtBottom);
+  }, []);
 
   const scrollToBottom = useCallback(
     (smooth = true) => {
       const container = containerRef.current;
       const end = endRef.current;
-      if (!container || !end || !shouldAutoScroll) return;
+      if (!container || !end) return;
 
-      const scrollOptions = {
-        behavior: smooth ? "smooth" : ("auto" as ScrollBehavior),
-        block: "end" as ScrollLogicalPosition,
-      };
-
-      // Use requestAnimationFrame to ensure smooth animation
-      requestAnimationFrame(() => {
-        end.scrollIntoView(scrollOptions);
+      end.scrollIntoView({
+        behavior: smooth ? "smooth" : "auto",
+        block: "end",
       });
+      checkIfCanScrollDown();
     },
-    [shouldAutoScroll],
+    [checkIfCanScrollDown],
   );
 
   useEffect(() => {
-    const container = containerRef.current;
-    const end = endRef.current;
+    scrollToBottom(false);
+  }, []);
 
-    if (container && end) {
-      const observer = new MutationObserver(() => {
-        if (shouldAutoScroll && !isScrollingRef.current) {
-          scrollToBottom(true);
-        }
-      });
-
-      observer.observe(container, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true,
-      });
-
-      const handleScroll = () => {
-        if (!container) return;
-
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        const distanceFromBottom = scrollHeight - clientHeight - scrollTop;
-        const isAtBottom = distanceFromBottom < SCROLL_THRESHOLD;
-
-        // Clear any existing timeout
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
-
-        // Set scrolling state
-        isScrollingRef.current = true;
-
-        // Update auto-scroll state after scroll stops
-        scrollTimeoutRef.current = setTimeout(() => {
-          isScrollingRef.current = false;
-          setShouldAutoScroll(isAtBottom);
-        }, SCROLL_DEBOUNCE);
-      };
-
-      container.addEventListener("scroll", handleScroll, { passive: true });
-
-      return () => {
-        observer.disconnect();
-        container.removeEventListener("scroll", handleScroll);
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
-      };
+  useEffect(() => {
+    if (status === "submitted") {
+      setHasSentMessage(true);
+      const messageDivs =
+        containerRef.current?.querySelectorAll(".oak-chat__message");
+      const lastUserMessage = messageDivs
+        ? messageDivs[messageDivs.length - 1]
+        : null;
+      const containerHeight = containerRef.current?.clientHeight ?? 0;
+      const lastUserMessageHeight = lastUserMessage?.clientHeight ?? 0;
+      setScrollPadding(containerHeight - lastUserMessageHeight - 50);
+      setTimeout(() => {
+        scrollToBottom(false);
+      }, 100);
     }
-  }, [shouldAutoScroll, scrollToBottom]);
+  }, [status]);
 
-  return [containerRef, endRef];
+  // Add scroll event listener to check scroll position
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      checkIfCanScrollDown();
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [checkIfCanScrollDown]);
+
+  // Check for content changes using MutationObserver
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new MutationObserver(() => {
+      checkIfCanScrollDown();
+    });
+
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => observer.disconnect();
+  }, [checkIfCanScrollDown]);
+
+  return {
+    scrollToBottom,
+    containerRef,
+    endRef,
+    hasSentMessage,
+    scrollPadding,
+    canScrollDown,
+  };
 }
 
 export default useScrollToBottom;
