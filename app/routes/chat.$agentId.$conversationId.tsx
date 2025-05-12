@@ -8,6 +8,7 @@ import { PERMISSIONS } from "~/types/auth";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import { getChatSettings } from "~/lib/llm/chat.server";
 import { Suspense } from "react";
+import { Loader } from "react-feather";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
@@ -34,7 +35,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     });
 
   const toolNames = toolNameIdentifierList();
-  const chatSettings = await getChatSettings(agentId);
+  const chatSettings = getChatSettings(agentId);
   return {
     initialMessagesPromise,
     conversationId,
@@ -53,9 +54,15 @@ export default function Index() {
     chatSettings,
   } = useLoaderData<typeof loader>();
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Await resolve={initialMessagesPromise}>
-        {(initialMessages) => (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex justify-center items-center">
+          <Loader className="animate-spin w-4 h-4" />
+        </div>
+      }
+    >
+      <Await resolve={Promise.all([initialMessagesPromise, chatSettings])}>
+        {([initialMessages, chatSettings]) => (
           <ClientOnlyComponent>
             {Chat && (
               <Chat
