@@ -61,7 +61,6 @@ const Chat = ({
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
 
-  const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -87,11 +86,24 @@ const Chat = ({
     document.head.appendChild(style);
   }, [chatSettings?.customCSS]);
 
+  const generateChatToken = async () => {
+    const res = await fetch(`${API_URL}/api/generate/token`, {
+      method: "POST",
+      body: JSON.stringify({ agentId }),
+    });
+    const data = await res.json();
+    if (data.jwt) {
+      return data.jwt;
+    }
+    console.error("Failed to generate chat token");
+    return null;
+  };
+
   useEffect(() => {
     if (isEmbed) {
       const startTime = Date.now();
-      const oakSessionToken = sessionStorage.getItem(OAK_SESSION_TOKEN_KEY);
       const headers: HeadersInit = {};
+      const oakSessionToken = sessionStorage.getItem(OAK_SESSION_TOKEN_KEY);
       if (oakSessionToken) {
         headers["x-oak-session-token"] = oakSessionToken;
       }
