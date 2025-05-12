@@ -24,7 +24,9 @@ import { Button } from "~/components/ui/button";
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-export const getConversationsByDay = (conversations: (Conversation & { messages: { createdAt: Date }[] })[]) => {
+export const getConversationsByDay = (
+  conversations: (Conversation & { messages: { createdAt: Date }[] })[],
+) => {
   const dayGroupedConversations = conversations.reduce(
     (
       acc: {
@@ -44,12 +46,10 @@ export const getConversationsByDay = (conversations: (Conversation & { messages:
     },
     {},
   );
-  return Object.keys(dayGroupedConversations).map(
-    (key) => ({
-      date: key,
-      conversations: dayGroupedConversations[key],
-    }),
-  );
+  return Object.keys(dayGroupedConversations).map((key) => ({
+    date: key,
+    conversations: dayGroupedConversations[key],
+  }));
 };
 
 const CONVERSATIONS_PER_PAGE = 25;
@@ -58,7 +58,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { agentId } = params;
 
   const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
-  const conversations = await loadConversations({ page: 1, agentId: agentId as string, userId: user.id, take: CONVERSATIONS_PER_PAGE });
+  const conversations = await loadConversations({
+    page: 1,
+    agentId: agentId as string,
+    userId: user.id,
+    take: CONVERSATIONS_PER_PAGE,
+  });
   const agent = await prisma.agent.findUnique({
     where: {
       id: agentId,
@@ -80,14 +85,17 @@ const ChatOverview = () => {
   const { conversations, agent, user } = useLoaderData<typeof loader>();
 
   const [allConversations, setAllConversations] = useState(conversations);
-  const [currentConversationsByDay, setCurrentConversationsByDay] =
-    useState(getConversationsByDay(conversations));
+  const [currentConversationsByDay, setCurrentConversationsByDay] = useState(
+    getConversationsByDay(conversations),
+  );
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const [editMode, setEditMode] = useState<string | null>(null);
   const [newTagline, setNewTagline] = useState<string>("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [allConversationsLoaded, setAllConversationsLoaded] = useState(conversations.length < CONVERSATIONS_PER_PAGE);
+  const [allConversationsLoaded, setAllConversationsLoaded] = useState(
+    conversations.length < CONVERSATIONS_PER_PAGE,
+  );
   const [page, setPage] = useState(1);
 
   const loadMoreConversations = () => {
@@ -99,10 +107,7 @@ const ChatOverview = () => {
 
   useEffect(() => {
     if (fetcher.data?.conversations?.length) {
-      setAllConversations((prev) => [
-        ...prev,
-        ...fetcher.data.conversations,
-      ]);
+      setAllConversations((prev) => [...prev, ...fetcher.data.conversations]);
     }
     if (fetcher.data?.conversations?.length < CONVERSATIONS_PER_PAGE) {
       setAllConversationsLoaded(true);
@@ -191,6 +196,7 @@ const ChatOverview = () => {
                       className={`py-2 block px-3 transition-all rounded-md text-sm font-normal ${conversationId === c.id ? "bg-stone-900 text-white" : "hover:bg-stone-900 hover:text-white text-neutral-900"}`}
                       to={`/chat/${agentId}/${c.id}`}
                       key={c.id}
+                      prefetch="intent"
                       onDoubleClick={(e) => {
                         e.preventDefault();
                         handleDoubleClick(c.id);
