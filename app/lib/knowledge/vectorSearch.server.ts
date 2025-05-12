@@ -17,7 +17,16 @@ const vectorSearch = async (
   });
   const vector = embeddings[0];
   const dimensions = vector.length;
-  // Cast vector fields to text for Prisma handling
+
+  const joinTagTables = tags.length > 0
+    ? Prisma.sql`
+        JOIN "_KnowledgeDocumentToTag" kdt ON k.id = kdt."A"
+        JOIN "knowledge_document_tag" kt ON kdt."B" = kt.id
+      `
+    : Prisma.sql`
+        LEFT JOIN "_KnowledgeDocumentToTag" kdt ON k.id = kdt."A"
+        LEFT JOIN "knowledge_document_tag" kt ON kdt."B" = kt.id
+      `;
 
   const results: {
     id: string;
@@ -25,6 +34,7 @@ const vectorSearch = async (
     knowledgeDocumentId: string;
     knowledgeDocumentName: string;
     tags: string[];
+    metadata: Record<string, any>;
     similarity: number;
   }[] = await prisma.$queryRaw`
     SELECT
@@ -37,8 +47,7 @@ const vectorSearch = async (
       (e.vector <-> ${vector}::vector) as similarity
     FROM "embedding" e
     JOIN "knowledge_document" k ON e."knowledgeDocumentId" = k.id
-    LEFT JOIN "_KnowledgeDocumentToTag" kdt ON k.id = kdt."A"
-    LEFT JOIN "knowledge_document_tag" kt ON kdt."B" = kt.id
+    ${joinTagTables}
     WHERE k."agentId" = ${agentId} AND e."dimensions" = ${dimensions}
     ${tags.length > 0 ? Prisma.sql`AND kt.name IN (${Prisma.join(tags)})` : Prisma.empty}
     GROUP BY e.id, k.id
