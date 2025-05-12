@@ -14,17 +14,20 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import calendar from "dayjs/plugin/calendar";
 import Layout from "~/components/layout/layout";
-import { MessageCircle, PlusCircle } from "react-feather";
+import { MessageCircle, PlusCircle, MoreVertical } from "react-feather";
 import { PERMISSIONS } from "~/types/auth";
 import { useEffect, useState } from "react";
 import { Intent } from "./chat.$agentId._index";
 import { loadConversations } from "./utils/chat";
 import { Button } from "~/components/ui/button";
+import * as Popover from "@radix-ui/react-popover";
 // Initialize the plugins
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-export const getConversationsByDay = (conversations: (Conversation & { messages: { createdAt: Date }[] })[]) => {
+export const getConversationsByDay = (
+  conversations: (Conversation & { messages: { createdAt: Date }[] })[],
+) => {
   const dayGroupedConversations = conversations.reduce(
     (
       acc: {
@@ -44,12 +47,10 @@ export const getConversationsByDay = (conversations: (Conversation & { messages:
     },
     {},
   );
-  return Object.keys(dayGroupedConversations).map(
-    (key) => ({
-      date: key,
-      conversations: dayGroupedConversations[key],
-    }),
-  );
+  return Object.keys(dayGroupedConversations).map((key) => ({
+    date: key,
+    conversations: dayGroupedConversations[key],
+  }));
 };
 
 const CONVERSATIONS_PER_PAGE = 25;
@@ -58,7 +59,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { agentId } = params;
 
   const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
-  const conversations = await loadConversations({ page: 1, agentId: agentId as string, userId: user.id, take: CONVERSATIONS_PER_PAGE });
+  const conversations = await loadConversations({
+    page: 1,
+    agentId: agentId as string,
+    userId: user.id,
+    take: CONVERSATIONS_PER_PAGE,
+    archived: false,
+  });
   const agent = await prisma.agent.findUnique({
     where: {
       id: agentId,
@@ -80,14 +87,17 @@ const ChatOverview = () => {
   const { conversations, agent, user } = useLoaderData<typeof loader>();
 
   const [allConversations, setAllConversations] = useState(conversations);
-  const [currentConversationsByDay, setCurrentConversationsByDay] =
-    useState(getConversationsByDay(conversations));
+  const [currentConversationsByDay, setCurrentConversationsByDay] = useState(
+    getConversationsByDay(conversations),
+  );
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const [editMode, setEditMode] = useState<string | null>(null);
   const [newTagline, setNewTagline] = useState<string>("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [allConversationsLoaded, setAllConversationsLoaded] = useState(conversations.length < CONVERSATIONS_PER_PAGE);
+  const [allConversationsLoaded, setAllConversationsLoaded] = useState(
+    conversations.length < CONVERSATIONS_PER_PAGE,
+  );
   const [page, setPage] = useState(1);
 
   const loadMoreConversations = () => {
@@ -99,10 +109,7 @@ const ChatOverview = () => {
 
   useEffect(() => {
     if (fetcher.data?.conversations?.length) {
-      setAllConversations((prev) => [
-        ...prev,
-        ...fetcher.data.conversations,
-      ]);
+      setAllConversations((prev) => [...prev, ...fetcher.data.conversations]);
     }
     if (fetcher.data?.conversations?.length < CONVERSATIONS_PER_PAGE) {
       setAllConversationsLoaded(true);
@@ -135,9 +142,6 @@ const ChatOverview = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [agentId, navigate, editMode, newTagline]);
 
-  const handleDoubleClick = (conversationId: string) =>
-    setEditMode(conversationId);
-
   const handleTaglineChange = (conversationId: string, newTagline: string) => {
     fetcher.submit(
       { conversationId, newTagline, intent: Intent.UPDATE_TAGLINE },
@@ -150,6 +154,26 @@ const ChatOverview = () => {
       ),
     );
     setEditMode(null);
+  };
+
+  const handleRename = (cid: string) => {
+    setEditMode(cid);
+  };
+
+  const handleDelete = (cid: string) => {
+    if (!confirm("Are you sure you want to delete this conversation?")) {
+      return;
+    }
+    fetcher.submit(
+      { conversationId: cid, intent: Intent.ARCHIVE_CONVERSATION },
+      { method: "post", action: `/chat/${agentId}` },
+    );
+
+    if (conversationId === cid) {
+      navigate(`/chat/${agentId}`);
+    }
+
+    setAllConversations((prev) => prev.filter((c) => c.id !== cid));
   };
 
   return (
@@ -169,37 +193,87 @@ const ChatOverview = () => {
             Chats
           </h2>
           {currentConversationsByDay.map(({ date, conversations }) => (
-            <div className="block mb-4 pb-4 overflow-auto border-b" key={date}>
+            <div
+              key={date}
+              className="block mb-4 pb-4 overflow-auto border-b"
+            >
               <h2 className="text-sm px-3 mb-2 font-medium text-primary">
                 {date}
               </h2>
               {conversations
                 .filter((e) => e && e.tagline)
-                .map((c) =>
-                  editMode === c.id ? (
-                    <input
-                      type="text"
-                      className={`w-full py-2 block px-3 transition-all rounded-md text-sm font-normal focus:outline-none ${conversationId === c.id ? "bg-stone-900 text-white" : "text-neutral-900"}`}
-                      defaultValue={c.tagline || ""}
-                      key={c.id}
-                      onChange={(e) => setNewTagline(e.target.value)}
-                      onBlur={(e) => handleTaglineChange(c.id, e.target.value)}
-                      autoFocus
-                    />
-                  ) : (
-                    <Link
-                      className={`py-2 block px-3 transition-all rounded-md text-sm font-normal ${conversationId === c.id ? "bg-stone-900 text-white" : "hover:bg-stone-900 hover:text-white text-neutral-900"}`}
-                      to={`/chat/${agentId}/${c.id}`}
-                      key={c.id}
-                      onDoubleClick={(e) => {
-                        e.preventDefault();
-                        handleDoubleClick(c.id);
-                      }}
+                .map((c) => (
+                  <Popover.Root key={c.id}>
+                    <div
+                      className={`flex justify-between transition-all rounded-md text-sm font-normal relative group ${
+                        conversationId === c.id
+                          ? "bg-stone-900 text-white"
+                          : "hover:bg-stone-900 hover:text-white text-neutral-900"
+                      }`}
                     >
-                      {c.tagline}
-                    </Link>
-                  ),
-                )}
+                      {editMode === c.id ? (
+                        <input
+                          type="text"
+                          className={`w-full flex-1 block py-2 px-3 rounded-md text-sm font-normal focus:outline-none
+                          }`}
+                          defaultValue={c.tagline || ""}
+                          key={c.id}
+                          onChange={(e) => setNewTagline(e.target.value)}
+                          onBlur={(e) =>
+                            handleTaglineChange(c.id, e.target.value)
+                          }
+                          autoFocus
+                        />
+                      ) : (
+                        <Link
+                          className={`py-2 block px-3 flex-1 rounded-md text-sm font-normal
+                          }`}
+                          to={`/chat/${agentId}/${c.id}`}
+                          key={c.id}
+                          onDoubleClick={(e) => {
+                            e.preventDefault();
+                            handleRename(c.id);
+                          }}
+                        >
+                          {c.tagline}
+                        </Link>
+                      )}
+                      <Popover.Trigger asChild>
+                        <div className="w-10 h-auto flex items-center justify-center cursor-pointer">
+                          <MoreVertical className="w-4 h-4 text-white" />
+                        </div>
+                      </Popover.Trigger>
+                      <Popover.Anchor asChild>
+                        <span />
+                      </Popover.Anchor>
+                    </div>
+                    <Popover.Portal>
+                      <Popover.Content
+                        side="right"
+                        align="start"
+                        sideOffset={0}
+                        className="p-2 bg-white rounded-md border w-40 shadow-sm text-sm z-10"
+                      >
+                        <div className="flex flex-col space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => handleRename(c.id)}
+                            className="text-left p-1 hover:bg-gray-100 rounded items-center w-full focus:outline-none"
+                          >
+                            Rename
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(c.id)}
+                            className="text-left text-destructive p-1 hover:bg-gray-100 rounded flex items-center w-full focus:outline-none"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </Popover.Content>
+                    </Popover.Portal>
+                  </Popover.Root>
+                ))}
             </div>
           ))}
           {!allConversationsLoaded && (
