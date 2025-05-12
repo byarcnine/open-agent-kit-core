@@ -18,15 +18,12 @@ const vectorSearch = async (
   const vector = embeddings[0];
   const dimensions = vector.length;
 
-  const joinTagTables = tags.length > 0
-    ? Prisma.sql`
-        JOIN "_KnowledgeDocumentToTag" kdt ON k.id = kdt."A"
-        JOIN "knowledge_document_tag" kt ON kdt."B" = kt.id
-      `
-    : Prisma.sql`
-        LEFT JOIN "_KnowledgeDocumentToTag" kdt ON k.id = kdt."A"
-        LEFT JOIN "knowledge_document_tag" kt ON kdt."B" = kt.id
-      `;
+  // Use INNER JOIN if filtering by tags, otherwise LEFT JOIN to include docs without tags
+  const joinType = tags.length > 0 ? Prisma.sql`JOIN` : Prisma.sql`LEFT JOIN`;
+  const joinTagTables = Prisma.sql`
+    ${joinType} "_KnowledgeDocumentToTag" kdt ON (k.id = kdt."A")
+    ${joinType} "knowledge_document_tag" kt ON (kdt."B" = kt.id)
+  `;
 
   const results: {
     id: string;
