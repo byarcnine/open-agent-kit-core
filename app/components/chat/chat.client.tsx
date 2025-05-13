@@ -199,7 +199,7 @@ const Chat = ({
           ? createFileList(files)
           : undefined,
       });
-      textareaRef.current?.blur();
+      // textareaRef.current?.blur();
       clearFileInput();
     },
     [handleSubmit, input, files],
@@ -214,7 +214,7 @@ const Chat = ({
             ? createFileList(files)
             : undefined,
         });
-        textareaRef.current?.blur();
+        // textareaRef.current?.blur();
         clearFileInput();
       }
     },
@@ -381,6 +381,7 @@ const Chat = ({
               error={error?.message}
               avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
               status={status}
+              anchorToBottom={false}
             />
           </>
         )}

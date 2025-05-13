@@ -326,16 +326,25 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         border-radius: 5px;
         border: 1px solid transparent;
       }
+      &--anchor-bottom {
+        * {
+          overflow-anchor: none;
+        }
+      }
     }
 
     &__messages-container-wrapper {
       position: relative;
       overflow-y: auto;
+      height: 100%;
     }
 
     &__scroll-end {
       height: 10px;
       width: 10px;
+      &--anchor-bottom {
+        overflow-anchor: auto;
+      }
     }
 
     &__advice-badges {
