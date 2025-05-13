@@ -71,6 +71,7 @@ export default function Index() {
                 agentId={agentId}
                 toolNamesList={toolNames}
                 agentChatSettings={chatSettings}
+                anchorToBottom={false}
               />
             )}
           </ClientOnlyComponent>

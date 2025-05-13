@@ -36,6 +36,7 @@ const Chat = ({
   agentChatSettings = null,
   toolNamesList = {},
   avatarImageURL,
+  anchorToBottom = true,
 }: {
   onConversationStart?: (conversationId: string) => void;
   initialMessages?: Message[];
@@ -48,6 +49,7 @@ const Chat = ({
   agentChatSettings?: ChatSettings | null;
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
+  anchorToBottom?: boolean;
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     initialConversationId,
@@ -381,7 +383,7 @@ const Chat = ({
               error={error?.message}
               avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
               status={status}
-              anchorToBottom={false}
+              anchorToBottom={anchorToBottom}
             />
           </>
         )}
