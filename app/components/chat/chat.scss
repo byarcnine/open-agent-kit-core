@@ -5,6 +5,7 @@ $oak-white: white;
 $oak-color-muted-foreground: #737373;
 $oak-border-radius: 12px;
 $oak-error-color: oklch(0.704 0.191 22.216);
+$oak-mobile-breakpoint: 480px;
 
 #oak-chat-container {
   font-family: "Inter", "ui-sans-serif", "system-ui", "sans-serif";
@@ -19,6 +20,8 @@ $oak-error-color: oklch(0.704 0.191 22.216);
   background-color: $oak-white;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  container-type: inline-size;
+  container-name: chat-container;
 
   .oak-chat {
     &__empty-state {
@@ -430,7 +433,10 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         &-container {
           display: flex;
           flex-direction: column;
-          max-width: 80%;
+          max-width: 100%;
+          @container chat-container (min-width: #{$oak-mobile-breakpoint}) {
+            max-width: 80%;
+          }
 
           &-attachments {
             display: flex;
@@ -547,7 +553,10 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       flex-shrink: 0;
       overflow: hidden;
       margin-top: 8px;
-
+      display: none;
+      @container chat-container (min-width: #{$oak-mobile-breakpoint}) {
+        display: block;
+      }
       &-image {
         aspect-ratio: 1 / 1;
         height: 100%;
@@ -700,6 +709,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
   }
 
   code {
+    white-space: break-words !important;
     span {
       font-size: 12px;
       white-space: pre;
