@@ -2,6 +2,7 @@ import { type LoaderFunctionArgs, redirect } from "react-router";
 import { AgentUserRole, prisma } from "@db/db.server";
 import { getSession } from "~/lib/auth/auth.server";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
+import jwt from 'jsonwebtoken';
 
 export const hasPermission = async (
   user: SessionUser,
@@ -72,6 +73,26 @@ export const canUserAccessAgent = async (
   if (agent?.isPublic) return true;
   if (!user) return false;
   return hasPermission(user, PERMISSIONS.VIEW_AGENT, agentId);
+};
+
+export const verifyChatSessionTokenForPublicAgent = async (
+  request: LoaderFunctionArgs["request"],
+  agentId: string
+): Promise<boolean> => {
+  const agent = await prisma.agent.findUnique({ where: { id: agentId } });
+  if (agent?.isPublic) {
+    const sessionToken = request.headers.get("x-oak-session-token");
+    if (!sessionToken) return false;
+    try {
+      const decoded = jwt.verify(sessionToken, process.env.APP_SECRET!);
+      if (!decoded) return false;
+      return true;
+    } catch (error) {
+      console.error("Error verifying session token:", error);
+      return false;
+    }
+  }
+  return true;
 };
 
 export const getUserAgentRole = async (

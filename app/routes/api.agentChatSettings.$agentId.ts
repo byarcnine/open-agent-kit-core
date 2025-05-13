@@ -35,16 +35,16 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     );
   }
 
-  const sessionToken = request.headers.get("x-oak-session-token");
+  const conversationToken = request.headers.get("x-oak-conversation-token");
   let conversationId: string | undefined;
-  if (sessionToken) {
+  if (conversationToken) {
     try {
-      const decoded = jwt.verify(sessionToken, process.env.APP_SECRET as string);
+      const decoded = jwt.verify(conversationToken, process.env.APP_SECRET as string);
       if (typeof decoded === "object" && decoded !== null && "conversationId" in decoded) {
         conversationId = decoded.conversationId as string;
       }
     } catch (error) {
-      console.error("Error verifying session token:", error);
+      console.error("Error verifying conversation token:", error);
     }
   }
 
@@ -79,7 +79,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const toolNames = toolNameIdentifierList();
 
   const chatSettings = await getChatSettings(agentId as string);
-  return new Response(JSON.stringify({ chatSettings, toolNames, messages, sessionValid: !!conversationId }), {
+  return new Response(JSON.stringify({ chatSettings, toolNames, messages, conversationValid: !!conversationId }), {
     headers: {
       "Content-Type": "application/json",
       ...corsHeaders,
