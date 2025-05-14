@@ -85,7 +85,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 const ChatOverview = () => {
   const { agentId, conversationId } = useParams();
   const { conversations, agent, user } = useLoaderData<typeof loader>();
-
   const [allConversations, setAllConversations] = useState(conversations);
   const [currentConversationsByDay, setCurrentConversationsByDay] = useState(
     getConversationsByDay(conversations),
@@ -119,6 +118,10 @@ const ChatOverview = () => {
   useEffect(() => {
     setCurrentConversationsByDay(getConversationsByDay(allConversations));
   }, [allConversations]);
+
+  useEffect(() => {
+    setAllConversations(conversations);
+  }, [conversations.map((c) => c.createdAt.toISOString()).join(";")]);
 
   useEffect(() => {
     if (fetcher.state === "idle") {
@@ -175,7 +178,6 @@ const ChatOverview = () => {
 
     setAllConversations((prev) => prev.filter((c) => c.id !== cid));
   };
-
   return (
     <Layout
       navComponent={

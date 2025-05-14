@@ -70,8 +70,8 @@ export default function Index() {
   const { agentId } = useParams();
   const { toolNames, chatSettings } = useLoaderData<typeof loader>();
   const onConversationStart = (conversationId: string) => {
-    revalidate();
     window.history.replaceState(null, "", `/chat/${agentId}/${conversationId}`);
+    revalidate();
   };
   return (
     <ClientOnlyComponent>

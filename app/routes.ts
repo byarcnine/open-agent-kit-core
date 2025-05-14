@@ -12,7 +12,7 @@ const plugins = getPlugins();
 
 export const routes = (
   corePrefix: string,
-  routesDirPrefix: string = "../node_modules/"
+  routesDirPrefix: string = "../node_modules/",
 ) => {
   return [
     // Core routes
@@ -39,11 +39,11 @@ export const routes = (
           route("users", `${corePrefix}/agent.$agentId.users.tsx`),
           route(
             "conversations",
-            `${corePrefix}/agent.$agentId.conversations._index.tsx`
+            `${corePrefix}/agent.$agentId.conversations._index.tsx`,
           ),
           route(
             "conversations/:id",
-            `${corePrefix}/agent.$agentId.conversations.$id.tsx`
+            `${corePrefix}/agent.$agentId.conversations.$id.tsx`,
           ),
           // ...routeArray.map((r) => route(r.routePath, r.relativePath)),
           ...plugins
@@ -56,28 +56,34 @@ export const routes = (
                     return index(`${routesDirPrefix}${p.name}/${r.file}`);
                   }
                   return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
-                }) || []
-              )
+                }) || [],
+              ),
             ),
           // Knowledge Routes
           layout(`${corePrefix}/agent.$agentId.knowledge.tsx`, [
             ...prefix("knowledge/", [
               index(`${corePrefix}/agent.$agentId.knowledge.documents.tsx`),
-              route("settings", `${corePrefix}/agent.$agentId.knowledge.settings.tsx`),
+              route(
+                "settings",
+                `${corePrefix}/agent.$agentId.knowledge.settings.tsx`,
+              ),
             ]),
           ]),
         ]),
       ]),
     ]),
     // Chat routes
-    layout(`${corePrefix}/chat.$agentId.tsx`, [
+    layout(`${corePrefix}/chat.$agentId.$conversationId.tsx`, [
       route("chat/:agentId", `${corePrefix}/chat.$agentId._index.tsx`),
       route(
         "chat/:agentId/:conversationId",
-        `${corePrefix}/chat.$agentId.$conversationId.tsx`
+        `${corePrefix}/chat.$agentId.$conversationId.tsx`,
       ),
     ]),
-    route("chat/:agentId/loadMoreConversations", `${corePrefix}/chat.$agentId.loadMoreConversations.tsx`),
+    route(
+      "chat/:agentId/loadMoreConversations",
+      `${corePrefix}/chat.$agentId.loadMoreConversations.tsx`,
+    ),
 
     // Other routes
     route("invite/:id", `${corePrefix}/invite.$id.tsx`),
@@ -88,7 +94,7 @@ export const routes = (
     route("api/generate", `${corePrefix}/api.generate.ts`),
     route(
       "api/agentChatSettings/:agentId",
-      `${corePrefix}/api.agentChatSettings.$agentId.ts`
+      `${corePrefix}/api.agentChatSettings.$agentId.ts`,
     ),
   ] satisfies RouteConfig;
 };

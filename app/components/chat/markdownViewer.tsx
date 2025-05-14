@@ -168,6 +168,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
               theme={atomOneLight}
               customStyle={{
                 display: "flex",
+                padding: "10px",
               }}
             />
           ) : (

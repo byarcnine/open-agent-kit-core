@@ -18,7 +18,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     .findUnique({
       where: { id: conversationId, agentId },
       include: {
-        messages: true,
+        messages: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     })
     .then((conversation) => {

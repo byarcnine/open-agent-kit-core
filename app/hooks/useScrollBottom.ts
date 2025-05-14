@@ -38,7 +38,9 @@ export function useScrollToBottom<T extends HTMLElement>(
   );
 
   useEffect(() => {
-    scrollToBottom(false);
+    setTimeout(() => {
+      scrollToBottom(false);
+    }, 100);
   }, []);
 
   useEffect(() => {
