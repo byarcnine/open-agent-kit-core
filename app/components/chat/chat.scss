@@ -245,7 +245,8 @@ $oak-mobile-breakpoint: 480px;
       opacity: 1;
       transition: 300ms ease;
       color: $oak-color-primary;
-
+      border: none;
+      background-color: transparent;
       span {
         display: none;
         width: 0;
@@ -268,6 +269,7 @@ $oak-mobile-breakpoint: 480px;
 
       &:hover {
         opacity: 1;
+        cursor: pointer;
         background-color: $oak-color-primary;
         svg {
           stroke: $oak-white;

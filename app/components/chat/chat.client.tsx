@@ -103,7 +103,7 @@ const Chat = ({
       })
         .then((res) => res.json())
         .then((data) => {
-          setChatSettings(data.chatSettings || chatSettings);
+          setChatSettings(data.chatSettings || initialChatSettings);
           setToolNames(data.toolNames);
 
           if (!data.sessionValid) {
@@ -128,7 +128,7 @@ const Chat = ({
           );
         });
     }
-  }, []);
+  }, [isEmbed, API_URL, agentId]);
 
   const initMessages =
     chatSettings?.initialMessage && !initialMessages?.length
@@ -284,13 +284,22 @@ const Chat = ({
     const isSuggestedQuestion =
       chatSettings?.suggestedQuestions?.includes(input);
     if (isSuggestedQuestion) {
-      handleSubmit(event, {
+      const formEvent = new Event(
+        "submit",
+      ) as unknown as React.FormEvent<HTMLFormElement>;
+      handleSubmit(formEvent, {
         experimental_attachments: files.length
           ? createFileList(files)
           : undefined,
       });
     }
-  }, [input, handleSubmit]);
+  }, [
+    input,
+    handleSubmit,
+    files,
+    chatSettings?.suggestedQuestions,
+    createFileList,
+  ]);
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -342,13 +351,13 @@ const Chat = ({
 
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
-  const contextValue = React.useMemo(
-    () => ({ isEmbed, chatSettings }),
-    [isEmbed, chatSettings],
-  );
+  // const contextValue = React.useMemo(
+  //   () => ({ isEmbed, chatSettings }),
+  //   [isEmbed, JSON.stringify(chatSettings)],
+  // );
 
   return (
-    <ChatContext.Provider value={contextValue}>
+    <ChatContext.Provider value={{ isEmbed, chatSettings }}>
       <div
         key={conversationId}
         id="oak-chat-container"

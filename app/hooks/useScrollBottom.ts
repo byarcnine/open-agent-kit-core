@@ -69,7 +69,7 @@ export function useScrollToBottom<T extends HTMLElement>(
         scrollToBottom(false);
       }, 100);
     }
-  }, [status]);
+  }, [status, scrollToBottom, disableScrolling]);
 
   // Add scroll event listener to check scroll position
   useEffect(() => {
