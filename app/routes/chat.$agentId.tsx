@@ -193,10 +193,7 @@ const ChatOverview = () => {
             Chats
           </h2>
           {currentConversationsByDay.map(({ date, conversations }) => (
-            <div
-              key={date}
-              className="block mb-4 pb-4 overflow-auto border-b"
-            >
+            <div key={date} className="block mb-4 pb-4 overflow-auto border-b">
               <h2 className="text-sm px-3 mb-2 font-medium text-primary">
                 {date}
               </h2>
@@ -230,6 +227,7 @@ const ChatOverview = () => {
                           }`}
                           to={`/chat/${agentId}/${c.id}`}
                           key={c.id}
+                          prefetch="intent"
                           onDoubleClick={(e) => {
                             e.preventDefault();
                             handleRename(c.id);

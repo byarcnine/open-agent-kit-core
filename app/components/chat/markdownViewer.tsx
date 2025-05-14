@@ -36,7 +36,7 @@ const YouTubeEmbed = React.memo(({ url }: { url: string }) => {
 
 function enhanceChildrenWithMedia(
   children: React.ReactNode,
-  chatSettings: ChatSettings | undefined
+  chatSettings: ChatSettings | undefined,
 ) {
   const isYouTubeUrl = (url: string) =>
     url.includes("youtube.com") || url.includes("youtu.be");
@@ -89,7 +89,10 @@ function enhanceChildrenWithMedia(
 
 const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
   const { chatSettings } = useContext(ChatContext);
-  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(props.children, chatSettings);
+  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(
+    props.children,
+    chatSettings,
+  );
 
   if (hasBlock) {
     return <>{enhancedChildren}</>;
@@ -100,7 +103,10 @@ const CustomP = (props: HTMLAttributes<HTMLParagraphElement>) => {
 
 const CustomLI = (props: HTMLAttributes<HTMLLIElement>) => {
   const { chatSettings } = useContext(ChatContext);
-  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(props.children, chatSettings);
+  const { enhancedChildren, hasBlock } = enhanceChildrenWithMedia(
+    props.children,
+    chatSettings,
+  );
 
   if (hasBlock) {
     return <>{enhancedChildren}</>;
@@ -161,12 +167,14 @@ const MarkdownViewer = ({ text }: { text: string }) => {
               showLineNumbers={false}
               theme={atomOneLight}
               customStyle={{
-                whiteSpace: "pre-wrap",
-                wordWrap: "break-word",
+                display: "flex",
               }}
             />
           ) : (
-            <code className={`${className} whitespace-pre-wrap break-words`} {...props}>
+            <code
+              className={`${className} whitespace-pre-wrap break-words`}
+              {...props}
+            >
               {children}
             </code>
           );

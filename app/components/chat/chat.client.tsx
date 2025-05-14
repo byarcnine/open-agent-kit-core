@@ -36,6 +36,7 @@ const Chat = ({
   agentChatSettings = null,
   toolNamesList = {},
   avatarImageURL,
+  anchorToBottom = true,
 }: {
   onConversationStart?: (conversationId: string) => void;
   initialMessages?: Message[];
@@ -48,6 +49,7 @@ const Chat = ({
   agentChatSettings?: ChatSettings | null;
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
+  anchorToBottom?: boolean;
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     initialConversationId,
@@ -61,7 +63,6 @@ const Chat = ({
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
 
-  const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
@@ -126,7 +127,7 @@ const Chat = ({
           );
         });
     }
-  }, []);
+  }, [isEmbed, API_URL, agentId, chatSettings]);
 
   const initMessages =
     chatSettings?.initialMessage && !initialMessages?.length
@@ -199,7 +200,7 @@ const Chat = ({
           ? createFileList(files)
           : undefined,
       });
-      textareaRef.current?.blur();
+      // textareaRef.current?.blur();
       clearFileInput();
     },
     [handleSubmit, input, files],
@@ -214,7 +215,7 @@ const Chat = ({
             ? createFileList(files)
             : undefined,
         });
-        textareaRef.current?.blur();
+        // textareaRef.current?.blur();
         clearFileInput();
       }
     },
@@ -288,7 +289,7 @@ const Chat = ({
           : undefined,
       });
     }
-  }, [input, handleSubmit]);
+  }, [input, handleSubmit, files, chatSettings?.suggestedQuestions]);
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -340,13 +341,13 @@ const Chat = ({
 
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
-  const contextValue = React.useMemo(
-    () => ({ isEmbed, chatSettings }),
-    [isEmbed, chatSettings],
-  );
+  // const contextValue = React.useMemo(
+  //   () => ({ isEmbed, chatSettings }),
+  //   [isEmbed, JSON.stringify(chatSettings)],
+  // );
 
   return (
-    <ChatContext.Provider value={contextValue}>
+    <ChatContext.Provider value={{ isEmbed, chatSettings }}>
       <div
         key={conversationId}
         id="oak-chat-container"
@@ -380,14 +381,9 @@ const Chat = ({
               messages={messages}
               error={error?.message}
               avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
-            >
-              {status === "submitted" && (
-                <p className="oak-chat__thinking-message">
-                  Thinking
-                  <span className="oak-chat__thinking-dots" />
-                </p>
-              )}
-            </Messages>
+              status={status}
+              anchorToBottom={anchorToBottom}
+            />
           </>
         )}
         {!disableInput && (
