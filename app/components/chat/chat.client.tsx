@@ -63,7 +63,6 @@ const Chat = ({
     useState<Record<string, string>>(toolNamesList);
   const [chatSettingsLoaded, setChatSettingsLoaded] = useState(!isEmbed);
 
-  const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);

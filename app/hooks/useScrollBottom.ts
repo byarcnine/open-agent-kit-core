@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  type RefObject,
-  useCallback,
-  useState,
-} from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { type UseChatHelpers } from "@ai-sdk/react";
 
 export function useScrollToBottom<T extends HTMLElement>(
@@ -48,13 +42,13 @@ export function useScrollToBottom<T extends HTMLElement>(
   }, []);
 
   useEffect(() => {
-    if (disableScrolling) {
+    if (disableScrolling && status === "submitted") {
       // only scroll to bottom because a new message is being sent
       scrollToBottom(false);
       return;
     }
 
-    if (status === "submitted") {
+    if (status === "submitted" && !disableScrolling) {
       setHasSentMessage(true);
       const messageDivs = containerRef.current?.querySelectorAll(
         ".oak-chat__message--user > div",

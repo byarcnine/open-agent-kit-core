@@ -33,11 +33,12 @@ const Messages: React.FC<MessagesProps> = ({
     canScrollDown,
     scrollToBottom,
   } = useScrollToBottom<HTMLDivElement>(status, anchorToBottom);
+  const autoScrollOnNewContent = anchorToBottom && !canScrollDown;
   return (
     <div className="oak-chat__messages-container-wrapper">
       <div
         className={cn("oak-chat__messages", {
-          "oak-chat__messages--anchor-bottom": anchorToBottom,
+          "oak-chat__messages--anchor-bottom": autoScrollOnNewContent,
         })}
         ref={containerRef}
       >
@@ -75,7 +76,7 @@ const Messages: React.FC<MessagesProps> = ({
         <div
           ref={endRef}
           className={cn("oak-chat__scroll-end", {
-            "oak-chat__scroll-end--anchor-bottom": anchorToBottom,
+            "oak-chat__scroll-end--anchor-bottom": autoScrollOnNewContent,
           })}
         />
       </div>
