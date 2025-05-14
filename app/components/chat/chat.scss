@@ -75,8 +75,11 @@ $oak-mobile-breakpoint: 480px;
         margin-bottom: 16px;
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
-        margin-left: 54px;
         color: $oak-color-muted-foreground;
+        margin-left: 8px;
+        @container chat-container (min-width: #{$oak-mobile-breakpoint}) {
+          margin-left: 54px;
+        }
       }
       &-dots {
         display: inline-block;

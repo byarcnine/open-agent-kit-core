@@ -103,7 +103,7 @@ const Chat = ({
       })
         .then((res) => res.json())
         .then((data) => {
-          setChatSettings(data.chatSettings || initialChatSettings);
+          setChatSettings(data.chatSettings || chatSettings);
           setToolNames(data.toolNames);
 
           if (!data.sessionValid) {
@@ -128,7 +128,7 @@ const Chat = ({
           );
         });
     }
-  }, [isEmbed, API_URL, agentId]);
+  }, [isEmbed, API_URL, agentId, chatSettings]);
 
   const initMessages =
     chatSettings?.initialMessage && !initialMessages?.length
@@ -284,22 +284,13 @@ const Chat = ({
     const isSuggestedQuestion =
       chatSettings?.suggestedQuestions?.includes(input);
     if (isSuggestedQuestion) {
-      const formEvent = new Event(
-        "submit",
-      ) as unknown as React.FormEvent<HTMLFormElement>;
-      handleSubmit(formEvent, {
+      handleSubmit(event, {
         experimental_attachments: files.length
           ? createFileList(files)
           : undefined,
       });
     }
-  }, [
-    input,
-    handleSubmit,
-    files,
-    chatSettings?.suggestedQuestions,
-    createFileList,
-  ]);
+  }, [input, handleSubmit, files, chatSettings?.suggestedQuestions]);
 
   useEffect(() => {
     textareaRef.current?.focus();
