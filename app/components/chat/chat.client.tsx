@@ -37,6 +37,7 @@ const Chat = ({
   agentChatSettings = null,
   toolNamesList = {},
   avatarImageURL,
+  anchorToBottom = true,
 }: {
   onConversationStart?: (conversationId: string) => void;
   initialMessages?: Message[];
@@ -49,6 +50,7 @@ const Chat = ({
   agentChatSettings?: ChatSettings | null;
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
+  anchorToBottom?: boolean;
 }) => {
   const [conversationId, setConversationId] = useState<string | undefined>(
     initialConversationId,
@@ -168,7 +170,7 @@ const Chat = ({
       };
       initChat();
     }
-  }, []);
+  }, [isEmbed, API_URL, agentId, chatSettings]);
 
   const initMessages =
     chatSettings?.initialMessage && !initialMessages?.length
@@ -279,6 +281,8 @@ const Chat = ({
           ? createFileList(files)
           : undefined,
       });
+      // textareaRef.current?.blur();
+      clearFileInput();
     },
     [handleSubmitWithTokenCheck, input, files],
   );
@@ -291,6 +295,8 @@ const Chat = ({
             ? createFileList(files)
             : undefined,
         });
+        // textareaRef.current?.blur();
+        clearFileInput();
       }
     },
     [handleSubmitWithTokenCheck, files],
@@ -363,7 +369,7 @@ const Chat = ({
           : undefined,
       });
     }
-  }, [input, handleSubmitWithTokenCheck]);
+  }, [input, handleSubmitWithTokenCheck, chatSettings?.suggestedQuestions, files]);
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -421,7 +427,7 @@ const Chat = ({
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
   return (
-    <ChatContext.Provider value={contextValue}>
+    <ChatContext.Provider value={{ isEmbed, chatSettings }}>
       <div
         key={conversationId}
         id="oak-chat-container"
@@ -455,14 +461,9 @@ const Chat = ({
               messages={messages}
               error={error?.message}
               avatarURL={avatarImageURL || `${API_URL}/assets/oak_leaf.svg`}
-            >
-              {status === "submitted" && (
-                <p className="oak-chat__thinking-message">
-                  Thinking
-                  <span className="oak-chat__thinking-dots" />
-                </p>
-              )}
-            </Messages>
+              status={status}
+              anchorToBottom={anchorToBottom}
+            />
           </>
         )}
         {!disableInput && (

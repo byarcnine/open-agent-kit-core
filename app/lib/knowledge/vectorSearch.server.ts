@@ -18,6 +18,13 @@ const vectorSearch = async (
   const vector = embeddings[0];
   const dimensions = vector.length;
 
+  // Use INNER JOIN if filtering by tags, otherwise LEFT JOIN to include docs without tags
+  const joinType = tags.length > 0 ? Prisma.sql`JOIN` : Prisma.sql`LEFT JOIN`;
+  const joinTagTables = Prisma.sql`
+    ${joinType} "_KnowledgeDocumentToTag" kdt ON (k.id = kdt."A")
+    ${joinType} "knowledge_document_tag" kt ON (kdt."B" = kt.id)
+  `;
+
   const results: {
     id: string;
     content: string;
@@ -37,8 +44,7 @@ const vectorSearch = async (
       (e.vector <-> ${vector}::vector) as similarity
     FROM "embedding" e
     JOIN "knowledge_document" k ON e."knowledgeDocumentId" = k.id
-    JOIN "_KnowledgeDocumentToTag" kdt ON k.id = kdt."A"
-    JOIN "knowledge_document_tag" kt ON kdt."B" = kt.id
+    ${joinTagTables}
     WHERE k."agentId" = ${agentId} AND e."dimensions" = ${dimensions}
     ${tags.length > 0 ? Prisma.sql`AND kt.name IN (${Prisma.join(tags)})` : Prisma.empty}
     GROUP BY e.id, k.id

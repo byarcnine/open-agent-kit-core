@@ -80,6 +80,7 @@ export default function Index() {
           onConversationStart={onConversationStart}
           agentId={agentId as string}
           toolNamesList={toolNames}
+          anchorToBottom={false}
           agentChatSettings={chatSettings}
         />
       )}

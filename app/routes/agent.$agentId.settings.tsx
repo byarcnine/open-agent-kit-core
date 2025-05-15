@@ -706,7 +706,7 @@ const AgentSettings = () => {
                 <div className="flex flex-row gap-2 mb-4">
                   <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-md">
                     {`
-<iframe src="${appUrl}/embed/${agent.id} width="100%" height="100%"></iframe>
+<iframe src="${appUrl}/embed/${agent.id}" width="100%" height="100%"></iframe>
                 `}
                   </code>
                 </div>
