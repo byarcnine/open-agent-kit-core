@@ -508,10 +508,10 @@ $oak-mobile-breakpoint: 480px;
         overflow-x: auto;
       }
 
-      &-code {
-        font-size: 12px;
-        white-space: pre-wrap;
-        word-break: break-word;
+      &-copyBlock {
+        button {
+          border: none;
+        }
       }
 
       &-content {
@@ -712,6 +712,10 @@ $oak-mobile-breakpoint: 480px;
   }
   ol {
     list-style: decimal;
+  }
+
+  pre {
+    margin: 15px 0;
   }
 
   code {

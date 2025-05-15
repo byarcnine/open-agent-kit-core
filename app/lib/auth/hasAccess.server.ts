@@ -69,8 +69,6 @@ export const canUserAccessAgent = async (
   user: SessionUser | undefined,
   agentId: string
 ): Promise<boolean> => {
-  const agent = await prisma.agent.findUnique({ where: { id: agentId } });
-  if (agent?.isPublic) return true;
   if (!user) return false;
   return hasPermission(user, PERMISSIONS.VIEW_AGENT, agentId);
 };
@@ -92,7 +90,7 @@ export const verifyChatSessionTokenForPublicAgent = async (
       return false;
     }
   }
-  return true;
+  return false;
 };
 
 export const getUserAgentRole = async (

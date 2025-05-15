@@ -43,8 +43,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const meta = body.meta || {};
   // make sure the agent is public or the user has access to the agent
   const canAccess = await canUserAccessAgent(session?.user, agentId);
-  const chatSessionAllowed = await verifyChatSessionTokenForPublicAgent(request, agentId);
-  if (!canAccess || !chatSessionAllowed) {
+  const chatSessionAllowed = canAccess || await verifyChatSessionTokenForPublicAgent(request, agentId);
+
+  if (!canAccess && !chatSessionAllowed) {
     return data(
       { error: "Unauthorized" },
       {
@@ -67,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const chatSettings = await getChatSettings(agentId);
     const maintainConversationSession = chatSettings?.maintainConversationSession;
 
-    let oakConversationToken = session?.user.id || clientConversationId ?
+    let oakConversationToken = session?.user.id ?
       undefined :
       jwt.sign({ conversationId }, process.env.APP_SECRET || "" as string, { expiresIn: (maintainConversationSession || 0) * 60 });
 
