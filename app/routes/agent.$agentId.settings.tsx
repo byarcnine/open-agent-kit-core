@@ -43,7 +43,7 @@ import {
 } from "~/components/ui/select";
 import type { ModelSettings } from "~/types/llm";
 import { PERMISSIONS } from "~/types/auth";
-import CustomCodeEditor from "~/components/CodeEditor/CodeEditor";
+import CustomCodeEditor from "~/components/codeEditor/codeEditor";
 import css from "css";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
