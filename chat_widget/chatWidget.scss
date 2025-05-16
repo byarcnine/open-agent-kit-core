@@ -1,0 +1,83 @@
+#oakChatWidget {
+  // Block: oakChatWidget
+
+  &__suggested {
+    position: fixed;
+    right: 32px;
+    bottom: 100px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    &-button {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 16px;
+      padding: 6px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+      &:hover {
+        background: #f3f4f6;
+      }
+    }
+  }
+
+  &__bubble-container {
+    position: fixed;
+    right: 32px;
+    bottom: 32px;
+    z-index: 1002;
+  }
+
+  &__bubble-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    cursor: pointer;
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  &__window {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 360px;
+    height: 500px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    overflow: hidden;
+    z-index: 1003;
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    pointer-events: auto;
+    transition: height 0.3s cubic-bezier(.4,2,.6,1), opacity 0.2s;
+
+    &--closed {
+      height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  &__close-btn {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    margin: 8px;
+  }
+}
