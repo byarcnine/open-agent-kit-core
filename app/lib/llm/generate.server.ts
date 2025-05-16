@@ -31,7 +31,8 @@ export const generateSingleMessage =
       },
     ];
     const completion = await generateText({
-      model,
+      model: model.model,
+      temperature: model.settings?.temperature ?? 0.7,
       toolChoice: options?.disableTools ? "none" : "auto",
       messages,
       tools: tools?.tools ? Object.fromEntries(tools.tools) : undefined,
@@ -47,7 +48,8 @@ export const generateConversation =
       prepareToolsForAgent(agentId, "0", {}, messages),
     ]);
     const completion = await generateText({
-      model,
+      model: model.model,
+      temperature: model.settings?.temperature ?? 0.7,
       tools: Object.fromEntries(tools.tools),
       messages,
     });

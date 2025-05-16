@@ -40,6 +40,8 @@ import { Textarea } from "~/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Loader, Trash2 } from "react-feather";
 import { createMCPClient } from "~/lib/mcp/client.server";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { PERMISSIONS } from "~/types/auth";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -112,13 +114,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return { plugins: await pluginsPromise, mcp: await mcpPromise };
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
+  const agentId = params.agentId as string;
   const formAction = formData.get("_action") as
     | "addMcp"
     | "fetchTools"
-    | "removeMcp"; // Add 'removeMcp'
+    | "removeMcp";
 
+  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
   if (formAction === "fetchTools") {
     const mcpId = formData.get("mcpId") as string;
     if (!mcpId) {
@@ -138,7 +142,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
 
       let mcpClient;
-      const connectionArgs = mcp.connectionArgs as any; // Type assertion might be needed
+      const connectionArgs = mcp.connectionArgs as any;
 
       if (mcp.type === "SSE") {
         mcpClient = await createMCPClient({
@@ -217,8 +221,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 
-  // --- Existing Add MCP Logic ---
-  const agentId = formData.get("agentId") as string;
   const type = formData.get("type") as "SSE" | "STDIO";
   const name = formData.get("name") as string;
 

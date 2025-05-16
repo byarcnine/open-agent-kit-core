@@ -7,7 +7,7 @@ import {
 import { getConfig } from "../config/config";
 
 export const getChatSettings = async (
-  agentId: string
+  agentId: string,
 ): Promise<ChatSettings | null> => {
   const agent = await prisma.agent.findUnique({
     where: { id: agentId },
@@ -18,7 +18,9 @@ export const getChatSettings = async (
   const settings = JSON.parse(agent.chatSettings as string) as ChatSettings;
   const model = await getModelForAgent(agentId, getConfig());
   if (settings?.enableFileUpload) {
-    settings.supportedFileTypes = supportedFileTypesForModel(model.provider);
+    settings.supportedFileTypes = supportedFileTypesForModel(
+      model.model.provider,
+    );
   }
   return settings;
 };

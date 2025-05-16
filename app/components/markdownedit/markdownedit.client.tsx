@@ -10,37 +10,40 @@ import {
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import styles from "./markdownedit.module.scss";
+import { memo } from "react";
 
-const MarkdownEdit = ({
-  prompt,
-  onChange,
-}: {
-  prompt: string;
-  onChange: (markdown: string) => void;
-}) => {
-  return (
-    <MDXEditor
-      className={styles.root}
-      plugins={[
-        headingsPlugin({
-          allowedHeadingLevels: [1, 2, 3],
-        }),
-        listsPlugin(),
-        toolbarPlugin({
-          toolbarContents: () => (
-            <>
-              <BlockTypeSelect />
-              <UndoRedo />
-              <BoldItalicUnderlineToggles />
-              <ListsToggle options={["number", "bullet"]} />
-            </>
-          ),
-        }),
-      ]}
-      markdown={prompt}
-      onChange={(markdown) => onChange(markdown)}
-    />
-  );
-};
+const MarkdownEdit = memo(
+  ({
+    prompt,
+    onChange,
+  }: {
+    prompt: string;
+    onChange: (markdown: string) => void;
+  }) => {
+    return (
+      <MDXEditor
+        className={styles.root}
+        plugins={[
+          headingsPlugin({
+            allowedHeadingLevels: [1, 2, 3],
+          }),
+          listsPlugin(),
+          toolbarPlugin({
+            toolbarContents: () => (
+              <>
+                <BlockTypeSelect />
+                <UndoRedo />
+                <BoldItalicUnderlineToggles />
+                <ListsToggle options={["number", "bullet"]} />
+              </>
+            ),
+          }),
+        ]}
+        markdown={prompt}
+        onChange={(markdown) => onChange(markdown)}
+      />
+    );
+  },
+);
 
 export default MarkdownEdit;

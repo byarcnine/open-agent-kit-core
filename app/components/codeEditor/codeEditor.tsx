@@ -35,11 +35,7 @@ const CustomCodeEditor: React.FC<CustomCodeEditorProps> = ({
     }
   };
 
-  // import prismjs only on client
   const [isReady, setIsReady] = useState(false);
-
-  // import
-
   useEffect(() => {
     import("prismjs").then(() => setIsReady(true));
   }, []);

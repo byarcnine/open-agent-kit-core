@@ -15,6 +15,8 @@ import { Badge } from "~/components/ui/badge";
 import { sessionStorage } from "~/lib/sessions.server";
 import ColorPicker from "~/components/ui/colorPicker";
 import { toast, Toaster } from "sonner";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { PERMISSIONS } from "~/types/auth";
 enum Intent {
   CREATE_TAG = "createTag",
   UPDATE_TAG = "updateTag",
@@ -31,7 +33,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie"),
   );
-
+  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
   try {
     if (intent === Intent.CREATE_TAG) {
       await prisma.knowledgeDocumentTag.create({
@@ -90,7 +92,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     request.headers.get("Cookie"),
   );
   const message = session.get("message");
-  return data({ tags, message }, { headers: { "Set-Cookie": await sessionStorage.commitSession(session) } });
+  return data(
+    { tags, message },
+    { headers: { "Set-Cookie": await sessionStorage.commitSession(session) } },
+  );
 };
 
 const SettingsTab = () => {
@@ -113,9 +118,9 @@ const SettingsTab = () => {
         <CardHeader>
           <CardTitle>Document Tags</CardTitle>
         </CardHeader>
-      <CardContent>
-        <TagSettingsForm tags={tags} />
-      </CardContent>
+        <CardContent>
+          <TagSettingsForm tags={tags} />
+        </CardContent>
       </Card>
       <Toaster expand={true} />
     </>
@@ -253,4 +258,3 @@ function TagSettingsForm({ tags }: { tags: Tag[] }) {
     </div>
   );
 }
-

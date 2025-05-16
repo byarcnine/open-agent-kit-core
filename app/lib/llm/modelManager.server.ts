@@ -32,10 +32,14 @@ const getDefaultModel = (config: OAKConfig) => {
   );
 };
 
-export const setModelForAgent = async (agentId: string, modelId: string) => {
+export const setModelForAgent = async (
+  agentId: string,
+  modelId: string,
+  temperature?: number,
+) => {
   await prisma.agent.update({
     where: { id: agentId },
-    data: { modelSettings: { model: modelId } },
+    data: { modelSettings: { model: modelId, temperature } },
   });
 };
 
@@ -47,7 +51,13 @@ export const getModelForAgent = async (agentId: string, config: OAKConfig) => {
   });
 
   if (!agent) {
-    return getDefaultModel(config);
+    return {
+      model: getDefaultModel(config),
+      settings: {
+        model: getDefaultModel(config).modelId,
+        temperature: 0.7,
+      },
+    };
   }
 
   if (
@@ -57,14 +67,20 @@ export const getModelForAgent = async (agentId: string, config: OAKConfig) => {
   ) {
     const modelId = (agent.modelSettings as ModelSettings).model;
     if (getConfiguredModelIds(config).includes(modelId)) {
-      return (
+      const provider =
         config.models.find((model) => model.modelId === modelId) ||
-        getDefaultModel(config)
-      );
+        getDefaultModel(config);
+      return {
+        model: provider,
+        settings: agent.modelSettings as ModelSettings | undefined,
+      };
     }
   }
 
-  return getDefaultModel(config);
+  return {
+    model: getDefaultModel(config),
+    settings: agent?.modelSettings as ModelSettings,
+  };
 };
 
 export const getDefaultEmbeddingModel = async (
@@ -72,7 +88,7 @@ export const getDefaultEmbeddingModel = async (
   agentId: string,
 ) => {
   const agentModel = await getModelForAgent(agentId, config);
-  switch (agentModel.provider) {
+  switch (agentModel.model.provider) {
     case "xai.chat": // xai doesnt have an embedding model as of march 3, 2025
     case "openai.chat":
       return openai.embedding("text-embedding-3-small");
