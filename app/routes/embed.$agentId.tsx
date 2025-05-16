@@ -64,6 +64,8 @@ const ChatEmbed = () => {
       <ClientOnlyComponent>
         {Chat && (
           <Chat
+            apiUrl={window.location.origin}
+            isEmbed={true}
             agentId={agentId as string}
             agentChatSettings={chatSettings}
             toolNamesList={toolNames}

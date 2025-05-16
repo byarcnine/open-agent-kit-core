@@ -95,6 +95,7 @@ const ChatSettingsUpdateSchema = z.object({
     .nullable(),
   textAreaInitialRows: z.number().min(1).max(5),
   footerNote: z.string().nullable(),
+  maintainConversationSession: z.number().optional(),
 });
 
 enum Intent {
@@ -234,6 +235,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       openInternalLinksInNewTab: !!formData.get("openInternalLinksInNewTab"),
       openYoutubeVideosInIframe: !!formData.get("openYoutubeVideosInIframe"),
       customCSS: formData.get("customCSS")?.toString() || null,
+      maintainConversationSession: formData.get("maintainConversationSession")
+        ? parseInt(formData.get("maintainConversationSession") as string)
+        : undefined,
     };
     try {
       const validatedData = ChatSettingsUpdateSchema.parse(rawInput);
@@ -634,6 +638,23 @@ const AgentSettings = () => {
                     />
                   </div>
                 </CardContentSection>
+                <div className="flex flex-col space-y-2">
+                  <Label htmlFor="maintainConversationSession">
+                    Maintain Conversation Session in Embed
+                  </Label>
+                  <Input
+                    type="number"
+                    id="maintainConversationSession"
+                    name="maintainConversationSession"
+                    className="border"
+                    defaultValue={chatSettings?.maintainConversationSession}
+                    placeholder="Enter number of minutes"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    If enabled, the agent will maintain a conversation session
+                    in the browser's session storage when the agent is embedded.
+                  </p>
+                </div>
                 <Button type="submit">Save Changes</Button>
               </Form>
             </CardContent>
