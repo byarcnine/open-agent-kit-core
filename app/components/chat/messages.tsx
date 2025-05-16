@@ -34,9 +34,7 @@ const Messages: React.FC<MessagesProps> = ({
     scrollToBottom,
   } = useScrollToBottom<HTMLDivElement>(status, anchorToBottom);
 
-  console.log("REENDER")
-
-  const autoScrollOnNewContent = true && canScrollDown;
+  const autoScrollOnNewContent = canScrollDown && anchorToBottom;
 
   return (
     <div className="oak-chat__messages-container-wrapper">
