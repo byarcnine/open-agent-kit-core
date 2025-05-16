@@ -30,6 +30,7 @@ const Chat = (props: {
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
   anchorToBottom?: boolean;
+  onEmbedInit?: (chatSettings: ChatSettings) => void;
 }) => {
   const {
     avatar,

@@ -17,6 +17,7 @@ type UseOakChatArgs = {
   toolNamesList?: Record<string, string>;
   anchorToBottom?: boolean;
   avatarImageURL?: string;
+  onEmbedInit?: (chatSettings: ChatSettings) => void;
 };
 
 type UseOakChatReturn = {
@@ -69,6 +70,7 @@ const useOakChat = ({
   agentChatSettings = null,
   toolNamesList = {},
   avatarImageURL,
+  onEmbedInit,
 }: UseOakChatArgs): UseOakChatReturn => {
   const OAK_CONVERSATION_TOKEN_KEY = "oak_conversation_token";
   const [conversationId, setConversationId] = useState<string | undefined>(initialConversationId);
@@ -190,6 +192,12 @@ const useOakChat = ({
       initChat();
     }
   }, [isEmbed]);
+
+  useEffect(() => {
+    if (isEmbed && chatInitialized) {
+      onEmbedInit?.(chatSettings);
+    }
+  }, [isEmbed, chatInitialized, onEmbedInit, chatSettings]);
 
   const {
     messages,
