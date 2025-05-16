@@ -13,7 +13,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: "chat_widget/index.tsx",
-      name: "ChatWidget",
+      name: "OAKChatWidget",
       fileName: (format) => `chatWidget.bundle.${format}.js`,
     },
     outDir: "public/chat_widget",

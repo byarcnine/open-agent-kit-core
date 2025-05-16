@@ -33,7 +33,11 @@ const Messages: React.FC<MessagesProps> = ({
     canScrollDown,
     scrollToBottom,
   } = useScrollToBottom<HTMLDivElement>(status, anchorToBottom);
-  const autoScrollOnNewContent = anchorToBottom && !canScrollDown;
+
+  console.log("REENDER")
+
+  const autoScrollOnNewContent = true && canScrollDown;
+
   return (
     <div className="oak-chat__messages-container-wrapper">
       <div
@@ -93,4 +97,4 @@ const Messages: React.FC<MessagesProps> = ({
   );
 };
 
-export default Messages;
+export default React.memo(Messages);

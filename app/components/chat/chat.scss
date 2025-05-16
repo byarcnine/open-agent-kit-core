@@ -109,6 +109,7 @@ $oak-mobile-breakpoint: 480px;
       // }
     }
     &__scroll-down-indicator {
+      border: none;
       position: absolute;
       bottom: 15px;
       left: 50%;
@@ -307,6 +308,7 @@ $oak-mobile-breakpoint: 480px;
       color: $oak-color-muted-foreground;
       padding: 20px;
       padding-top: 0;
+      margin: 0;
       text-align: center;
       white-space: pre-wrap;
     }
@@ -511,6 +513,9 @@ $oak-mobile-breakpoint: 480px;
       &-copyBlock {
         button {
           border: none;
+        }
+        span:first-child {
+          overflow-y: hidden;
         }
       }
 

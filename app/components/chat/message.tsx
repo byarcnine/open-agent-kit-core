@@ -54,6 +54,7 @@ const Message: React.FC<MessageProps> = React.memo(
       });
     };
     const isUserMessage = message.role === "user";
+
     return (
       <div
         className={`oak-chat__message oak-chat__message--${
