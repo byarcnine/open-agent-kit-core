@@ -66,7 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
 
     const chatSettings = await getChatSettings(agentId);
-    const maintainConversationSession = chatSettings?.maintainConversationSession;
+    const maintainConversationSession = chatSettings?.embedSettings?.maintainConversationSession;
 
     let oakConversationToken = session?.user.id ?
       undefined :

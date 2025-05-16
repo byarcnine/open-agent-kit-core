@@ -17,6 +17,7 @@ type UseOakChatArgs = {
   toolNamesList?: Record<string, string>;
   anchorToBottom?: boolean;
   avatarImageURL?: string;
+  onEmbedInit?: (chatSettings: ChatSettings) => void;
 };
 
 type UseOakChatReturn = {
@@ -41,8 +42,6 @@ type UseOakChatReturn = {
   handleDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   handleDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   supportedFileTypes: string[];
-  disableInput: boolean;
-  anchorToBottom: boolean;
   avatar: string;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -64,15 +63,14 @@ const useOakChat = ({
   onConversationStart,
   initialMessages,
   initialConversationId,
-  disableInput = false,
   agentId,
   apiUrl,
   meta,
   isEmbed = false,
   agentChatSettings = null,
   toolNamesList = {},
-  anchorToBottom = true,
   avatarImageURL,
+  onEmbedInit,
 }: UseOakChatArgs): UseOakChatReturn => {
   const OAK_CONVERSATION_TOKEN_KEY = "oak_conversation_token";
   const [conversationId, setConversationId] = useState<string | undefined>(initialConversationId);
@@ -194,6 +192,12 @@ const useOakChat = ({
       initChat();
     }
   }, [isEmbed]);
+
+  useEffect(() => {
+    if (isEmbed && chatInitialized) {
+      onEmbedInit?.(chatSettings);
+    }
+  }, [isEmbed, chatInitialized, onEmbedInit, chatSettings]);
 
   const {
     messages,
@@ -397,8 +401,6 @@ const useOakChat = ({
     handleDragOver,
     handleDrop,
     supportedFileTypes,
-    disableInput,
-    anchorToBottom,
     avatar,
     textareaRef,
     fileInputRef,

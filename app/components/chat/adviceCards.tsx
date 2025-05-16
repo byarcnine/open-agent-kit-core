@@ -24,4 +24,4 @@ const AdviceCards: React.FC<AdviceCardsProps> = React.memo(
   )
 );
 
-export default AdviceCards;
+export default React.memo(AdviceCards);
