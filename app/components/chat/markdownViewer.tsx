@@ -161,18 +161,25 @@ const MarkdownViewer = ({ text }: { text: string }) => {
         } & React.HTMLAttributes<HTMLElement>) {
           const match = /language-(\w+)/.exec(className || "");
           return !inline && match ? (
-            <CopyBlock
-              text={decode(String(children).replace(/\n$/, ""))}
-              language={match[1]}
-              showLineNumbers={false}
-              theme={atomOneLight}
-              customStyle={{
-                display: "flex",
-              }}
-            />
+            <div className="oak-chat__message-copyBlock">
+              <CopyBlock
+                text={decode(String(children).replace(/\n$/, ""))}
+                language={match[1]}
+                showLineNumbers={false}
+                theme={atomOneLight}
+                customStyle={{
+                  display: "flex",
+                  minHeight: "35px",
+                }}
+              />
+            </div>
           ) : (
             <code
-              className={`${className} whitespace-pre-wrap break-words`}
+              className={className}
+              style={{
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+              }}
               {...props}
             >
               {children}
