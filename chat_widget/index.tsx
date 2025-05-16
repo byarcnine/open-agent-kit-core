@@ -38,6 +38,7 @@ const FloatingChatWidget = (props: ChatComponentType) => {
     if (!initialMessageShown) {
       setInitialMessage(chatSettings.initialMessage || "");
     }
+    setTitle(chatSettings.embedSettings?.embedWidgetTitle || "");
   };
 
   return (

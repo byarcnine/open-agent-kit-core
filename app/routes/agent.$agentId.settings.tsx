@@ -95,12 +95,21 @@ const ChatSettingsUpdateSchema = z.object({
     .nullable(),
   textAreaInitialRows: z.number().min(1).max(5),
   footerNote: z.string().nullable(),
+  embedSettings: z.object({
+    maintainConversationSession: z.number().optional(),
+    embedWidgetTitle: z.string().optional(),
+  }),
+});
+
+const EmbedSettingsUpdateSchema = z.object({
   maintainConversationSession: z.number().optional(),
+  embedWidgetTitle: z.string().optional(),
 });
 
 enum Intent {
   UPDATE_GENERAL_SETTINGS = "updateGeneralSettings",
   UPDATE_CHAT_SETTINGS = "updateChatSettings",
+  UPDATE_EMBED_SETTINGS = "updateEmbedSettings",
   DELETE_AGENT = "deleteAgent",
 }
 
@@ -148,7 +157,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // Fetch current agent data to access modelSettings
   const currentAgent = await prisma.agent.findUnique({
     where: { id: agentId },
-    select: { modelSettings: true },
+    select: { modelSettings: true, chatSettings: true },
   });
 
   // Handle delete action
@@ -253,6 +262,32 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         return data({ errors: error.flatten().fieldErrors }, { status: 400 });
       }
       throw error;
+    }
+  }
+  if (intent === Intent.UPDATE_EMBED_SETTINGS) {
+    const rawInput = {
+      maintainConversationSession: formData.get("maintainConversationSession")
+        ? parseInt(formData.get("maintainConversationSession") as string)
+        : undefined,
+      embedWidgetTitle: formData.get("embedWidgetTitle")?.toString() || "",
+    };
+    try {
+      const validatedData = EmbedSettingsUpdateSchema.parse(rawInput);
+      const chatSettings = JSON.parse(currentAgent?.chatSettings as string);
+      await prisma.agent.update({
+        where: { id: agentId },
+        data: {
+          chatSettings: JSON.stringify({
+            ...chatSettings,
+            embedSettings: validatedData,
+          }),
+        },
+      });
+      return { success: true, errors: null };
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return data({ errors: error.flatten().fieldErrors }, { status: 400 });
+      }
     }
   }
   return data({ success: false, errors: null }, { status: 400 });
@@ -638,23 +673,6 @@ const AgentSettings = () => {
                     />
                   </div>
                 </CardContentSection>
-                <div className="flex flex-col space-y-2">
-                  <Label htmlFor="maintainConversationSession">
-                    Maintain Conversation Session in Embed
-                  </Label>
-                  <Input
-                    type="number"
-                    id="maintainConversationSession"
-                    name="maintainConversationSession"
-                    className="border"
-                    defaultValue={chatSettings?.maintainConversationSession}
-                    placeholder="Enter number of minutes"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    If enabled, the agent will maintain a conversation session
-                    in the browser's session storage when the agent is embedded.
-                  </p>
-                </div>
                 <Button type="submit">Save Changes</Button>
               </Form>
             </CardContent>
@@ -711,6 +729,58 @@ const AgentSettings = () => {
                   </code>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Embed Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form method="post">
+                <input
+                  type="hidden"
+                  name="intent"
+                  value={Intent.UPDATE_EMBED_SETTINGS}
+                />
+                <CardContentSection title="">
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="maintainConversationSession">
+                      Maintain Conversation Session in Embed
+                  </Label>
+                  <Input
+                    type="number"
+                    id="maintainConversationSession"
+                    name="maintainConversationSession"
+                    className="border"
+                    defaultValue={chatSettings?.embedSettings?.maintainConversationSession}
+                    placeholder="Enter number of minutes"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                      If enabled, the agent will maintain a conversation
+                      session in the browser's session storage when the agent
+                      is embedded.
+                    </p>
+                  </div>
+                  <div className="flex flex-col space-y-2 mt-4">
+                    <Label htmlFor="embedWidgetTitle">
+                      Embed Window Title
+                  </Label>
+                  <Input
+                    type="text"
+                    id="embedWidgetTitle"
+                    name="embedWidgetTitle"
+                    className="border"
+                    defaultValue={chatSettings?.embedSettings?.embedWidgetTitle}
+                    placeholder="Enter embed widget title"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                      This title will be displayed in the chat widget when the
+                      agent is embedded in a website.
+                    </p>
+                  </div>
+                </CardContentSection>
+                <Button type="submit">Save Changes</Button>
+              </Form>
             </CardContent>
           </Card>
         </TabsContent>
