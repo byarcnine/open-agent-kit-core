@@ -1,38 +1,43 @@
-$oak-chat-widget-z-index: 2147483646; // max z-index
-$oak-chat-widget-right: 32px;
-$oak-chat-widget-bottom: 32px;
-$oak-chat-widget-init-message-bottom: 115px;
-$oak-chat-widget-bubble-size: 64px;
-$oak-chat-widget-window-width: 360px;
-$oak-chat-widget-window-height: 700px;
-$oak-chat-widget-border-radius: 16px;
-$oak-chat-widget-window-bottom: $oak-chat-widget-bubble-size + 16px;
+:root {
+  --oak-chat-widget-z-index: 2147483646;
+  --oak-chat-widget-right: 32px;
+  --oak-chat-widget-bottom: 32px;
+  --oak-chat-widget-init-message-bottom: 115px;
+  --oak-chat-widget-bubble-size: 64px;
+  --oak-chat-widget-window-width: 360px;
+  --oak-chat-widget-window-height: 700px;
+  --oak-chat-widget-border-radius: 16px;
+  --oak-chat-widget-window-bottom: 80px; // 64px + 16px
 
-$oak-chat-widget-color-primary: #64D855;
-$oak-chat-widget-color-header-background: #64D855;
-$oak-chat-widget-color-background: #fff;
-$oak-chat-widget-color-background-hover: #f3f4f6;
-$oak-chat-widget-color-border: #eee;
-$oak-chat-widget-color-text: #000;
-$oak-chat-widget-color-text-muted: #666;
+  --oak-chat-widget-color-primary: #64D855;
+  --oak-chat-widget-color-header-background: #64D855;
+  --oak-chat-widget-color-background: #fff;
+  --oak-chat-widget-color-background-hover: #f3f4f6;
+  --oak-chat-widget-color-border: #eee;
+  --oak-chat-widget-color-text: white;
+  --oak-chat-widget-color-text-muted: #666;
 
-$oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --oak-chat-widget-color-popup-button-background: white;
+  --oak-chat-widget-color-popup-button-text: #rgba(23, 23, 23, 1);
+
+  --oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 #oak-chat-widget-root {
-  z-index: $oak-chat-widget-z-index;
+  z-index: var(--oak-chat-widget-z-index);
   font-family: Inter, "ui-sans-serif", "system-ui", "sans-serif";
   .oak-chat-widget {
     &__popup {
       position: fixed;
-      right: $oak-chat-widget-right;
-      bottom: $oak-chat-widget-init-message-bottom;
+      right: var(--oak-chat-widget-right);
+      bottom: var(--oak-chat-widget-init-message-bottom);
       display: flex;
       flex-direction: column;
       gap: 8px;
       opacity: 0;
       pointer-events: none;
       transform: translateY(20px);
-      transition: opacity 0.5s ease, transform $oak-chat-widget-transition;
+      transition: opacity 0.5s ease, transform var(--oak-chat-widget-transition);
 
       &--fade-in {
         opacity: 1;
@@ -65,7 +70,7 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         width: 28px;
         height: 28px;
         background: #fff;
-        border: 1px solid $oak-chat-widget-color-border;
+        border: 1px solid var(--oak-chat-widget-color-border);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -81,8 +86,9 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       &-button {
-        background: $oak-chat-widget-color-background;
-        border: 1px solid $oak-chat-widget-color-border;
+        background: var(--oak-chat-widget-color-popup-button-background);
+        color: var(--oak-chat-widget-color-popup-button-text);
+        border: 1px solid var(--oak-chat-widget-color-border);
         border-radius: 12px;
         padding: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -99,16 +105,16 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &__bubble-container {
       position: fixed;
-      right: $oak-chat-widget-right;
-      bottom: $oak-chat-widget-bottom;
+      right: var(--oak-chat-widget-right);
+      bottom: var(--oak-chat-widget-bottom);
     }
 
     &__bubble-btn {
       opacity: 0;
-      width: $oak-chat-widget-bubble-size;
-      height: $oak-chat-widget-bubble-size;
+      width: var(--oak-chat-widget-bubble-size);
+      height: var(--oak-chat-widget-bubble-size);
       border-radius: 50%;
-      background: $oak-chat-widget-color-primary;
+      background: var(--oak-chat-widget-color-primary);
       color: #fff;
       border: none;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -133,14 +139,14 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       align-items: center;
       justify-content: space-between;
       padding: 8px 16px;
-      background: $oak-chat-widget-color-header-background;
-      border-bottom: 1px solid $oak-chat-widget-color-border;
+      background: var(--oak-chat-widget-color-header-background);
+      border-bottom: 1px solid var(--oak-chat-widget-color-border);
     }
 
     &__window-title {
       font-size: 14px;
       font-weight: 500;
-      color: $oak-chat-widget-color-text;
+      color: var(--oak-chat-widget-color-text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -154,11 +160,11 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     &__window {
       position: absolute;
       right: 0;
-      bottom: $oak-chat-widget-window-bottom;
-      width: $oak-chat-widget-window-width;
-      height: $oak-chat-widget-window-height;
-      background: $oak-chat-widget-color-background;
-      border-radius: $oak-chat-widget-border-radius;
+      bottom: var(--oak-chat-widget-window-bottom);
+      width: var(--oak-chat-widget-window-width);
+      height: var(--oak-chat-widget-window-height);
+      background: var(--oak-chat-widget-color-background);
+      border-radius: var(--oak-chat-widget-border-radius);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
       overflow: hidden;
       display: flex;
@@ -166,8 +172,8 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 1;
       pointer-events: auto;
       transition:
-        height $oak-chat-widget-transition,
-        opacity $oak-chat-widget-transition;
+        height var(--oak-chat-widget-transition),
+        opacity var(--oak-chat-widget-transition);
 
       &--closed {
         height: 0;
@@ -182,17 +188,18 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: none;
       font-size: 24px;
       cursor: pointer;
+      color: var(--oak-chat-widget-color-text);
     }
 
     &__window-footer {
       padding: 6px 16px;
-      background: $oak-chat-widget-color-background;
-      border-top: 1px solid $oak-chat-widget-color-border;
+      background: var(--oak-chat-widget-color-background);
+      border-top: 1px solid var(--oak-chat-widget-color-border);
       font-size: 10px;
-      color: $oak-chat-widget-color-text-muted;
+      color: var(--oak-chat-widget-color-text-muted);
       text-align: center;
       a {
-        color: $oak-chat-widget-color-text-muted;
+        color: var(--oak-chat-widget-color-text-muted);
         text-decoration: none;
       }
     }
@@ -215,7 +222,7 @@ $oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 28px;
   height: 28px;
   background: #fff;
-  border: 1px solid $oak-chat-widget-color-border;
+  border: 1px solid var(--oak-chat-widget-color-border);
   border-radius: 50%;
   display: flex;
   align-items: center;

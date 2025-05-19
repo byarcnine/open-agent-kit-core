@@ -95,10 +95,6 @@ const ChatSettingsUpdateSchema = z.object({
     .nullable(),
   textAreaInitialRows: z.number().min(1).max(5),
   footerNote: z.string().nullable(),
-  embedSettings: z.object({
-    maintainConversationSession: z.number().optional(),
-    embedWidgetTitle: z.string().optional(),
-  }),
 });
 
 const EmbedSettingsUpdateSchema = z.object({
@@ -250,10 +246,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     };
     try {
       const validatedData = ChatSettingsUpdateSchema.parse(rawInput);
+      const chatSettings = JSON.parse(currentAgent?.chatSettings as string);
       await prisma.agent.update({
         where: { id: agentId },
         data: {
-          chatSettings: JSON.stringify(validatedData),
+          chatSettings: JSON.stringify({
+            ...chatSettings,
+            ...validatedData,
+          }),
         },
       });
       return { success: true, errors: null };
