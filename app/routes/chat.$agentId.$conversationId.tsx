@@ -70,6 +70,7 @@ export default function Index() {
           <ClientOnlyComponent>
             {Chat && (
               <Chat
+                key={conversationId}
                 initialConversationId={conversationId}
                 initialMessages={initialMessages}
                 agentId={agentId}

@@ -173,7 +173,11 @@ const MarkdownViewer = ({ text }: { text: string }) => {
             />
           ) : (
             <code
-              className={`${className} whitespace-pre-wrap break-words`}
+              className={className}
+              style={{
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+              }}
               {...props}
             >
               {children}

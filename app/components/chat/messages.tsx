@@ -1,10 +1,11 @@
 import React from "react";
 import { type Message as MessageType } from "ai";
 import Message from "./message";
-import useScrollToBottom from "~/hooks/useScrollBottom";
+import { mergeRefs, useScrollPadding } from "~/hooks/useScrollPadding";
 import { ArrowDown } from "react-feather";
 import { type UseChatHelpers } from "@ai-sdk/react";
 import { cn } from "~/lib/utils";
+import { useStickToBottom } from "use-stick-to-bottom";
 
 interface MessagesProps {
   messages: MessageType[];
@@ -26,23 +27,32 @@ const Messages: React.FC<MessagesProps> = ({
   anchorToBottom = true, // if true, the scroll will be anchored to the bottom when a new message is being sent. If false the new message gets anchored to the top and overflowing text will be hidden.
 }) => {
   const {
-    containerRef,
-    endRef,
-    hasSentMessage,
+    scrollRef,
+    contentRef,
+    isAtBottom: autoScrollIsAtBottom,
+  } = useStickToBottom();
+  const {
+    messagesContainerRef,
     scrollPadding,
-    canScrollDown,
+    isAtBottom: manualScrollIsAtBottom,
     scrollToBottom,
-  } = useScrollToBottom<HTMLDivElement>(status, anchorToBottom);
-  const autoScrollOnNewContent = anchorToBottom && !canScrollDown;
+  } = useScrollPadding<HTMLDivElement>(status, anchorToBottom);
+  const isAtBottom = anchorToBottom
+    ? autoScrollIsAtBottom
+    : manualScrollIsAtBottom;
   return (
     <div className="oak-chat__messages-container-wrapper">
       <div
-        className={cn("oak-chat__messages", {
-          "oak-chat__messages--anchor-bottom": autoScrollOnNewContent,
-        })}
-        ref={containerRef}
+        className={cn("oak-chat__messages", "scrollRef")}
+        ref={mergeRefs(
+          anchorToBottom ? (scrollRef as React.Ref<HTMLDivElement>) : null,
+          messagesContainerRef,
+        )}
       >
-        <div className="oak-chat__messages-container">
+        <div
+          className="oak-chat__messages-container contentRef"
+          ref={anchorToBottom ? contentRef : null}
+        >
           {messages.map((message, index) => (
             <Message
               key={message.id || index}
@@ -50,41 +60,34 @@ const Messages: React.FC<MessagesProps> = ({
               toolNames={toolNames}
               avatarURL={avatarURL}
               requiresScrollPadding={
-                hasSentMessage &&
+                !anchorToBottom &&
                 index === messages.length - 1 &&
                 message.role !== "user"
               }
               scrollPadding={scrollPadding}
             />
           ))}
+          {error && (
+            <div className="oak-chat__error-container">
+              <p className="oak-chat__error-message">{error}</p>
+            </div>
+          )}
+          {status === "submitted" && (
+            <p
+              className="oak-chat__thinking-message"
+              style={{ minHeight: scrollPadding }}
+            >
+              Thinking
+              <span className="oak-chat__thinking-dots" />
+            </p>
+          )}
         </div>
-        {error && (
-          <div className="oak-chat__error-container">
-            <p className="oak-chat__error-message">{error}</p>
-          </div>
-        )}
-        {status === "submitted" && (
-          <p
-            className="oak-chat__thinking-message"
-            style={{ minHeight: scrollPadding }}
-          >
-            Thinking
-            <span className="oak-chat__thinking-dots" />
-          </p>
-        )}
-
-        <div
-          ref={endRef}
-          className={cn("oak-chat__scroll-end", {
-            "oak-chat__scroll-end--anchor-bottom": autoScrollOnNewContent,
-          })}
-        />
       </div>
       <button
-        onClick={() => scrollToBottom(true)}
+        onClick={() => scrollToBottom()}
         className="oak-chat__scroll-down-indicator"
         style={{
-          opacity: canScrollDown ? 1 : 0,
+          opacity: isAtBottom ? 0 : 1,
         }}
       >
         <ArrowDown />
@@ -93,4 +96,4 @@ const Messages: React.FC<MessagesProps> = ({
   );
 };
 
-export default Messages;
+export default React.memo(Messages);

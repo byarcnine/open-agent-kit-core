@@ -92,6 +92,7 @@ export const routes = (
 
     // API routes
     route("api/generate", `${corePrefix}/api.generate.ts`),
+    route("api/generate/token", `${corePrefix}/api.generate.token.ts`),
     route(
       "api/agentChatSettings/:agentId",
       `${corePrefix}/api.agentChatSettings.$agentId.ts`,

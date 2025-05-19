@@ -3,11 +3,12 @@ import {
   data,
   type LoaderFunctionArgs,
 } from "react-router";
-import { canUserAccessAgent } from "~/lib/auth/hasAccess.server";
+import { canUserAccessAgent, verifyChatSessionTokenForPublicAgent } from "~/lib/auth/hasAccess.server";
 import { getSession } from "~/lib/auth/auth.server";
 import { streamConversation } from "~/lib/llm/streamConversation.server";
 import { getCorsHeaderForAgent } from "./utils";
 import jwt from 'jsonwebtoken';
+import { getChatSettings } from "~/lib/llm/chat.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -42,7 +43,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const meta = body.meta || {};
   // make sure the agent is public or the user has access to the agent
   const canAccess = await canUserAccessAgent(session?.user, agentId);
-  if (!canAccess) {
+  const chatSessionAllowed = canAccess || await verifyChatSessionTokenForPublicAgent(request, agentId);
+
+  if (!canAccess && !chatSessionAllowed) {
     return data(
       { error: "Unauthorized" },
       {
@@ -62,14 +65,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       meta
     );
 
-    let oakSessionToken = session?.user.id || clientConversationId ?
+    const chatSettings = await getChatSettings(agentId);
+    const maintainConversationSession = chatSettings?.embedSettings?.maintainConversationSession;
+
+    let oakConversationToken = session?.user.id ?
       undefined :
-      jwt.sign({ conversationId }, process.env.APP_SECRET || "" as string, { expiresIn: '24h' });
+      jwt.sign({ conversationId }, process.env.APP_SECRET || "" as string, { expiresIn: (maintainConversationSession || 0) * 60 });
 
     return stream.toDataStreamResponse({
       headers: {
         "x-conversation-id": conversationId,
-        ...(oakSessionToken ? { "x-oak-session-token": oakSessionToken } : {}),
+        ...(oakConversationToken ? { "x-oak-conversation-token": oakConversationToken } : {}),
         ...corsHeaders,
       },
       getErrorMessage(error) {
