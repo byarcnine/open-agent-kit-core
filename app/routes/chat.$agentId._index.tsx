@@ -77,6 +77,7 @@ export default function Index() {
     <ClientOnlyComponent>
       {Chat && (
         <Chat
+          key={agentId}
           onConversationStart={onConversationStart}
           agentId={agentId as string}
           toolNamesList={toolNames}
