@@ -1,6 +1,7 @@
 import {
   data,
   useLoaderData,
+  useOutletContext,
   useParams,
   useRevalidator,
   type ActionFunctionArgs,
@@ -12,6 +13,7 @@ import { getChatSettings } from "~/lib/llm/chat.server";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import { prisma } from "@db/db.server";
 import { PERMISSIONS } from "~/types/auth";
+import type { Message } from "ai";
 
 export enum Intent {
   UPDATE_TAGLINE = "updateTagline",
@@ -20,7 +22,6 @@ export enum Intent {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { agentId } = params;
-
   const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
   if (!user) {
     return data({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -68,16 +69,33 @@ export const loader = async ({ params }: { params: { agentId: string } }) => {
 export default function Index() {
   const { revalidate } = useRevalidator();
   const { agentId } = useParams();
+  const context = useOutletContext<{
+    onConversationStart: (conversationId: string) => void;
+  }>();
   const { toolNames, chatSettings } = useLoaderData<typeof loader>();
+
   const onConversationStart = (conversationId: string) => {
-    window.history.replaceState(null, "", `/chat/${agentId}/${conversationId}`);
-    revalidate();
+    window.history.replaceState(
+      {
+        conversationId,
+      },
+      "",
+      `/chat/${agentId}/${conversationId}`,
+    );
+    context.onConversationStart(conversationId);
+  };
+  const onMessage = (messages: Message[]) => {
+    if (messages.filter((m) => m.role !== "user").length === 1) {
+      // run this after the first AI message was received
+      revalidate();
+    }
   };
   return (
     <ClientOnlyComponent>
       {Chat && (
         <Chat
           key={agentId}
+          onMessage={onMessage}
           onConversationStart={onConversationStart}
           agentId={agentId as string}
           toolNamesList={toolNames}

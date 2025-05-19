@@ -73,7 +73,7 @@ export const routes = (
       ]),
     ]),
     // Chat routes
-    layout(`${corePrefix}/chat.$agentId.$conversationId.tsx`, [
+    layout(`${corePrefix}/chat.$agentId.tsx`, [
       route("chat/:agentId", `${corePrefix}/chat.$agentId._index.tsx`),
       route(
         "chat/:agentId/:conversationId",

@@ -7,6 +7,7 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
   useFetcher,
+  useMatches,
 } from "react-router";
 import { type Conversation, prisma } from "@db/db.server";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
@@ -21,6 +22,7 @@ import { Intent } from "./chat.$agentId._index";
 import { loadConversations } from "./utils/chat";
 import { Button } from "~/components/ui/button";
 import * as Popover from "@radix-ui/react-popover";
+import { cn } from "~/lib/utils";
 // Initialize the plugins
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
@@ -98,6 +100,8 @@ const ChatOverview = () => {
     conversations.length < CONVERSATIONS_PER_PAGE,
   );
   const [page, setPage] = useState(1);
+  const [currentConversationIndex, setCurrentConversationIndex] =
+    useState(conversationId);
 
   const loadMoreConversations = () => {
     if (isLoadingMore || fetcher.state !== "idle") return;
@@ -163,6 +167,10 @@ const ChatOverview = () => {
     setEditMode(cid);
   };
 
+  useEffect(() => {
+    setCurrentConversationIndex(conversationId);
+  }, [conversationId]);
+
   const handleDelete = (cid: string) => {
     if (!confirm("Are you sure you want to delete this conversation?")) {
       return;
@@ -204,17 +212,17 @@ const ChatOverview = () => {
                 .map((c) => (
                   <Popover.Root key={c.id}>
                     <div
-                      className={`flex justify-between transition-all rounded-md text-sm font-normal relative group ${
-                        conversationId === c.id
+                      className={cn(
+                        "flex justify-between transition-all rounded-md text-sm font-normal relative group",
+                        currentConversationIndex === c.id
                           ? "bg-stone-900 text-white"
-                          : "hover:bg-stone-900 hover:text-white text-neutral-900"
-                      }`}
+                          : "hover:bg-stone-900 hover:text-white text-neutral-900",
+                      )}
                     >
                       {editMode === c.id ? (
                         <input
                           type="text"
-                          className={`w-full flex-1 block py-2 px-3 rounded-md text-sm font-normal focus:outline-none
-                          }`}
+                          className={`w-full flex-1 block py-2 px-3 rounded-md text-sm font-normal focus:outline-none`}
                           defaultValue={c.tagline || ""}
                           key={c.id}
                           onChange={(e) => setNewTagline(e.target.value)}
@@ -225,8 +233,7 @@ const ChatOverview = () => {
                         />
                       ) : (
                         <Link
-                          className={`py-2 block px-3 flex-1 rounded-md text-sm font-normal
-                          }`}
+                          className={`py-2 block px-3 flex-1 rounded-md text-sm font-normal`}
                           to={`/chat/${agentId}/${c.id}`}
                           key={c.id}
                           prefetch="intent"
@@ -291,7 +298,12 @@ const ChatOverview = () => {
       user={user}
       agentName={agent?.name}
     >
-      <Outlet />
+      <Outlet
+        context={{
+          onConversationStart: (conversationId: string) =>
+            setCurrentConversationIndex(conversationId),
+        }}
+      />
     </Layout>
   );
 };

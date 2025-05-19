@@ -41,22 +41,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const toolNames = toolNameIdentifierList();
   const chatSettings = getChatSettings(agentId);
   return {
-    initialMessagesPromise,
+    initialChatDataPromise: Promise.all([initialMessagesPromise, chatSettings]),
     conversationId,
     agentId: agentId as string,
     toolNames,
-    chatSettings,
   };
 };
 
 export default function Index() {
-  const {
-    initialMessagesPromise,
-    conversationId,
-    agentId,
-    toolNames,
-    chatSettings,
-  } = useLoaderData<typeof loader>();
+  const { initialChatDataPromise, conversationId, agentId, toolNames } =
+    useLoaderData<typeof loader>();
   return (
     <Suspense
       fallback={
@@ -65,23 +59,19 @@ export default function Index() {
         </div>
       }
     >
-      <Await resolve={initialMessagesPromise}>
-        {(initialMessages) => (
-          <Await resolve={chatSettings}>
-            {(chatSettings) => (
-              <ClientOnlyComponent>
-                <Chat
-                  key={conversationId}
-                  initialConversationId={conversationId}
-                  initialMessages={initialMessages}
-                  agentId={agentId}
-                  toolNamesList={toolNames}
-                  agentChatSettings={chatSettings}
-                  anchorToBottom={false}
-                />
-              </ClientOnlyComponent>
-            )}
-          </Await>
+      <Await resolve={initialChatDataPromise}>
+        {([initialMessages, chatSettings]) => (
+          <ClientOnlyComponent>
+            <Chat
+              key={conversationId}
+              initialConversationId={conversationId}
+              initialMessages={initialMessages}
+              agentId={agentId}
+              toolNamesList={toolNames}
+              agentChatSettings={chatSettings}
+              anchorToBottom={false}
+            />
+          </ClientOnlyComponent>
         )}
       </Await>
     </Suspense>
