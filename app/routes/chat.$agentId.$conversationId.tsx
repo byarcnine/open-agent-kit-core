@@ -61,21 +61,23 @@ export default function Index() {
         </div>
       }
     >
-      <Await resolve={Promise.all([initialMessagesPromise, chatSettings])}>
-        {([initialMessages, chatSettings]) => (
-          <ClientOnlyComponent>
-            {Chat && (
-              <Chat
-                key={conversationId}
-                initialConversationId={conversationId}
-                initialMessages={initialMessages}
-                agentId={agentId}
-                toolNamesList={toolNames}
-                agentChatSettings={chatSettings}
-                anchorToBottom={false}
-              />
+      <Await resolve={initialMessagesPromise}>
+        {(initialMessages) => (
+          <Await resolve={chatSettings}>
+            {(chatSettings) => (
+              <ClientOnlyComponent>
+                <Chat
+                  key={conversationId}
+                  initialConversationId={conversationId}
+                  initialMessages={initialMessages}
+                  agentId={agentId}
+                  toolNamesList={toolNames}
+                  agentChatSettings={chatSettings}
+                  anchorToBottom={false}
+                />
+              </ClientOnlyComponent>
             )}
-          </ClientOnlyComponent>
+          </Await>
         )}
       </Await>
     </Suspense>
