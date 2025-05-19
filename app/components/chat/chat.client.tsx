@@ -1,5 +1,5 @@
 import "./chat.scss";
-import React from "react";
+import React, { useMemo } from "react";
 import { type Message } from "@ai-sdk/react";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
@@ -30,6 +30,7 @@ const Chat = (props: {
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
   anchorToBottom?: boolean;
+  onEmbedInit?: (chatSettings: ChatSettings) => void;
 }) => {
   const {
     avatar,
@@ -53,11 +54,11 @@ const Chat = (props: {
     handleDragOver,
     handleDrop,
     supportedFileTypes,
-    disableInput: hookDisableInput,
-    anchorToBottom: hookAnchorToBottom,
     textareaRef,
     fileInputRef,
   } = useOakChat(props);
+
+  const chatContext = useMemo(() => ({ isEmbed: !!props.isEmbed, chatSettings }), [props.isEmbed, chatSettings]);
 
   if (!chatInitialized && props.isEmbed) {
     return (
@@ -77,7 +78,7 @@ const Chat = (props: {
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
   return (
-    <ChatContext.Provider value={{ isEmbed: !!props.isEmbed, chatSettings }}>
+    <ChatContext.Provider value={chatContext}>
       <div
         key={conversationId}
         id="oak-chat-container"
@@ -112,11 +113,11 @@ const Chat = (props: {
               error={error?.message}
               avatarURL={avatar}
               status={status}
-              anchorToBottom={hookAnchorToBottom}
+              anchorToBottom={props.anchorToBottom}
             />
           </>
         )}
-        {!hookDisableInput && (
+        {!props.disableInput && (
           <>
             <ChatInput
               files={files}

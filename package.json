@@ -14,6 +14,7 @@
     "build:embed": "vite build --config vite.embed.config.ts",
     "prebuild:chat": "mkdir -p chat_dist && cp chat_module/package.json chat_dist/package.json",
     "build:chat": "vite build --config vite.chat.config.ts",
+    "build:chatWidget": "vite build --config vite.chatWidget.config.ts",
     "build:lib": "vite build --config vite.lib.config.ts",
     "build:routes": "vite build --config vite.routes.config.ts",
     "publish:chat": "cd chat_module && npm version patch --no-git-tag-version && cd .. && npm run build:chat && cd chat_dist && npm publish --access public",
