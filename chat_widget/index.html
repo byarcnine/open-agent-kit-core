@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Widget</title>
+  <link rel="stylesheet" href="http://localhost:5173/chat_widget/core.css">
+</head>
+
+<body>
+  <!-- Add the container where you want to render the agent. -->
+  <div id="chat-container"></div>
+  <!-- Add the script to load the agent. -->
+  <script src="http://localhost:5173/chat_widget/chatWidget.bundle.umd.js"></script>
+  <script>
+    // Initialize the chat component
+    OAKChatWidget.renderChatWidget(undefined, {
+      agentId: "peters-agent",
+      apiUrl: "http://localhost:5173"
+    });
+  </script>
+</body>
+
+</html>

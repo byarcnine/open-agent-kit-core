@@ -96,4 +96,4 @@ const Messages: React.FC<MessagesProps> = ({
   );
 };
 
-export default Messages;
+export default React.memo(Messages);
