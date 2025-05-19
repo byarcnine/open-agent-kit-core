@@ -313,7 +313,7 @@ $oak-mobile-breakpoint: 480px;
 
     &__messages {
       flex: 1;
-      scroll-behavior: smooth;
+      // scroll-behavior: smooth;
       padding: 16px;
       padding-bottom: 0;
       position: relative;
@@ -335,25 +335,25 @@ $oak-mobile-breakpoint: 480px;
         border-radius: 5px;
         border: 1px solid transparent;
       }
-      &--anchor-bottom {
-        * {
-          overflow-anchor: none;
-        }
-      }
+      // &--anchor-bottom {
+      //   * {
+      //     overflow-anchor: none;
+      //   }
+      // }
     }
 
     &__messages-container-wrapper {
       position: relative;
-      overflow-y: auto;
+      overflow-y: hidden;
       height: 100%;
     }
 
     &__scroll-end {
       height: 10px;
       width: 10px;
-      &--anchor-bottom {
-        overflow-anchor: auto;
-      }
+      // &--anchor-bottom {
+      //   overflow-anchor: auto;
+      // }
     }
 
     &__advice-badges {
@@ -511,6 +511,9 @@ $oak-mobile-breakpoint: 480px;
       &-copyBlock {
         button {
           border: none;
+        }
+        & > div > span {
+          overflow-y: hidden;
         }
       }
 
