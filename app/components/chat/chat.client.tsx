@@ -63,6 +63,11 @@ const Chat = (props: {
     () => ({ isEmbed: !!props.isEmbed, chatSettings }),
     [props.isEmbed, chatSettings],
   );
+  useEffect(() => {
+    if (props.onMessage) {
+      props.onMessage(messages);
+    }
+  }, [messages.length]);
 
   if (!chatInitialized && props.isEmbed) {
     return (
@@ -74,12 +79,6 @@ const Chat = (props: {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (props.onMessage) {
-      props.onMessage(messages);
-    }
-  }, [messages.length]);
 
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
