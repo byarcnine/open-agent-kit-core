@@ -33,7 +33,9 @@ type UseOakChatReturn = {
   error: Error | null;
   files: File[];
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleKeyDown: (event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleKeyDown: (
+    event: KeyboardEvent | React.KeyboardEvent<HTMLTextAreaElement>,
+  ) => void;
   handleFormSubmit: (event: { preventDefault: () => void }) => Promise<void>;
   handleCardSelect: (question: string) => void;
   handleFileInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -56,8 +58,8 @@ const isJwtExpired = (token: string) => {
     return decoded.exp < now + 30;
   } catch {
     return true;
-    }
-}
+  }
+};
 
 const useOakChat = ({
   onConversationStart,
@@ -73,13 +75,21 @@ const useOakChat = ({
   onEmbedInit,
 }: UseOakChatArgs): UseOakChatReturn => {
   const OAK_CONVERSATION_TOKEN_KEY = "oak_conversation_token";
-  const [conversationId, setConversationId] = useState<string | undefined>(initialConversationId);
-  const [chatSettings, setChatSettings] = useState<ChatSettings>(agentChatSettings || initialChatSettings);
+  const [conversationId, setConversationId] = useState<string | undefined>(
+    initialConversationId,
+  );
+  const [chatSettings, setChatSettings] = useState<ChatSettings>(
+    agentChatSettings || initialChatSettings,
+  );
   const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [sessionTokenIsRefreshing, setSessionTokenIsRefreshing] = useState(false);
-  const [toolNames, setToolNames] = useState<Record<string, string>>(toolNamesList);
+  const [sessionTokenIsRefreshing, setSessionTokenIsRefreshing] =
+    useState(false);
+  const [toolNames, setToolNames] =
+    useState<Record<string, string>>(toolNamesList);
   const [chatInitialized, setChatInitialized] = useState(!isEmbed);
-  const [initMessages, setInitMessages] = useState<Message[]>(initialMessages || []);
+  const [initMessages, setInitMessages] = useState<Message[]>(
+    initialMessages || [],
+  );
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,7 +98,10 @@ const useOakChat = ({
   // const [selectedAction, setSelectedAction] = useState<"default" | "deep-research" | "search-web">("default");
   const supportedFileTypes = chatSettings?.supportedFileTypes || [];
 
-  const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(/\/$/, "");
+  const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(
+    /\/$/,
+    "",
+  );
 
   const avatar = avatarImageURL || `${API_URL}/assets/oak_leaf.svg`;
 
@@ -106,13 +119,18 @@ const useOakChat = ({
     try {
       const challengeRes = await fetch(`${API_URL}/api/generate/token`);
       const challenge = await challengeRes.json();
-      const { promise } = solveChallenge(challenge.challenge, challenge.salt, challenge.algorithm, challenge.maxnumber);
+      const { promise } = solveChallenge(
+        challenge.challenge,
+        challenge.salt,
+        challenge.algorithm,
+        challenge.maxnumber,
+      );
       const solution = await promise;
 
       const altchaSolution = {
         ...challenge,
         number: solution?.number,
-      }
+      };
 
       const res = await fetch(`${API_URL}/api/generate/token`, {
         method: "POST",
@@ -137,7 +155,9 @@ const useOakChat = ({
 
   const getChatSettings = async () => {
     const headers: HeadersInit = {};
-    const oakConversationToken = sessionStorage.getItem(OAK_CONVERSATION_TOKEN_KEY);
+    const oakConversationToken = sessionStorage.getItem(
+      OAK_CONVERSATION_TOKEN_KEY,
+    );
     if (oakConversationToken) {
       headers["x-oak-conversation-token"] = oakConversationToken;
     }
@@ -238,7 +258,12 @@ const useOakChat = ({
   });
 
   useEffect(() => {
-    if (chatInitialized && chatSettings?.initialMessage && !initialMessages?.length && !messages?.length) {
+    if (
+      chatInitialized &&
+      chatSettings?.initialMessage &&
+      !initialMessages?.length &&
+      !messages?.length
+    ) {
       setMessages([
         {
           id: "initial-message",
@@ -251,7 +276,7 @@ const useOakChat = ({
             } as { type: "text"; text: string },
           ],
         } as Message,
-      ])
+      ]);
     }
   }, [chatSettings?.initialMessage, chatInitialized]);
 
@@ -279,7 +304,10 @@ const useOakChat = ({
       if (input.trim() === "") {
         return;
       }
-      textareaRef.current?.blur();
+      if (window.innerWidth < 768) {
+        // blur on mobile to prevent keyboard from showing
+        textareaRef.current?.blur();
+      }
       clearFileInput();
       let token = "";
       if (isEmbed) {
@@ -365,7 +393,7 @@ const useOakChat = ({
     const isSuggestedQuestion =
       chatSettings?.suggestedQuestions?.includes(input);
     if (isSuggestedQuestion) {
-      handleFormSubmit({ preventDefault: () => { } });
+      handleFormSubmit({ preventDefault: () => {} });
     }
   }, [input, handleFormSubmit, chatSettings?.suggestedQuestions]);
 
@@ -405,6 +433,6 @@ const useOakChat = ({
     textareaRef,
     fileInputRef,
   };
-}
+};
 
 export default useOakChat;

@@ -61,7 +61,9 @@ export function useScrollPadding<T extends HTMLElement>(
       const containerHeight = messagesContainerRef.current?.clientHeight ?? 0;
       const lastUserMessageHeight = lastUserMessage?.clientHeight ?? 0;
       setScrollPadding(containerHeight - lastUserMessageHeight - 50);
-      handleScrollToBottom();
+      requestAnimationFrame(() => {
+        handleScrollToBottom();
+      });
     }
   }, [status, disableScrolling, handleScrollToBottom]);
 
