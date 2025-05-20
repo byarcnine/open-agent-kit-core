@@ -85,7 +85,7 @@ const Layout = ({
         </div>
 
         {/* Mobile Header & Navigation */}
-        <div className="md:hidden w-full">
+        <div className="md:hidden w-full flex flex-col max-h-screen">
           <header className="flex items-center justify-between px-4 py-4 bg-zinc-200/40 border-b">
             <Link to="/" className="flex items-center gap-2">
               <img
@@ -107,8 +107,10 @@ const Layout = ({
             </button>
           </header>
           {mobileNavOpen && (
-            <nav className="border-t bg-zinc-200/40 shadow-md">
-              <div className="px-4 py-4">{navComponent}</div>
+            <nav className="border-t bg-zinc-200/40 shadow-md overflow-hidden flex flex-col">
+              <div className="px-4 py-4 overflow-y-auto overflow-x-hidden">
+                {navComponent}
+              </div>
               {user && (
                 <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">
                   <Link
