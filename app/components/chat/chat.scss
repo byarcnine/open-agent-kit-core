@@ -321,7 +321,6 @@
 
     &__messages {
       flex: 1;
-      // scroll-behavior: smooth;
       padding: 16px;
       padding-bottom: 0;
       position: relative;
@@ -476,6 +475,7 @@
         }
 
         &--copy-button {
+          margin-top: 16px;
           opacity: 0.3;
           transition: opacity 0.3s ease;
           cursor: pointer;

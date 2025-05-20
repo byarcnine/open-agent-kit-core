@@ -1,5 +1,5 @@
 import "./chat.scss";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { type Message } from "@ai-sdk/react";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
@@ -19,6 +19,7 @@ export const ChatContext = React.createContext<ChatContextType>({
 
 const Chat = (props: {
   onConversationStart?: (conversationId: string) => void;
+  onMessage?: (messages: Message[]) => void;
   initialMessages?: Message[];
   initialConversationId?: string;
   disableInput?: boolean;
@@ -58,22 +59,27 @@ const Chat = (props: {
     fileInputRef,
   } = useOakChat(props);
 
-  const chatContext = useMemo(() => ({ isEmbed: !!props.isEmbed, chatSettings }), [props.isEmbed, chatSettings]);
+  const chatContext = useMemo(
+    () => ({ isEmbed: !!props.isEmbed, chatSettings }),
+    [props.isEmbed, chatSettings],
+  );
 
   if (!chatInitialized && props.isEmbed) {
     return (
       <div id="oak-chat-container" className="oak-chat">
         <div className="oak-chat__loading-container">
-          <img
-            className="oak-chat__loading-logo"
-            src={avatar}
-            alt="Logo"
-          />
+          <img className="oak-chat__loading-logo" src={avatar} alt="Logo" />
           <p className="oak-chat__loading-text">One moment, I'm on it..</p>
         </div>
       </div>
     );
   }
+
+  useEffect(() => {
+    if (props.onMessage) {
+      props.onMessage(messages);
+    }
+  }, [messages.length]);
 
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
