@@ -53,6 +53,7 @@ export default function Index() {
     useLoaderData<typeof loader>();
   return (
     <Suspense
+      key={conversationId}
       fallback={
         <div className="w-full h-full flex justify-center items-center">
           <Loader className="animate-spin w-4 h-4" />

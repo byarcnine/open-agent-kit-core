@@ -44,6 +44,8 @@ export function useScrollPadding<T extends HTMLElement>(
       characterData: true,
     });
 
+    handleScrollToBottom();
+
     return () => {
       container.removeEventListener("scroll", checkIfAtBottom);
       observer.disconnect();
