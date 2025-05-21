@@ -80,7 +80,7 @@ export const routes = (
         .flatMap((p) =>
           prefix(
             `chat/:agentId/plugins/${p.slug}`,
-            (p.userRoutes?.map((r) => {
+            p.userRoutes?.map((r) => {
               if (r.index) {
                 return index(`${routesDirPrefix}${p.name}/${r.file}`);
               }
