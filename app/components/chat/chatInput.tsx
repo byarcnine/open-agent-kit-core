@@ -40,9 +40,38 @@ const ChatInput = ({
     }
   }, [input]);
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    if (!chatSettings?.enableFileUpload) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.indexOf("image") === 0) {
+        const file = item.getAsFile();
+        if (file) {
+          // Create a synthetic event to reuse existing handler
+          const syntheticEvent = {
+            target: {
+              files: [file],
+            },
+            preventDefault: () => {},
+          } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+          handleFileInputChange(syntheticEvent);
+          break;
+        }
+      }
+    }
+  };
+
   return (
     <div className="oak-chat__input-container">
-      <form onSubmit={handleFormSubmit} className="oak-chat__form">
+      <form
+        onSubmit={handleFormSubmit}
+        onPaste={handlePaste}
+        className="oak-chat__form"
+      >
         {files.length > 0 && (
           <div className="oak-chat__file-thumbnails">
             {files.map((file: File) => (
