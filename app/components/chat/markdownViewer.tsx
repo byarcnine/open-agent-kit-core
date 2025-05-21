@@ -1,5 +1,4 @@
 import Markdown from "react-markdown";
-import DOMPurify from "dompurify";
 import { CopyBlock, atomOneLight } from "react-code-blocks";
 import type { ChatSettings } from "~/types/chat";
 import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
@@ -186,7 +185,7 @@ const MarkdownViewer = ({ text }: { text: string }) => {
         },
       }}
     >
-      {DOMPurify.sanitize(text)}
+      {text}
     </Markdown>
   );
 };

@@ -731,6 +731,9 @@
 
   pre {
     margin: 15px 0;
+    span {
+      overflow: hidden;
+    }
   }
 
   code {
