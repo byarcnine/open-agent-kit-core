@@ -47,11 +47,11 @@ export const routes = (
           ),
           // ...routeArray.map((r) => route(r.routePath, r.relativePath)),
           ...plugins
-            .filter((p) => p.routes !== undefined)
+            .filter((p) => (p.adminRoutes ?? p.routes) !== undefined)
             .flatMap((p) =>
               prefix(
                 `plugins/${p.slug}`,
-                p.routes?.map((r) => {
+                (p.adminRoutes ?? p.routes)?.map((r) => {
                   if (r.index) {
                     return index(`${routesDirPrefix}${p.name}/${r.file}`);
                   }
@@ -75,6 +75,19 @@ export const routes = (
     // Chat routes
     layout(`${corePrefix}/chat.$agentId.tsx`, [
       route("chat/:agentId", `${corePrefix}/chat.$agentId._index.tsx`),
+      ...plugins
+        .filter((p) => p.userRoutes !== undefined)
+        .flatMap((p) =>
+          prefix(
+            `chat/:agentId/plugins/${p.slug}`,
+            (p.userRoutes?.map((r) => {
+              if (r.index) {
+                return index(`${routesDirPrefix}${p.name}/${r.file}`);
+              }
+              return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
+            }) || [],
+          ),
+        ),
       route(
         "chat/:agentId/:conversationId",
         `${corePrefix}/chat.$agentId.$conversationId.tsx`,
