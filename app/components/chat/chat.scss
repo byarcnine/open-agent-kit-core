@@ -221,6 +221,9 @@
       }
     }
 
+    &__text-area-container {
+      display: flex;
+    }
     &__text-area {
       display: flex;
       width: 100%;
