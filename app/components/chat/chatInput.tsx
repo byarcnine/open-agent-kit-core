@@ -50,12 +50,27 @@ const ChatInput = ({
       if (item.type.indexOf("image") === 0) {
         const file = item.getAsFile();
         if (file) {
+          // Check if the file type is supported
+          const isSupported = supportedFileTypes.some((type) => {
+            // Handle wildcard mime types like "image/*"
+            if (type.endsWith("/*")) {
+              const category = type.split("/")[0];
+              return file.type.startsWith(`${category}/`);
+            }
+            return type === file.type;
+          });
+
+          if (!isSupported) {
+            console.warn(`File type ${file.type} is not supported`);
+            return;
+          }
+
           // Create a synthetic event to reuse existing handler
           const syntheticEvent = {
             target: {
               files: [file],
+              preventDefault: () => {},
             },
-            preventDefault: () => {},
           } as unknown as React.ChangeEvent<HTMLInputElement>;
 
           handleFileInputChange(syntheticEvent);
