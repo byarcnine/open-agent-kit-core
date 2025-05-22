@@ -7,8 +7,6 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
   useFetcher,
-  useMatches,
-  data,
   useLocation,
 } from "react-router";
 import { type Conversation, prisma } from "@db/db.server";
