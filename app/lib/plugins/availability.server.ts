@@ -28,13 +28,13 @@ export const getPluginsWithAvailability = async (): Promise<
   });
   return allPlugins.map((p) => {
     const globalPlugin = globalPlugins.find(
-      (gp) => gp.pluginIdentifier === p.name
+      (gp) => gp.pluginIdentifier === p.name,
     );
     const agentsForPlugin = agentPlugins.filter(
-      (ap) => ap.pluginIdentifier === p.name
+      (ap) => ap.pluginIdentifier === p.name,
     );
     const agents = relevantAgents.filter((a) =>
-      agentsForPlugin.some((ap) => ap.agentId === a.id)
+      agentsForPlugin.some((ap) => ap.agentId === a.id),
     );
     return { ...p, isGlobal: globalPlugin !== undefined, agents };
   });
@@ -43,7 +43,7 @@ export const getPluginsWithAvailability = async (): Promise<
 export const setPluginAvailability = async (
   pluginIdentifier: string,
   isGlobal: boolean,
-  agentIds: string[]
+  agentIds: string[],
 ) => {
   const plugin = getPlugins().find((p) => p.name === pluginIdentifier);
   if (!plugin) {
@@ -92,7 +92,7 @@ export const getPluginsForAgent = async (agentId: string) => {
     },
   });
   const plugins = getPlugins().filter((p) =>
-    enabledPlugins.some((ep) => ep.pluginIdentifier === p.name)
+    enabledPlugins.some((ep) => ep.pluginIdentifier === p.name),
   );
   return plugins;
 };
@@ -101,7 +101,20 @@ export const getAgentPluginMenuItems = async (agentId: string) => {
   const plugins = await getPluginsForAgent(agentId);
   return plugins
     .flatMap((p) =>
-      p.menuItems?.map((m) => ({ ...m, href: `${p.slug}${m.href}` }))
+      p.menuItems?.map((m) => ({ ...m, href: `${p.slug}${m.href}` })),
+    )
+    .filter((i) => !!i);
+};
+
+export const getUserRoutesForAgent = async (agentId: string) => {
+  const plugins = await getPluginsForAgent(agentId);
+  return plugins
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+    .flatMap((p) =>
+      p.userRoutes?.map((m) => ({
+        title: p.displayName,
+        slug: p.slug,
+      })),
     )
     .filter((i) => !!i);
 };

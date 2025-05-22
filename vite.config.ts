@@ -9,5 +9,6 @@ export default defineConfig({
   optimizeDeps: {
     entries: ["app/**/*.tsx", "app/**/*.ts"],
     force: true,
+    esbuildOptions: { target: "esnext" },
   },
 });

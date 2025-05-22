@@ -3,7 +3,8 @@ import readXlsxFile, { type CellValue } from "read-excel-file/node";
 import * as mammoth from "mammoth";
 import { parseString } from "xml2js";
 import * as mime from "mime-types";
-import { PdfReader } from "pdfreader";
+// @ts-ignore
+import scribe from "scribe.js-ocr";
 
 interface ParsedFile {
   content: string;
@@ -12,31 +13,23 @@ interface ParsedFile {
 
 export async function parseFile(
   buffer: Buffer,
-  name: string
+  name: string,
 ): Promise<ParsedFile> {
   const fileName = name;
   const mimeType = mime.lookup(fileName);
   try {
     switch (mimeType) {
-      case "application/pdf":
-        return new Promise<ParsedFile>((resolve, reject) => {
-          let textContent = "";
+      case "application/pdf": {
+        const arrayBuffer = buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.byteLength,
+        );
 
-          const reader = new PdfReader();
-          reader.parseBuffer(buffer, (err, item) => {
-            if (err) {
-              console.error(err);
-              reject(new Error(`PDF parsing error`));
-            } else if (!item) {
-              // End of file, resolve with accumulated text
-              resolve({ content: textContent, format: "pdf" });
-            } else if (item.text) {
-              // Accumulate text content
-              textContent += item.text + " ";
-            }
-          });
+        const res = await scribe.extractText({
+          pdfFiles: [arrayBuffer],
         });
-
+        return { content: res, format: "pdf" };
+      }
       case "application/json":
         const jsonText = new TextDecoder().decode(buffer);
         const jsonObj = JSON.parse(jsonText);
@@ -85,7 +78,7 @@ export async function parseFile(
                 content: JSON.stringify(result, null, 2),
                 format: "xml",
               });
-            }
+            },
           );
         });
 

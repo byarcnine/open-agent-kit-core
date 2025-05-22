@@ -1,0 +1,245 @@
+:root {
+  --oak-chat-widget-z-index: 2147483646;
+  --oak-chat-widget-right: 32px;
+  --oak-chat-widget-bottom: 32px;
+  --oak-chat-widget-init-message-bottom: 115px;
+  --oak-chat-widget-bubble-size: 64px;
+  --oak-chat-widget-window-width: 360px;
+  --oak-chat-widget-window-height: 700px;
+  --oak-chat-widget-border-radius: 16px;
+  --oak-chat-widget-window-bottom: 80px; // 64px + 16px
+
+  --oak-chat-widget-color-primary: #64D855;
+  --oak-chat-widget-color-header-background: #64D855;
+  --oak-chat-widget-color-background: #fff;
+  --oak-chat-widget-color-background-hover: #f3f4f6;
+  --oak-chat-widget-color-border: #eee;
+  --oak-chat-widget-color-text: white;
+  --oak-chat-widget-color-text-muted: #666;
+
+  --oak-chat-widget-color-popup-button-background: white;
+  --oak-chat-widget-color-popup-button-text: #rgba(23, 23, 23, 1);
+
+  --oak-chat-widget-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#oak-chat-widget-root {
+  z-index: var(--oak-chat-widget-z-index);
+  font-family: Inter, "ui-sans-serif", "system-ui", "sans-serif";
+  .oak-chat-widget {
+    &__popup {
+      position: fixed;
+      right: var(--oak-chat-widget-right);
+      bottom: var(--oak-chat-widget-init-message-bottom);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform var(--oak-chat-widget-transition);
+
+      &--fade-in {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      &--closed {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(20px);
+      }
+
+      &-inner {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        &:hover .oak-chat-widget__popup-close {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
+
+      &-close {
+        position: absolute;
+        top: -14px;
+        right: -14px;
+        width: 28px;
+        height: 28px;
+        background: #fff;
+        border: 1px solid var(--oak-chat-widget-color-border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #888;
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: opacity 0.2s;
+        z-index: 2;
+      }
+
+      &-button {
+        background: var(--oak-chat-widget-color-popup-button-background);
+        color: var(--oak-chat-widget-color-popup-button-text);
+        border: 1px solid var(--oak-chat-widget-color-border);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+      }
+
+      &:hover .oak-chat-widget__popup-close {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    &__bubble-container {
+      position: fixed;
+      right: var(--oak-chat-widget-right);
+      bottom: var(--oak-chat-widget-bottom);
+    }
+
+    &__bubble-btn {
+      opacity: 0;
+      width: var(--oak-chat-widget-bubble-size);
+      height: var(--oak-chat-widget-bubble-size);
+      border-radius: 50%;
+      background: var(--oak-chat-widget-color-primary);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.2s;
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+
+    &__bubble--fade-in {
+      animation: fadeIn 0.6s;
+      opacity: 1;
+    }
+
+    &__window-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: var(--oak-chat-widget-color-header-background);
+      border-bottom: 1px solid var(--oak-chat-widget-color-border);
+    }
+
+    &__window-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--oak-chat-widget-color-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &__window-content {
+      flex: 1;
+      min-height: 0;
+    }
+
+    &__window {
+      position: absolute;
+      right: 0;
+      bottom: var(--oak-chat-widget-window-bottom);
+      width: var(--oak-chat-widget-window-width);
+      height: var(--oak-chat-widget-window-height);
+      background: var(--oak-chat-widget-color-background);
+      border-radius: var(--oak-chat-widget-border-radius);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      opacity: 1;
+      pointer-events: auto;
+      transition:
+        height var(--oak-chat-widget-transition),
+        opacity var(--oak-chat-widget-transition);
+
+      &--closed {
+        height: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+    }
+
+    &__close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--oak-chat-widget-color-text);
+    }
+
+    &__window-footer {
+      padding: 6px 16px;
+      background: var(--oak-chat-widget-color-background);
+      border-top: 1px solid var(--oak-chat-widget-color-border);
+      font-size: 10px;
+      color: var(--oak-chat-widget-color-text-muted);
+      text-align: center;
+      a {
+        color: var(--oak-chat-widget-color-text-muted);
+        text-decoration: none;
+      }
+    }
+
+    &__visually-hidden {
+      position: absolute !important;
+      height: 1px; width: 1px;
+      overflow: hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap;
+    }
+
+  }
+}
+
+.oak-chat-widget__popup-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+  background: #fff;
+  border: 1px solid var(--oak-chat-widget-color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #888;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.8);}
+  to { opacity: 1; transform: scale(1);}
+}
+
+

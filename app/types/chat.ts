@@ -15,6 +15,11 @@ export interface ChatSettings {
   openInternalLinksInNewTab?: boolean;
   openYoutubeVideosInIframe?: boolean;
   customCSS?: string;
+  maintainConversationSession?: number;
+  embedSettings?: {
+    maintainConversationSession?: number;
+    embedWidgetTitle?: string;
+  };
 }
 
 export enum MessageRole {

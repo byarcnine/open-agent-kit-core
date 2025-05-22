@@ -5,8 +5,6 @@ import {
   type LoaderFunctionArgs,
   useFetcher,
   type ActionFunctionArgs,
-  Link,
-  useSearchParams,
 } from "react-router";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -40,15 +38,9 @@ import * as Popover from "@radix-ui/react-popover";
 import { Button } from "~/components/ui/button";
 import JsonEditorDialog from "~/components/jsonEditorDialog/jsonEditorDialog";
 import React from "react";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "~/components/ui/pagination";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { PERMISSIONS } from "~/types/auth";
+import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
 
 dayjs.extend(relativeTime);
 
@@ -64,6 +56,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie"),
   );
+  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
   try {
     const clonedRequest = request.clone();
 
@@ -155,8 +148,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       heading: "File uploaded successfully",
       type: "success",
     });
+    return data(
+      { success: true },
+      {
+        headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      },
+    );
   } catch (error) {
     if (error instanceof Error) {
+      console.log("error instanceof Error", error.message);
       session.flash("message", {
         heading: error.message,
         type: "error",
@@ -235,25 +235,19 @@ const DocumentsTab = () => {
     pageSize = 25,
   } = loaderData;
   const { agentId } = useParams();
-  const [searchParams] = useSearchParams();
-
   useEffect(() => {
     if (message) {
       if (message.type === "success") {
         toast.success(message.heading);
       } else {
-        toast.error(message.heading);
+        toast.error(message.heading, {
+          duration: 8000,
+        });
       }
     }
   }, [message]);
 
   const totalPages = Math.ceil(totalCount / pageSize);
-
-  const getPageUrl = (pageNumber: number) => {
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set("page", pageNumber.toString());
-    return `?${newSearchParams.toString()}`;
-  };
 
   // --- Calculate pagination range ---
   const pagesToShow = 2; // Number of pages to show on each side of the current page
@@ -307,102 +301,11 @@ const DocumentsTab = () => {
               </TableBody>
             </Table>
           </div>
-          {totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      to={getPageUrl(currentPage - 1)}
-                      preventScrollReset
-                      prefetch="intent"
-                      className={
-                        currentPage <= 1
-                          ? "pointer-events-none opacity-50"
-                          : undefined
-                      }
-                      aria-disabled={currentPage <= 1}
-                      tabIndex={currentPage <= 1 ? -1 : undefined}
-                    />
-                  </PaginationItem>
-
-                  {/* --- Render first page and ellipsis if needed --- */}
-                  {startPage > 1 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationLink
-                          to={getPageUrl(1)}
-                          preventScrollReset
-                          prefetch="intent"
-                          isActive={currentPage === 1}
-                        >
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-                      {startPage > 2 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                    </>
-                  )}
-                  {/* --- End first page and ellipsis --- */}
-
-                  {/* --- Render page numbers in the calculated range --- */}
-                  {pageNumbers.map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        to={getPageUrl(page)}
-                        preventScrollReset
-                        prefetch="intent"
-                        isActive={currentPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  {/* --- End page numbers --- */}
-
-                  {/* --- Render last page and ellipsis if needed --- */}
-                  {endPage < totalPages && (
-                    <>
-                      {endPage < totalPages - 1 && (
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      )}
-                      <PaginationItem>
-                        <PaginationLink
-                          to={getPageUrl(totalPages)}
-                          preventScrollReset
-                          prefetch="intent"
-                          isActive={currentPage === totalPages}
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-                  {/* --- End last page and ellipsis --- */}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      to={getPageUrl(currentPage + 1)}
-                      preventScrollReset
-                      prefetch="intent"
-                      className={
-                        currentPage >= totalPages
-                          ? "pointer-events-none opacity-50"
-                          : undefined
-                      }
-                      aria-disabled={currentPage >= totalPages}
-                      tabIndex={currentPage >= totalPages ? -1 : undefined}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+          <PaginationBlock
+            currentPage={currentPage}
+            totalCount={totalCount}
+            pageSize={pageSize}
+          />
         </>
       ) : (
         !message && (

@@ -9,7 +9,6 @@ import Chat from "~/components/chat/chat.client";
 import { prisma } from "@db/db.server";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
-import type { ChatSettings } from "~/types/chat";
 import { getAllowedUrlsForAgent } from "~/routes/utils";
 import { getChatSettings } from "~/lib/llm/chat.server";
 
@@ -38,10 +37,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     },
   });
   if (!agent) {
-    return data({ error: "Agent not found" }, { status: 404, headers });
+    throw data({ error: "Agent not found" }, { status: 404, headers });
   }
   if (!agent.isPublic) {
-    return data({ error: "Agent is not public" }, { status: 403, headers });
+    throw data({ error: "Agent is not public" }, { status: 403, headers });
   }
 
   const toolNames = toolNameIdentifierList();
@@ -51,18 +50,22 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     { agent, toolNames, chatSettings },
     {
       headers,
-    }
+    },
   );
 };
 
 const ChatEmbed = () => {
   const { agentId } = useParams();
-  const { chatSettings, toolNames } = useLoaderData();
+  const loaderData = useLoaderData();
+
+  const { chatSettings, toolNames } = loaderData;
   return (
     <div className="h-screen w-full">
       <ClientOnlyComponent>
         {Chat && (
           <Chat
+            apiUrl={window.location.origin}
+            isEmbed={true}
             agentId={agentId as string}
             agentChatSettings={chatSettings}
             toolNamesList={toolNames}

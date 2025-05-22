@@ -1,10 +1,17 @@
-$oak-color-primary: rgba(23, 23, 23, 1);
-$oak-color-bg: rgb(244, 244, 245);
-$oak-border-color: #e2e8f0;
-$oak-white: white;
-$oak-color-muted-foreground: #737373;
-$oak-border-radius: 12px;
-$oak-error-color: oklch(0.704 0.191 22.216);
+:root {
+  --oak-color-primary: rgba(23, 23, 23, 1);
+  --oak-color-bg: rgb(244, 244, 245);
+  --oak-border-color: #e2e8f0;
+  --oak-color-secondary: white;
+  --oak-color-muted-foreground: #737373;
+  --oak-border-radius: 12px;
+  --oak-error-color: oklch(0.704 0.191 22.216);
+  --oak-mobile-breakpoint: 480px;
+  --oak-color-chat-user-background: rgba(23, 23, 23, 1);
+  --oak-color-chat-user-text: white;
+  --oak-color-chat-assistant-background: transparent;
+  --oak-color-chat-assistant-text: rgba(23, 23, 23, 1);
+}
 
 #oak-chat-container {
   font-family: "Inter", "ui-sans-serif", "system-ui", "sans-serif";
@@ -16,9 +23,11 @@ $oak-error-color: oklch(0.704 0.191 22.216);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  background-color: $oak-white;
+  background-color: var(--oak-color-secondary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  container-type: inline-size;
+  container-name: chat-container;
 
   .oak-chat {
     &__empty-state {
@@ -30,12 +39,19 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       z-index: 1;
       width: 100%;
       margin: 0 auto;
+      padding-left: 30px;
+      padding-right: 30px;
+
+      @media (min-width: 768px) {
+        padding-left: 0;
+        padding-right: 0;
+      }
 
       &-heading {
         font-size: 24px;
         font-weight: 500;
         margin-bottom: 25.6px;
-        color: $oak-color-primary;
+        color: var(--oak-color-primary);
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.3s;
@@ -56,7 +72,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       margin: 16px;
       margin-top: 0;
       padding-top: 16px;
-      border-top: 1px solid $oak-border-color;
+      border-top: 1px solid var(--oak-border-color);
     }
     &__thinking {
       &-message {
@@ -65,8 +81,11 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         margin-bottom: 16px;
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
-        margin-left: 70px;
-        color: $oak-color-muted-foreground;
+        color: var(--oak-color-muted-foreground);
+        margin-left: 8px;
+        @container chat-container (min-width: var(--oak-mobile-breakpoint)) {
+          margin-left: 54px;
+        }
       }
       &-dots {
         display: inline-block;
@@ -86,8 +105,8 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       // display: flex;
       // flex-direction: column;
       align-items: start;
-      border-radius: $oak-border-radius;
-      background-color: $oak-color-bg;
+      border-radius: var(--oak-border-radius);
+      background-color: var(--oak-color-bg);
       // border: 2px solid $oak-color-bg;
       transition: border 0.3s ease;
 
@@ -95,7 +114,30 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       //   border: 2px solid $oak-color-primary;
       // }
     }
-
+    &__scroll-down-indicator {
+      border: none;
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--oak-color-primary);
+      font-size: 24px;
+      font-weight: 500;
+      background-color: var(--oak-color-secondary);
+      border-radius: 50%;
+      padding: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
     &__file-thumbnails {
       position: relative;
       display: flex;
@@ -109,34 +151,41 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         img {
           width: 64px;
           height: 64px;
-          border-radius: $oak-border-radius;
+          border-radius: var(--oak-border-radius);
           object-fit: cover;
           overflow: hidden;
         }
 
         &--pdf {
-          background-color: $oak-color-primary;
-          color: $oak-white;
+          background-color: var(--oak-color-primary);
+          color: var(--oak-color-secondary);
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
           padding: 8px 40px 8px 8px;
-
-          border-radius: $oak-border-radius;
+          border-radius: var(--oak-border-radius);
           font-size: 24px;
           height: 64px;
 
           &-icon {
             padding: 8px;
-            background-color: $oak-color-muted-foreground;
-            border-radius: $oak-border-radius;
+            background-color: var(--oak-color-muted-foreground);
+            border-radius: var(--oak-border-radius);
           }
 
           > div {
             display: flex;
             flex-direction: column;
             font-size: 12.8px;
+            max-width: 100px;
+
+            span:first-of-type {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              display: block;
+            }
           }
         }
       }
@@ -146,7 +195,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       position: absolute;
       top: 4.8px;
       right: 4.8px;
-      color: $oak-color-bg;
+      color: var(--oak-color-bg);
     }
 
     &__submit-button {
@@ -157,9 +206,9 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       margin-top: auto;
       margin-left: auto;
       padding: 8px;
-      color: white;
+      color: var(--oak-color-secondary);
       border-radius: 100%;
-      background-color: $oak-color-primary;
+      background-color: var(--oak-color-primary);
       opacity: 1;
       transition: 300ms ease;
 
@@ -172,9 +221,14 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       }
     }
 
+    &__text-area-container {
+      display: flex;
+    }
     &__text-area {
+      display: flex;
+      width: 100%;
       flex: 1;
-      color: $oak-color-primary;
+      color: var(--oak-color-primary);
       height: 100%;
       border: none;
       outline: none;
@@ -183,8 +237,12 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       margin: 0;
       background: transparent;
       font-family: inherit;
-      font-size: 14.4px;
+      font-size: 16px;
       max-height: 300px;
+
+      @media (min-width: 768px) {
+        font-size: 14.4px;
+      }
       &::-webkit-scrollbar {
         display: none;
       }
@@ -195,12 +253,13 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       align-items: center;
       justify-content: center;
       gap: 4px;
-      border-radius: $oak-border-radius;
+      border-radius: var(--oak-border-radius);
       padding: 6px 6px;
       opacity: 1;
       transition: 300ms ease;
-      color: $oak-color-primary;
-
+      color: var(--oak-color-primary);
+      border: none;
+      background-color: transparent;
       span {
         display: none;
         width: 0;
@@ -210,9 +269,9 @@ $oak-error-color: oklch(0.704 0.191 22.216);
 
       &.active {
         opacity: 1;
-        background-color: $oak-color-primary;
+        background-color: var(--oak-color-primary);
         svg {
-          stroke: $oak-white;
+          stroke: var(--oak-color-secondary);
           opacity: 1;
         }
         span {
@@ -223,27 +282,29 @@ $oak-error-color: oklch(0.704 0.191 22.216);
 
       &:hover {
         opacity: 1;
-        background-color: $oak-color-primary;
+        cursor: pointer;
+        background-color: var(--oak-color-primary);
         svg {
-          stroke: $oak-white;
+          stroke: var(--oak-color-secondary);
         }
       }
 
       svg {
         transition: 600ms ease;
         opacity: 0.7;
-        stroke: $oak-color-primary;
+        stroke: var(--oak-color-primary);
       }
 
       span {
         font-size: 12.8px;
         font-weight: 500;
-        color: $oak-color-bg;
+        color: var(--oak-color-bg);
       }
     }
 
     &__action-row {
       display: flex;
+      box-sizing: border-box;
       justify-content: space-between;
       align-items: end;
       width: 100%;
@@ -253,9 +314,10 @@ $oak-error-color: oklch(0.704 0.191 22.216);
 
     &__footer-note {
       font-size: 12.8px;
-      color: $oak-color-muted-foreground;
-      margin-top: 8px;
-      padding: 8px;
+      color: var(--oak-color-muted-foreground);
+      padding: 20px;
+      padding-top: 0;
+      margin: 0;
       text-align: center;
       white-space: pre-wrap;
     }
@@ -279,15 +341,29 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       }
 
       &::-webkit-scrollbar-thumb {
-        background-color: $oak-color-bg;
+        background-color: var(--oak-color-bg);
         border-radius: 5px;
         border: 1px solid transparent;
       }
+      // &--anchor-bottom {
+      //   * {
+      //     overflow-anchor: none;
+      //   }
+      // }
+    }
+
+    &__messages-container-wrapper {
+      position: relative;
+      overflow-y: hidden;
+      height: 100%;
     }
 
     &__scroll-end {
       height: 10px;
       width: 10px;
+      // &--anchor-bottom {
+      //   overflow-anchor: auto;
+      // }
     }
 
     &__advice-badges {
@@ -300,9 +376,9 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       }
 
       &-card {
-        background-color: $oak-white;
-        border: 1px solid $oak-border-color;
-        border-radius: $oak-border-radius;
+        background-color: var(--oak-color-secondary);
+        border: 1px solid var(--oak-border-color);
+        border-radius: var(--oak-border-radius);
         padding: 15px;
         cursor: pointer;
         transition: background-color 0.3s ease;
@@ -310,7 +386,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         animation-fill-mode: both;
 
         &:hover {
-          background-color: $oak-color-bg;
+          background-color: var(--oak-color-bg);
         }
 
         @for $i from 1 through 100 {
@@ -359,7 +435,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
           gap: 16px;
           & > div {
             padding-left: 16px;
-            border-left: 2px solid $oak-color-primary;
+            border-left: 2px solid var(--oak-color-primary);
           }
           &-item {
             display: flex;
@@ -373,7 +449,10 @@ $oak-error-color: oklch(0.704 0.191 22.216);
         &-container {
           display: flex;
           flex-direction: column;
-          max-width: 80%;
+          max-width: 100%;
+          @container chat-container (min-width: var(--oak-mobile-breakpoint)) {
+            max-width: 80%;
+          }
 
           &-attachments {
             display: flex;
@@ -386,7 +465,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
               &--image {
                 width: 112px;
                 height: 112px;
-                border-radius: $oak-border-radius;
+                border-radius: var(--oak-border-radius);
                 object-fit: cover;
                 overflow: hidden;
               }
@@ -396,6 +475,18 @@ $oak-error-color: oklch(0.704 0.191 22.216);
 
         &--assistant {
           margin-top: 3.2px;
+        }
+
+        &--copy-button {
+          margin-top: 16px;
+          opacity: 0.3;
+          transition: opacity 0.3s ease;
+          cursor: pointer;
+          border: none;
+          background-color: transparent;
+          &:hover {
+            opacity: 1;
+          }
         }
       }
 
@@ -423,29 +514,33 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       }
 
       &-tool-invocation {
-        border-left: 2px solid $oak-color-primary;
+        border-left: 2px solid var(--oak-color-primary);
         padding: 12px;
         overflow-x: auto;
       }
 
-      &-code {
-        font-size: 12px;
-        white-space: pre-wrap;
-        word-break: break-word;
+      &-copyBlock {
+        button {
+          border: none;
+        }
+        span:first-child {
+          overflow-y: hidden;
+        }
       }
 
       &-content {
         font-size: 14px;
-        border-radius: $oak-border-radius;
+        border-radius: var(--oak-border-radius);
         padding: 8px 12px;
 
         &--user {
-          background-color: $oak-color-primary;
-          color: $oak-white;
+          background-color: var(--oak-color-chat-user-background);
+          color: var(--oak-color-chat-user-text);
         }
 
         &--assistant {
-          background-color: transparent;
+          background-color: var(--oak-color-chat-assistant-background);
+          color: var(--oak-color-chat-assistant-text);
         }
       }
     }
@@ -468,7 +563,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       padding: 8px;
       font-size: 19.2px;
       font-weight: 400;
-      color: $oak-color-primary;
+      color: var(--oak-color-primary);
     }
 
     &__message-avatar {
@@ -479,7 +574,10 @@ $oak-error-color: oklch(0.704 0.191 22.216);
       flex-shrink: 0;
       overflow: hidden;
       margin-top: 8px;
-
+      display: none;
+      @container chat-container (min-width: var(--oak-mobile-breakpoint)) {
+        display: block;
+      }
       &-image {
         aspect-ratio: 1 / 1;
         height: 100%;
@@ -492,9 +590,9 @@ $oak-error-color: oklch(0.704 0.191 22.216);
     &__error-message {
       padding: 8px;
       text-align: center;
-      background-color: $oak-error-color;
-      color: $oak-white;
-      border-radius: $oak-border-radius;
+      background-color: var(--oak-error-color);
+      color: var(--oak-color-secondary);
+      border-radius: var(--oak-border-radius);
       font-size: 14px;
     }
   }
@@ -558,14 +656,16 @@ $oak-error-color: oklch(0.704 0.191 22.216);
   span,
   p {
     white-space: pre-wrap;
+    line-height: 1.5;
   }
 
   a {
     text-decoration: underline;
-    color: $oak-color-primary;
+    color: var(--oak-color-primary);
   }
   hr {
-    margin-bottom: 1rem;
+    margin-top: 20px;
+    margin-bottom: 20px;
   }
   table {
     width: 100%;
@@ -574,7 +674,7 @@ $oak-error-color: oklch(0.704 0.191 22.216);
     padding-bottom: 20px;
 
     thead {
-      background: $oak-color-bg;
+      background: var(--oak-color-bg);
       border: 1px solid #ddd;
 
       th {
@@ -629,7 +729,15 @@ $oak-error-color: oklch(0.704 0.191 22.216);
     list-style: decimal;
   }
 
+  pre {
+    margin: 15px 0;
+    span {
+      overflow: hidden;
+    }
+  }
+
   code {
+    white-space: break-words !important;
     span {
       font-size: 12px;
       white-space: pre;
@@ -644,26 +752,26 @@ $oak-error-color: oklch(0.704 0.191 22.216);
   }
 
   h1 {
-    @include heading-style($oak-color-primary, 500, 8px, 20.8px);
+    @include heading-style(var(--oak-color-primary), 500, 8px, 20.8px);
     padding-bottom: 4.8px;
   }
 
   h2 {
-    @include heading-style($oak-color-primary, 500, 8px, 19.2px);
+    @include heading-style(var(--oak-color-primary), 500, 8px, 19.2px);
     padding-bottom: 4.8px;
   }
 
   h3 {
-    @include heading-style($oak-color-primary, 500, 8px, 17.6px);
+    @include heading-style(var(--oak-color-primary), 500, 8px, 17.6px);
     padding-bottom: 4.8px;
   }
 
   h4 {
-    @include heading-style($oak-color-primary, 500, 4.8px, 16px);
+    @include heading-style(var(--oak-color-primary), 500, 4.8px, 16px);
   }
 
   h5 {
-    @include heading-style($oak-color-primary, 500, 3.2px, 16px);
+    @include heading-style(var(--oak-color-primary), 500, 3.2px, 16px);
   }
 
   h6 {

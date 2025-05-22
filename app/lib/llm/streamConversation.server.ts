@@ -1,4 +1,4 @@
-import { prisma } from "@db/db.server";
+import { prisma, type Conversation } from "@db/db.server";
 import { getSystemPrompt } from "./systemPrompts.server";
 import {
   appendResponseMessages,
@@ -10,7 +10,34 @@ import { getConfig } from "../config/config";
 import { getModelContextLimit, getModelForAgent } from "./modelManager.server";
 import { generateSingleMessage } from "./generate.server";
 import { prepareToolsForAgent } from "./tools.server";
-import { encoding_for_model, type TiktokenModel } from "tiktoken";
+import {
+  calculateTokensForMessage,
+  calculateTokensForMessages,
+  calculateTokensString,
+} from "./tokenCounter.server";
+
+const limitMessagesByTokens = (
+  messages: Message[],
+  maxTokens: number,
+  modelId: string,
+): Message[] => {
+  let totalTokens = 0;
+  const limitedMessages: Message[] = [];
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    const messageTokens = calculateTokensForMessage(message, modelId);
+
+    if (totalTokens + messageTokens > maxTokens) {
+      break;
+    }
+
+    limitedMessages.unshift(message);
+    totalTokens += messageTokens;
+  }
+
+  return limitedMessages;
+};
 
 export const streamConversation = async (
   conversationId: string,
@@ -23,8 +50,8 @@ export const streamConversation = async (
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({
-      data: { agentId, userId, customIdentifier },
-    });
+        data: { agentId, userId, customIdentifier },
+      });
 
   if (!conversation) {
     throw new Error("Conversation not found");
@@ -32,7 +59,7 @@ export const streamConversation = async (
   const config = getConfig();
 
   const modelForAgent = await getModelForAgent(agentId, config);
-  const TOKEN_LIMIT = getModelContextLimit(modelForAgent.modelId) * 0.8;
+  const TOKEN_LIMIT = getModelContextLimit(modelForAgent.model.modelId) * 0.8;
 
   // Add the user message to the conversation
   const createMessagePromise = prisma.message.create({
@@ -43,42 +70,11 @@ export const streamConversation = async (
     },
   });
 
-  const calculateTokens = (message: Message): number => {
-    const enc = encoding_for_model(modelForAgent.modelId as TiktokenModel);
-    const messageWithoutAttachments = {
-      ...message,
-      ...(message.experimental_attachments && {
-        experimental_attachments: message.experimental_attachments.map((attachment) => ({
-          ...attachment,
-          url: "",
-        })),
-      }),
-    };
-    const tokens = enc.encode(JSON.stringify(messageWithoutAttachments)).length;
-    enc.free();
-    return tokens;
-  };
-
-  const limitMessagesByTokens = (messages: Message[], maxTokens: number): Message[] => {
-    let totalTokens = 0;
-    const limitedMessages: Message[] = [];
-
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      const messageTokens = calculateTokens(message);
-
-      if (totalTokens + messageTokens > maxTokens) {
-        break;
-      }
-
-      limitedMessages.unshift(message);
-      totalTokens += messageTokens;
-    }
-
-    return limitedMessages;
-  };
-
-  const messagesInScope = limitMessagesByTokens(messages, TOKEN_LIMIT);
+  const messagesInScope = limitMessagesByTokens(
+    messages,
+    TOKEN_LIMIT,
+    modelForAgent.model.modelId,
+  );
 
   const cleanedMessages = messagesInScope.filter((message) => {
     if (message.role === "assistant") {
@@ -96,7 +92,7 @@ export const streamConversation = async (
     tagLinePromise = generateSingleMessage(config)(
       `Summarize in 3-4 words what this conversation is about. "${messages[0].content}"`,
       agentId,
-      "What is the conversation about? Tell me in 3-4 words. Only return the tagline, no other text. Only summarize the topic of the conversation. Do not engage in the conversation, just return the tagline. Maintain the prompt language for your output.",
+      "What is the conversation about? Tell me in 3-4 words. Only return the tagline, no other text. Only summarize the topic of the conversation. Do not engage in the conversation, just return the tagline. Maintain the prompt language for your output. Do not end with a period.",
       {
         disableTools: true,
       },
@@ -130,7 +126,8 @@ export const streamConversation = async (
 
   return {
     stream: streamText({
-      model,
+      model: model.model,
+      temperature: model.settings?.temperature ?? 0.7,
       messages: cleanedMessages,
       system: systemPrompt,
       tools: { ...Object.fromEntries(toolsArray) },
@@ -152,7 +149,7 @@ export const streamConversation = async (
               year: new Date().getFullYear(),
               month: new Date().getMonth() + 1,
               day: new Date().getDate(),
-              modelId: model.modelId,
+              modelId: model.model.modelId,
             },
           },
           create: {
@@ -160,7 +157,7 @@ export const streamConversation = async (
             month: new Date().getMonth() + 1,
             day: new Date().getDate(),
             tokens: usage,
-            modelId: model.modelId,
+            modelId: model.model.modelId,
             agent: {
               connect: {
                 id: agentId,
@@ -194,5 +191,15 @@ export const streamConversation = async (
       },
     }),
     conversationId: conversation.id,
+    tokens: {
+      messages: calculateTokensForMessages(
+        messagesInScope,
+        modelForAgent.model.modelId,
+      ),
+      systemPrompt: calculateTokensString(
+        systemPrompt ?? "",
+        modelForAgent.model.modelId,
+      ),
+    },
   };
 };
