@@ -69,8 +69,8 @@ const ChatInput = ({
           const syntheticEvent = {
             target: {
               files: [file],
-              preventDefault: () => {},
             },
+            preventDefault: () => {},
           } as unknown as React.ChangeEvent<HTMLInputElement>;
 
           handleFileInputChange(syntheticEvent);
