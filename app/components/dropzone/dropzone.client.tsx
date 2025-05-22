@@ -1,7 +1,7 @@
 import { useDropzone } from "react-dropzone";
-import { useCallback, useRef, useState, useEffect } from "react";
-import { toast, Toaster } from "sonner";
-import { Form, useFetcher, useLocation } from "react-router";
+import { useCallback, useState, useEffect } from "react";
+import { toast } from "sonner";
+import { useFetcher, useLocation } from "react-router";
 
 const acceptedFileTypes = {
   "application/pdf": [".pdf"],
@@ -87,7 +87,6 @@ const Dropzone = ({ agentId }: { agentId: string }) => {
           )}
         </div>
       </div>
-      <Toaster expand={true} />
     </>
   );
 };

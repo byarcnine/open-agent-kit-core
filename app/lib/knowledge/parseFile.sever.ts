@@ -25,13 +25,10 @@ export async function parseFile(
           buffer.byteOffset + buffer.byteLength,
         );
 
-        return scribe
-          .extractText({
-            pdfFiles: [arrayBuffer],
-          })
-          .then((res: any) => {
-            return { content: res, format: "pdf" };
-          });
+        const res = await scribe.extractText({
+          pdfFiles: [arrayBuffer],
+        });
+        return { content: res, format: "pdf" };
       }
       case "application/json":
         const jsonText = new TextDecoder().decode(buffer);
