@@ -72,7 +72,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     archived: false,
   });
   const userChatPagesPromise = getUserRoutesForAgent(agentId as string);
-  const agentPromise = await prisma.agent
+  const agentPromise = prisma.agent
     .findUnique({
       where: {
         id: agentId,
