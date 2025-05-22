@@ -1,7 +1,7 @@
 import { useDropzone } from "react-dropzone";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { Form } from "react-router";
+import { Form, useFetcher, useLocation } from "react-router";
 
 const acceptedFileTypes = {
   "application/pdf": [".pdf"],
@@ -20,23 +20,36 @@ const acceptedFileTypes = {
 
 const Dropzone = ({ agentId }: { agentId: string }) => {
   const [uploading, setUploading] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
+  const fetcher = useFetcher();
+  const location = useLocation();
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      console.log("acceptedFiles", acceptedFiles);
+      if (acceptedFiles.length === 0) return;
+      setUploading(true);
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (!formRef.current || acceptedFiles.length === 0) return;
-    setUploading(true);
-    // Just submit the form directly!
-    toast.success("Progressing ... Please do not close this page");
-    const input = formRef.current.querySelector(
-      "input[name='file']"
-    ) as HTMLInputElement;
-    if (input) {
-      const dataTransfer = new DataTransfer();
-      acceptedFiles.forEach((file) => dataTransfer.items.add(file));
-      input.files = dataTransfer.files;
+      toast.success("Uploading... Please do not close this page");
+
+      const formData = new FormData();
+      acceptedFiles.forEach((file) => {
+        formData.append("file", file);
+      });
+
+      fetcher.submit(formData, {
+        method: "post",
+        encType: "multipart/form-data",
+        action: location.pathname,
+      });
+    },
+    [agentId, fetcher],
+  );
+
+  // Monitor fetcher state changes
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      setUploading(false);
     }
-    formRef.current.submit();
-  }, []);
+  }, [fetcher.state, fetcher.data]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -58,30 +71,23 @@ const Dropzone = ({ agentId }: { agentId: string }) => {
 
   return (
     <>
-      <Form
-        ref={formRef}
-        method="post"
-        encType="multipart/form-data"
-        className="mb-6"
-      >
-        <div {...getRootProps()}>
-          <input {...getInputProps()} name="file" />
-          <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50">
-            {uploading ? (
-              <p>Uploading...</p>
-            ) : isDragActive ? (
-              <p>Drop the files here...</p>
-            ) : (
-              <p>
-                Drag and drop files here, or click to select files. <br />
-                Allowed file types are{" "}
-                {Object.values(acceptedFileTypes).join(", ")} <br />
-                Maximum file size: 10MB
-              </p>
-            )}
-          </div>
+      <div {...getRootProps()} className="mb-6">
+        <input {...getInputProps()} name="file" />
+        <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50">
+          {uploading ? (
+            <p>Uploading...</p>
+          ) : isDragActive ? (
+            <p>Drop the files here...</p>
+          ) : (
+            <p>
+              Drag and drop files here, or click to select files. <br />
+              Allowed file types are{" "}
+              {Object.values(acceptedFileTypes).flat().join(", ")} <br />
+              Maximum file size: 10MB
+            </p>
+          )}
         </div>
-      </Form>
+      </div>
       <Toaster expand={true} />
     </>
   );

@@ -150,7 +150,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       type: "success",
     });
   } catch (error) {
+    console.log("error", error);
     if (error instanceof Error) {
+      console.log("error instanceof Error", error.message);
       session.flash("message", {
         heading: error.message,
         type: "error",
@@ -201,6 +203,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     request.headers.get("Cookie"),
   );
   const message = session.get("message");
+  console.log("loader message", message);
   return data(
     {
       files,
@@ -230,24 +233,19 @@ const DocumentsTab = () => {
   } = loaderData;
   const { agentId } = useParams();
   const [searchParams] = useSearchParams();
-
   useEffect(() => {
     if (message) {
       if (message.type === "success") {
         toast.success(message.heading);
       } else {
-        toast.error(message.heading);
+        toast.error(message.heading, {
+          duration: 8000,
+        });
       }
     }
   }, [message]);
 
   const totalPages = Math.ceil(totalCount / pageSize);
-
-  const getPageUrl = (pageNumber: number) => {
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set("page", pageNumber.toString());
-    return `?${newSearchParams.toString()}`;
-  };
 
   // --- Calculate pagination range ---
   const pagesToShow = 2; // Number of pages to show on each side of the current page
