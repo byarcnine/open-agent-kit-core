@@ -150,7 +150,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       type: "success",
     });
   } catch (error) {
-    console.log("error", error);
     if (error instanceof Error) {
       console.log("error instanceof Error", error.message);
       session.flash("message", {
@@ -203,7 +202,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     request.headers.get("Cookie"),
   );
   const message = session.get("message");
-  console.log("loader message", message);
   return data(
     {
       files,

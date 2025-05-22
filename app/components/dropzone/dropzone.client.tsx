@@ -24,7 +24,6 @@ const Dropzone = ({ agentId }: { agentId: string }) => {
   const location = useLocation();
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      console.log("acceptedFiles", acceptedFiles);
       if (acceptedFiles.length === 0) return;
       setUploading(true);
 
