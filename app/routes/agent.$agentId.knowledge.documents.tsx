@@ -5,7 +5,6 @@ import {
   type LoaderFunctionArgs,
   useFetcher,
   type ActionFunctionArgs,
-  useSearchParams,
 } from "react-router";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -149,6 +148,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       heading: "File uploaded successfully",
       type: "success",
     });
+    return data(
+      { success: true },
+      {
+        headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      },
+    );
   } catch (error) {
     if (error instanceof Error) {
       console.log("error instanceof Error", error.message);
@@ -230,7 +235,6 @@ const DocumentsTab = () => {
     pageSize = 25,
   } = loaderData;
   const { agentId } = useParams();
-  const [searchParams] = useSearchParams();
   useEffect(() => {
     if (message) {
       if (message.type === "success") {
