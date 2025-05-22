@@ -80,7 +80,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     })
     .then((agent) => {
       if (!agent) {
-        throw data("Agent not found", { status: 404 });
+        throw new Response("Agent not found", { status: 404 });
       }
       return agent;
     });
