@@ -18,9 +18,18 @@ export type PluginType = {
   description: string;
   slug: string;
   syncKnowledge?: (
-    params: SyncKnowledgeFunctionParams
+    params: SyncKnowledgeFunctionParams,
   ) => Promise<SyncKnowledgeFunctionReturnParams>;
+  /** @deprecated use adminRoutes instead */
   routes?: RouteConfigEntry[];
+  /**
+   * @description Use this to add routes for the admin panel (mostly for settings or API routes)
+   */
+  adminRoutes?: RouteConfigEntry[];
+  /**
+   * @description Use this to add user facing routes for the plugin
+   */
+  userRoutes?: RouteConfigEntry[];
   menuItems?: MenuItem[];
   tools?: ToolConfig[];
 };

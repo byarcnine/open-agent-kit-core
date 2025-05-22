@@ -7,7 +7,7 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
   useFetcher,
-  useMatches,
+  useLocation,
 } from "react-router";
 import { type Conversation, prisma } from "@db/db.server";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import calendar from "dayjs/plugin/calendar";
 import Layout from "~/components/layout/layout";
-import { MessageCircle, PlusCircle, MoreVertical } from "react-feather";
+import { MessageCircle, PlusCircle, MoreVertical, Box } from "react-feather";
 import { PERMISSIONS } from "~/types/auth";
 import { useEffect, useState } from "react";
 import { Intent } from "./chat.$agentId._index";
@@ -23,6 +23,7 @@ import { loadConversations } from "./utils/chat";
 import { Button } from "~/components/ui/button";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "~/lib/utils";
+import { getUserRoutesForAgent } from "~/lib/plugins/availability.server";
 // Initialize the plugins
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
@@ -61,38 +62,50 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { agentId } = params;
 
   const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
-  const conversations = await loadConversations({
+  const conversationsPromise = loadConversations({
     page: 1,
     agentId: agentId as string,
     userId: user.id,
     take: CONVERSATIONS_PER_PAGE,
     archived: false,
   });
-  const agent = await prisma.agent.findUnique({
-    where: {
-      id: agentId,
-    },
-  });
-  if (!agent) {
-    throw new Response("Agent not found", { status: 404 });
-  }
-
+  const userChatPagesPromise = getUserRoutesForAgent(agentId as string);
+  const agentPromise = prisma.agent
+    .findUnique({
+      where: {
+        id: agentId,
+      },
+    })
+    .then((agent) => {
+      if (!agent) {
+        throw new Response("Agent not found", { status: 404 });
+      }
+      return agent;
+    });
+  const [conversations, userChatPages, agent] = await Promise.all([
+    conversationsPromise,
+    userChatPagesPromise,
+    agentPromise,
+  ]);
   return {
     conversations,
     user,
     agent,
+    userChatPages,
   };
 };
 
 const ChatOverview = () => {
   const { agentId, conversationId } = useParams();
-  const { conversations, agent, user } = useLoaderData<typeof loader>();
+  const { conversations, agent, user, userChatPages } =
+    useLoaderData<typeof loader>();
   const [allConversations, setAllConversations] = useState(conversations);
   const [currentConversationsByDay, setCurrentConversationsByDay] = useState(
     getConversationsByDay(conversations),
   );
   const navigate = useNavigate();
   const fetcher = useFetcher();
+  const location = useLocation();
   const [editMode, setEditMode] = useState<string | null>(null);
   const [newTagline, setNewTagline] = useState<string>("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -190,6 +203,36 @@ const ChatOverview = () => {
     <Layout
       navComponent={
         <div className="md:px-2 text-sm">
+          {userChatPages?.length > 0 && (
+            <>
+              <h2 className="text-primary mb-4 flex items-center gap-2 px-3 py-2 border-b">
+                <Box className="h-4 w-4" />
+                Plugins
+              </h2>
+              <div className="flex flex-col gap-2">
+                {userChatPages.map((p) => (
+                  <Link
+                    key={p.slug}
+                    to={`/chat/${agentId}/plugins/${p.slug}`}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-3 py-2 mb-8",
+                      location.pathname.startsWith(
+                        `/chat/${agentId}/plugins/${p.slug}`,
+                      )
+                        ? "bg-stone-900 text-white"
+                        : "hover:bg-stone-900 hover:text-white text-neutral-900",
+                    )}
+                  >
+                    {p.title}
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+          <h2 className="text-primary mb-4 flex items-center gap-2 px-3 py-2 border-b">
+            <MessageCircle className="h-4 w-4" />
+            Chats
+          </h2>
           <Link
             className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-oak-green text-accent-foreground hover:bg-oak-green/90 mb-8"
             to={`/chat/${agentId}`}
@@ -198,10 +241,6 @@ const ChatOverview = () => {
             <PlusCircle className="h-4 w-4" />
             New Conversation
           </Link>
-          <h2 className="text-primary mb-4 flex items-center gap-2 px-3 py-2 border-b">
-            <MessageCircle className="h-4 w-4" />
-            Chats
-          </h2>
           {currentConversationsByDay.map(({ date, conversations }) => (
             <div key={date} className="block mb-4 pb-4 overflow-auto border-b">
               <h2 className="text-sm px-3 mb-2 font-medium text-primary">
