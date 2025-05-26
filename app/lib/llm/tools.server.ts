@@ -21,7 +21,7 @@ const getMCPTools = async (agentId: string) => {
       const type = mcp.type;
       if (type === "SSE") {
         const connectionArgs = mcp.connectionArgs as {
-          connectionString: string;
+          url: string;
           [x: string]: any;
         };
         const { url, ...additionalArgs } = connectionArgs;

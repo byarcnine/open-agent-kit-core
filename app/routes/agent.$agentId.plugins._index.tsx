@@ -140,7 +140,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         mcpClient = await createMCPClient({
           transport: {
             type: "sse",
-            url: connectionArgs.connectionString,
+            url: connectionArgs.url,
             headers: connectionArgs.headers || {},
           },
         });
