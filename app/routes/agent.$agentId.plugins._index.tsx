@@ -724,8 +724,7 @@ const KnowledgeProvider = () => {
                 <CardContent className="flex-grow">
                   {mcp.type === "SSE" && (
                     <p className="text-sm">
-                      URL:{" "}
-                      {(mcp.connectionArgs as any)?.connectionString || "N/A"}
+                      URL: {(mcp.connectionArgs as any)?.url || "N/A"}
                     </p>
                   )}
                   {mcp.type === "STDIO" && (

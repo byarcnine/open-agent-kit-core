@@ -24,12 +24,12 @@ const getMCPTools = async (agentId: string) => {
           connectionString: string;
           [x: string]: any;
         };
-        const { connectionString, ...additionalArgs } = connectionArgs;
+        const { url, ...additionalArgs } = connectionArgs;
 
         const mcpClient = await createMCPClient({
           transport: {
             type: "sse",
-            url: connectionString,
+            url: url,
             ...(additionalArgs || {}),
           },
         });
