@@ -1,7 +1,8 @@
+import type { SessionUser } from "~/types/auth";
 import { getConfig } from "../config/config";
 import OAKProvider from "../lib";
 import { getToolsForAgent } from "../tools/tools.server";
-import { prisma } from "@db/db.server";
+import { prisma, type User } from "@db/db.server";
 import {
   experimental_createMCPClient as createMCPClient,
   type Message,
@@ -80,6 +81,7 @@ export const prepareToolsForAgent = async (
   conversationId: string,
   meta: Record<string, any>,
   messages: Message[],
+  user?: User | SessionUser,
 ) => {
   const pluginToolsPromise = getToolsForAgent(agentId).then(async (r) => {
     // get tools ready
@@ -92,7 +94,7 @@ export const prepareToolsForAgent = async (
             agentId,
             meta,
             config: getConfig(),
-            provider: OAKProvider(getConfig(), t.pluginName as string),
+            provider: OAKProvider(getConfig(), t.pluginName as string, user),
             messages,
           }),
         ];

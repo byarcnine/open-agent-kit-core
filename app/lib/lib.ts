@@ -12,10 +12,21 @@ import {
   findUnique,
   update,
 } from "./plugins/pluginData.server";
-import type { Prisma } from "@prisma/client";
+import type { MCPType, Prisma } from "@prisma/client";
 import { updateKnowledgeSourcesQueue } from "./jobs/updateKnowledegeSources.server";
+import type { User } from "@prisma/client";
+import type { SessionUser } from "~/types/auth";
+import {
+  addMCPToAgent,
+  getMCPsForAgent,
+  removeMCPFromAgent,
+} from "./mcp/client.server";
 
-const OAKProvider = (config: OAKConfig, pluginIdentifier: string) => {
+const OAKProvider = (
+  config: OAKConfig,
+  pluginIdentifier: string,
+  user: User | SessionUser | null | undefined,
+) => {
   return {
     generateSingleMessage: generateSingleMessage(config),
     generateConversation: generateConversation(config),
@@ -44,6 +55,31 @@ const OAKProvider = (config: OAKConfig, pluginIdentifier: string) => {
         agentId: string,
         filter: Prisma.AgentPluginDataDeleteManyArgs,
       ) => deleteMany(pluginIdentifier, agentId, filter),
+    },
+    user: {
+      getCurrentUser: async () => {
+        return user;
+      },
+    },
+    mcp: {
+      getMCPsForAgent: async (agentId: string) => {
+        return getMCPsForAgent(agentId);
+      },
+      addMCPToAgent: async (
+        agentId: string,
+        connection: {
+          name: string;
+          type: MCPType;
+          connectionArgs:
+            | { command: string; args?: string }
+            | { url: string; headers?: Record<string, string> };
+        },
+      ) => {
+        return addMCPToAgent(agentId, connection);
+      },
+      removeMCPFromAgent: async (agentId: string, mcpId: string) => {
+        return removeMCPFromAgent(agentId, mcpId);
+      },
     },
   };
 };
