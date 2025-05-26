@@ -81,7 +81,7 @@ export const prepareToolsForAgent = async (
   conversationId: string,
   meta: Record<string, any>,
   messages: Message[],
-  user?: User | SessionUser,
+  user?: User | SessionUser | null,
 ) => {
   const pluginToolsPromise = getToolsForAgent(agentId).then(async (r) => {
     // get tools ready

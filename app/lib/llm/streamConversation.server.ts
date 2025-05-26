@@ -117,7 +117,7 @@ export const streamConversation = async (
     conversation.id,
     meta,
     messages,
-    user || undefined,
+    user,
   );
 
   const [systemPrompt, tools, model] = await Promise.all([
