@@ -3,6 +3,7 @@ import { getSystemPrompt } from "./systemPrompts.server";
 import type { OAKConfig } from "~/types/config";
 import { getModelForAgent } from "./modelManager.server";
 import { prepareToolsForAgent } from "./tools.server";
+import { trackUsageForMessageResponse } from "./usage.server";
 
 export const generateSingleMessage =
   (config: OAKConfig) =>
@@ -13,6 +14,8 @@ export const generateSingleMessage =
     options?: {
       disableTools?: boolean;
     },
+    initiator?: string, // for tracking purposes provide the name and reason of the plugin invoking the LLM
+    userId?: string,
   ) => {
     const [system = "", model, tools] = await Promise.all([
       systemPrompt || getSystemPrompt("default", agentId),
@@ -38,12 +41,30 @@ export const generateSingleMessage =
       tools: tools?.tools ? Object.fromEntries(tools.tools) : undefined,
     });
     await tools.closeMCPs();
+    await trackUsageForMessageResponse(
+      completion,
+      agentId,
+      model.model.modelId,
+      initiator ?? "generateSingleMessage_unknown",
+      userId,
+    );
     return completion.text;
   };
 
 export const generateConversation =
-  (config: OAKConfig) => async (agentId: string, messages: Message[]) => {
-    const [model, tools] = await Promise.all([
+  (config: OAKConfig) =>
+  async (
+    agentId: string,
+    messages: Message[],
+    systemPrompt?: string | null, // system prompt override
+    options?: {
+      disableTools?: boolean;
+    },
+    initiator?: string, // for tracking purposes provide the name and reason of the plugin invoking the LLM
+    userId?: string,
+  ) => {
+    const [system, model, tools] = await Promise.all([
+      systemPrompt ?? getSystemPrompt("default", agentId),
       getModelForAgent(agentId, config),
       prepareToolsForAgent(agentId, "0", {}, messages),
     ]);
@@ -51,8 +72,17 @@ export const generateConversation =
       model: model.model,
       temperature: model.settings?.temperature ?? 0.7,
       tools: Object.fromEntries(tools.tools),
+      toolChoice: options?.disableTools ? "none" : "auto",
       messages,
+      system,
     });
+    await trackUsageForMessageResponse(
+      completion,
+      agentId,
+      model.model.modelId,
+      initiator ?? "generateConversation_unknown",
+      userId,
+    );
     await tools.closeMCPs();
     return completion.text;
   };

@@ -66,28 +66,28 @@ enum KnowledgeSourceStatus {
 }
 
 model Agent {
-  id                 String               @id @default(cuid())
-  name               String
-  description        String?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  isPublic           Boolean              @default(false)
-  allowedUrls        String[]             @default([])
-  chatSettings       Json?
-  modelSettings      Json?
-  conversations      Conversation[]
-  systemPrompts      SystemPrompt[]
-  knowledgeDocuments KnowledgeDocument[]
-  usage              Usage[]
-  agentUsers         AgentUser[]
-  invitation         Invitation[]
-  pluginAvailability PluginAvailability[]
-  PluginConfig       PluginConfig[]
-  AgentPluginData    AgentPluginData[]
-  MCPs               MCPs[]
+  id                   String                 @id @default(cuid())
+  name                 String
+  description          String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  isPublic             Boolean                @default(false)
+  allowedUrls          String[]               @default([])
+  chatSettings         Json?
+  modelSettings        Json?
+  conversations        Conversation[]
+  systemPrompts        SystemPrompt[]
+  knowledgeDocuments   KnowledgeDocument[]
+  usage                Usage[]
+  agentUsers           AgentUser[]
+  invitation           Invitation[]
+  pluginAvailability   PluginAvailability[]
+  PluginConfig         PluginConfig[]
+  AgentPluginData      AgentPluginData[]
+  MCPs                 MCPs[]
+  KnowledgeDocumentTag KnowledgeDocumentTag[]
 
   @@map("agent")
-  KnowledgeDocumentTag KnowledgeDocumentTag[]
 }
 
 model Conversation {
@@ -135,16 +135,16 @@ model Feedback {
 }
 
 model KnowledgeDocument {
-  id         String                @id @default(cuid())
+  id         String                 @id @default(cuid())
   agentId    String
-  agent      Agent                 @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent      Agent                  @relation(fields: [agentId], references: [id], onDelete: Cascade)
   name       String
   metadata   Json?
-  provider   String                @default("")
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @updatedAt
+  provider   String                 @default("")
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
   embeddings Embedding[]
-  status     KnowledgeSourceStatus @default(PENDING)
+  status     KnowledgeSourceStatus  @default(PENDING)
   tags       KnowledgeDocumentTag[] @relation("KnowledgeDocumentToTag")
 
   @@unique([agentId, name, provider])
@@ -153,14 +153,14 @@ model KnowledgeDocument {
 }
 
 model KnowledgeDocumentTag {
-  id                 String           @id @default(cuid())
-  agentId           String
-  agent             Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  name              String
-  color             String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  documents         KnowledgeDocument[] @relation("KnowledgeDocumentToTag")
+  id        String              @id @default(cuid())
+  agentId   String
+  agent     Agent               @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  name      String
+  color     String
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  documents KnowledgeDocument[] @relation("KnowledgeDocumentToTag")
 
   @@unique([agentId, name])
   @@map("knowledge_document_tag")
@@ -180,18 +180,23 @@ model Embedding {
 }
 
 model Usage {
-  id        String   @id @default(cuid())
-  agentId   String
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  year      Int
-  month     Int
-  day       Int
-  tokens    BigInt
-  modelId   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year         Int
+  month        Int
+  day          Int
+  invocations  BigInt   @default(0) // number of times the agent was invoked
+  inputTokens  BigInt   @default(0) // number of input tokens
+  outputTokens BigInt   @default(0) // number of output tokens
+  initiator    String   @default("core") // user, plugin, tool ...
+  modelId      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@unique([agentId, year, month, day, modelId])
+  @@unique([agentId, year, month, day, modelId, initiator])
   @@map("usage")
 }
 
@@ -287,6 +292,7 @@ model User {
   image         String?
   sessions      Session[]
   accounts      Account[]
+  Usage         Usage[]
 
   @@map("user")
 }
