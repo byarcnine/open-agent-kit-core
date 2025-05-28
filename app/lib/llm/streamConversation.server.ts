@@ -100,6 +100,8 @@ export const streamConversation = async (
       {
         disableTools: true,
       },
+      "core_conversation_tagline",
+      user ?? undefined,
     )
       .then(async (r) => {
         await prisma.conversation.update({
@@ -120,7 +122,6 @@ export const streamConversation = async (
     messages,
     user,
   );
-
   const [systemPrompt, tools, model] = await Promise.all([
     systemPromptPromise,
     toolsPromise,
@@ -128,7 +129,7 @@ export const streamConversation = async (
     createMessagePromise,
   ]);
   const { tools: toolsArray, closeMCPs } = tools;
-
+  console.log(toolsArray);
   return {
     stream: streamText({
       model: model.model,

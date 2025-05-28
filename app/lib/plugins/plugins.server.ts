@@ -59,12 +59,14 @@ export async function getTools(
         return plugin.tools().then((tools) =>
           tools.map((tool) => ({
             ...tool,
+            identifier: `${plugin.name}__${tool.identifier}`,
             pluginName: plugin.name,
           })),
         );
       }
       return plugin.tools?.map((tool) => ({
         ...tool,
+        identifier: `${plugin.name}__${tool.identifier}`,
         pluginName: plugin.name,
       }));
     });
