@@ -4,6 +4,8 @@ import type { OAKConfig } from "~/types/config";
 import { getModelForAgent } from "./modelManager.server";
 import { prepareToolsForAgent } from "./tools.server";
 import { trackUsageForMessageResponse } from "./usage.server";
+import type { SessionUser } from "~/types/auth";
+import type { User } from "@prisma/client";
 
 export const generateSingleMessage =
   (config: OAKConfig) =>
@@ -15,12 +17,12 @@ export const generateSingleMessage =
       disableTools?: boolean;
     },
     initiator?: string, // for tracking purposes provide the name and reason of the plugin invoking the LLM
-    userId?: string,
+    user?: User | SessionUser,
   ) => {
     const [system = "", model, tools] = await Promise.all([
       systemPrompt || getSystemPrompt("default", agentId),
       getModelForAgent(agentId, config),
-      prepareToolsForAgent(agentId, "0", {}, []),
+      prepareToolsForAgent(agentId, "0", {}, [], user),
     ]);
 
     const messages: CoreMessage[] = [
@@ -46,7 +48,7 @@ export const generateSingleMessage =
       agentId,
       model.model.modelId,
       initiator ?? "generateSingleMessage_unknown",
-      userId,
+      user?.id,
     );
     return completion.text;
   };
@@ -56,17 +58,17 @@ export const generateConversation =
   async (
     agentId: string,
     messages: Message[],
+    user?: User | SessionUser,
     systemPrompt?: string | null, // system prompt override
     options?: {
       disableTools?: boolean;
     },
     initiator?: string, // for tracking purposes provide the name and reason of the plugin invoking the LLM
-    userId?: string,
   ) => {
     const [system, model, tools] = await Promise.all([
       systemPrompt ?? getSystemPrompt("default", agentId),
       getModelForAgent(agentId, config),
-      prepareToolsForAgent(agentId, "0", {}, messages),
+      prepareToolsForAgent(agentId, "0", {}, messages, user),
     ]);
     const completion = await generateText({
       model: model.model,
@@ -81,7 +83,7 @@ export const generateConversation =
       agentId,
       model.model.modelId,
       initiator ?? "generateConversation_unknown",
-      userId,
+      user?.id,
     );
     await tools.closeMCPs();
     return completion.text;

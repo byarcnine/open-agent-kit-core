@@ -17,24 +17,34 @@ export const loader = async ({
   params: { agentId: string; id: string };
 }) => {
   const { agentId, id } = params;
-  const conversation = await prisma.conversation.findUnique({
-    where: { id: id, agentId },
-    include: {
-      messages: {
-        orderBy: {
-          createdAt: "asc",
+  const conversationsPromise = prisma.conversation
+    .findUnique({
+      where: { id: id, agentId },
+      include: {
+        messages: {
+          orderBy: {
+            createdAt: "asc",
+          },
         },
       },
-    },
-  });
-  if (!conversation) {
-    throw new Response("Not Found", { status: 404 });
-  }
-  const toolNames = toolNameIdentifierList();
+    })
+    .then((conversation) => {
+      if (!conversation) {
+        throw new Response("Not Found", { status: 404 });
+      }
+      return conversation;
+    });
+
+  const toolNamesPromise = toolNameIdentifierList();
+  const chatSettingsPromise = getChatSettings(agentId);
+  const [conversation, toolNames, chatSettings] = await Promise.all([
+    conversationsPromise,
+    toolNamesPromise,
+    chatSettingsPromise,
+  ]);
   const initialMessages = conversation.messages.map(
     (message) => message.content as unknown as Message,
   );
-  const chatSettings = await getChatSettings(agentId);
   return { conversation, initialMessages, toolNames, chatSettings };
 };
 

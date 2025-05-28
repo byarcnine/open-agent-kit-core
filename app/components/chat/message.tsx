@@ -66,7 +66,11 @@ const Message: React.FC<MessageProps> = React.memo(
       >
         {!isUserMessage && (
           <Avatar className="oak-chat__message-avatar">
-            <img className="oak-chat__message-avatar-image" src={avatarURL} alt="OAK Logo" />
+            <img
+              className="oak-chat__message-avatar-image"
+              src={avatarURL}
+              alt="OAK Logo"
+            />
           </Avatar>
         )}
         <div className="oak-chat__message-content-container">
@@ -113,7 +117,7 @@ const Message: React.FC<MessageProps> = React.memo(
               const isMCPTool = !part.toolInvocation.toolName.includes("__");
               const hideDefaultTool =
                 isDefaultTool && !chatSettings?.showDefaultToolsDebugMessages;
-              if (isMCPTool && chatSettings?.showDefaultToolsDebugMessages) {
+              if (isMCPTool) {
                 return (
                   <div
                     key={part.toolInvocation.toolCallId}

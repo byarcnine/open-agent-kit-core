@@ -34,7 +34,7 @@ export const refreshKnowledgeSources = async (
     const syncJobs = await plugin.syncKnowledge({
       agentId,
       existingDocuments,
-      provider: OAKProvider(getConfig(), pluginName),
+      provider: OAKProvider(getConfig(), pluginName, null),
     });
     console.log("syncJobs", syncJobs);
     for (const syncJob of syncJobs) {

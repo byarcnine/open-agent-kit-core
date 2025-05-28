@@ -38,18 +38,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       });
     });
 
-  const toolNames = toolNameIdentifierList();
-  const chatSettings = getChatSettings(agentId);
+  const toolNamesPromise = toolNameIdentifierList();
+  const chatSettingsPromise = getChatSettings(agentId);
   return {
-    initialChatDataPromise: Promise.all([initialMessagesPromise, chatSettings]),
+    initialChatDataPromise: Promise.all([
+      initialMessagesPromise,
+      chatSettingsPromise,
+      toolNamesPromise,
+    ]),
     conversationId,
     agentId: agentId as string,
-    toolNames,
   };
 };
 
 export default function Index() {
-  const { initialChatDataPromise, conversationId, agentId, toolNames } =
+  const { initialChatDataPromise, conversationId, agentId } =
     useLoaderData<typeof loader>();
   return (
     <Suspense
@@ -61,7 +64,7 @@ export default function Index() {
       }
     >
       <Await resolve={initialChatDataPromise}>
-        {([initialMessages, chatSettings]) => (
+        {([initialMessages, chatSettings, toolNames]) => (
           <ClientOnlyComponent>
             <Chat
               key={conversationId}

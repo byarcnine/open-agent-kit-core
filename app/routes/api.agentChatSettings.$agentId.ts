@@ -3,13 +3,12 @@ import type { LoaderFunction } from "react-router";
 import { getCorsHeaderForAgent } from "./utils";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import { getChatSettings } from "~/lib/llm/chat.server";
-import jwt from 'jsonwebtoken';
-
+import jwt from "jsonwebtoken";
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const corsHeaders = await getCorsHeaderForAgent(
     request.headers.get("Origin") as string,
-    params.agentId as string
+    params.agentId as string,
   );
 
   const agentId = params.agentId;
@@ -31,7 +30,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
           "Content-Type": "application/json",
           ...corsHeaders,
         },
-      }
+      },
     );
   }
 
@@ -39,15 +38,21 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   let conversationId: string | undefined;
   if (conversationToken) {
     try {
-      const decoded = jwt.verify(conversationToken, process.env.APP_SECRET as string);
-      if (typeof decoded === "object" && decoded !== null && "conversationId" in decoded) {
+      const decoded = jwt.verify(
+        conversationToken,
+        process.env.APP_SECRET as string,
+      );
+      if (
+        typeof decoded === "object" &&
+        decoded !== null &&
+        "conversationId" in decoded
+      ) {
         conversationId = decoded.conversationId as string;
       }
     } catch (error) {
       console.error("Error verifying conversation token:", error);
     }
   }
-
 
   let messages: Message[] = [];
   if (conversationId) {
@@ -64,25 +69,31 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       },
     });
     if (conversation) {
-      messages = conversation.messages.map(
-        (message) => {
-          const messageContent = message.content as unknown as Message;
-          return {
-            ...messageContent,
-            id: message.id,
-          } as Message;
-        }
-      );
+      messages = conversation.messages.map((message) => {
+        const messageContent = message.content as unknown as Message;
+        return {
+          ...messageContent,
+          id: message.id,
+        } as Message;
+      });
     }
   }
 
-  const toolNames = toolNameIdentifierList();
+  const toolNames = await toolNameIdentifierList();
 
   const chatSettings = await getChatSettings(agentId as string);
-  return new Response(JSON.stringify({ chatSettings, toolNames, messages, conversationValid: !!conversationId }), {
-    headers: {
-      "Content-Type": "application/json",
-      ...corsHeaders,
+  return new Response(
+    JSON.stringify({
+      chatSettings,
+      toolNames,
+      messages,
+      conversationValid: !!conversationId,
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders,
+      },
     },
-  });
+  );
 };
