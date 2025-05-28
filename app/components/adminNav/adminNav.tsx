@@ -38,7 +38,11 @@ export const AdminNav = ({
           },
         )}
       >
-        <Play className="h-4 w-4" />
+        <Play
+          className={cn("h-4 w-4", {
+            "text-green-600": location.pathname === `/agent/${agentId}`,
+          })}
+        />
         <div className="flex flex-col">
           <span className="font-medium">Playground</span>
           <span className="text-xs">Interact with the agent</span>
@@ -56,7 +60,13 @@ export const AdminNav = ({
           },
         )}
       >
-        <Star className="h-4 w-4" />
+        <Star
+          className={cn("h-4 w-4", {
+            "text-green-600": location.pathname.includes(
+              `/agent/${agentId}/prompts`,
+            ),
+          })}
+        />
         <div className="flex flex-col">
           <span className="font-medium">Prompt</span>
           <span className="text-xs">Create guidelines for your agent</span>
@@ -73,7 +83,13 @@ export const AdminNav = ({
           },
         )}
       >
-        <Database className="h-4 w-4" />
+        <Database
+          className={cn("h-4 w-4", {
+            "text-green-600": location.pathname.includes(
+              `/agent/${agentId}/knowledge`,
+            ),
+          })}
+        />
         <div className="flex flex-col">
           <span className="font-medium">Knowledge</span>
           <span className="text-xs">Add your documents and data</span>
@@ -91,7 +107,13 @@ export const AdminNav = ({
           },
         )}
       >
-        <Inbox className="h-4 w-4" />
+        <Inbox
+          className={cn("h-4 w-4", {
+            "text-green-600": location.pathname.includes(
+              `/agent/${agentId}/feedback`,
+            ),
+          })}
+        />
         <div className="flex flex-col">
           <span className="font-medium">Feedback</span>
           <span className="text-xs">Review and manage agent feedback</span>
@@ -114,7 +136,13 @@ export const AdminNav = ({
           },
         )}
       >
-        <Tool className="h-4 w-4" />
+        <Tool
+          className={cn("h-4 w-4", {
+            "text-green-600": location.pathname.includes(
+              `/agent/${agentId}/plugins`,
+            ),
+          })}
+        />
         <div className="flex flex-col">
           <span className="font-medium">Tools</span>
           <span className="text-xs">Used by agents to complete tasks</span>
@@ -157,7 +185,13 @@ export const AdminNav = ({
           },
         )}
       >
-        <BookOpen className="h-4 w-4" />
+        <BookOpen
+          className={cn("h-4 w-4", {
+            "text-green-600": location.pathname.includes(
+              `/agent/${agentId}/conversations`,
+            ),
+          })}
+        />
         <div className="flex flex-col">
           <span className="font-medium">History</span>
           <span className="text-xs">View recent agent conversations</span>
@@ -175,7 +209,11 @@ export const AdminNav = ({
           },
         )}
       >
-        <MessageSquare className="h-4 w-4" />
+        <MessageSquare
+          className={cn("h-4 w-4", {
+            "text-green-600": location.pathname.includes(`/chat/${agentId}`),
+          })}
+        />
         <div className="flex flex-col">
           <span className="font-medium">Chat</span>
           <span className="text-xs">Opens chat without the admin UI</span>
@@ -194,8 +232,17 @@ export const AdminNav = ({
             },
           )}
         >
-          <Users className="h-4 w-4" />
-          Manage Users
+          <Users
+            className={cn("h-4 w-4", {
+              "text-green-600": location.pathname.includes(
+                `/agent/${agentId}/users`,
+              ),
+            })}
+          />
+          <div className="flex flex-col">
+            <span className="font-medium">Users</span>
+            <span className="text-xs">Manage agent access and roles</span>
+          </div>
         </Link>
         <Link
           to={`/agent/${agentId}/settings`}
@@ -208,8 +255,19 @@ export const AdminNav = ({
             },
           )}
         >
-          <Settings className="h-4 w-4" />
-          Manage Settings
+          <Settings
+            className={cn("h-4 w-4", {
+              "text-green-600": location.pathname.includes(
+                `/agent/${agentId}/settings`,
+              ),
+            })}
+          />
+          <div className="flex flex-col">
+            <span className="font-medium">Settings</span>
+            <span className="text-xs">
+              Choose model, default parameters etc.
+            </span>
+          </div>
         </Link>
       </div>
     </nav>

@@ -8,7 +8,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
   const canChangeGlobalSettings = user.role === "SUPER_ADMIN";
   return (
     <div className="flex flex-col justify-between flex-1 h-full">
-      <nav className="grid items-start md:px-2 text-sm">
+      <nav className="grid gap-0.5 items-start md:px-2 text-sm">
         <Link
           to="/"
           prefetch="intent"
@@ -17,6 +17,9 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             {
               "bg-stone-900 text-white hover:text-white":
                 location.pathname === "/",
+            },
+            {
+              "hover:bg-stone-900/10": location.pathname !== "/",
             },
           )}
         >
@@ -33,6 +36,9 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
               {
                 "bg-stone-900 text-white hover:text-white":
                   location.pathname === "/plugins",
+              },
+              {
+                "hover:bg-stone-900/10": location.pathname !== "/plugins",
               },
             )}
           >
