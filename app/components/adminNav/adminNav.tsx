@@ -22,7 +22,7 @@ export const AdminNav = ({
   const { agentId } = useParams();
   const location = useLocation();
   return (
-    <nav className="grid items-start md:px-2 text-sm lg:px-4">
+    <nav className="grid items-start md:px-2 text-sm">
       <Link
         to={`/agent/${agentId}`}
         prefetch="intent"

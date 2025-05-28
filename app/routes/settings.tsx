@@ -486,7 +486,7 @@ const Settings = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Invite Link</TableHead>
+                <TableHead className="w-25">Invite Link</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -25,7 +25,7 @@ const Layout = ({
         {/* Desktop Sidebar */}
         <div className="hidden border-r bg-sky-100/30 md:block">
           <div className="flex h-full max-h-screen flex-col gap-4">
-            <div className="flex items-center border-b px-4 py-4">
+            <div className="flex items-center border-b px-4 py-4 bg-zinc-400/10">
               <Link
                 to="/"
                 className="flex flex-col gap-1 font-medium w-full overflow-hidden"
