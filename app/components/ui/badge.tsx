@@ -1,7 +1,7 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "~/lib/utils"
+import { cn } from "~/lib/utils";
 
 const badgeVariants = cva(
   "inline-flex items-center rounded-md border px-2.5 py-2 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -16,21 +16,32 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground hover:bg-primary-foreground",
       },
+      disabled: {
+        true: "pointer-events-none hover:bg-inherit",
+        false: "",
+      },
     },
     defaultVariants: {
       variant: "default",
+      disabled: false,
     },
-  }
-)
+  },
+);
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  )
+    VariantProps<typeof badgeVariants> {
+  disabled?: boolean;
 }
 
-export { Badge, badgeVariants }
+function Badge({ className, variant, disabled = false, ...props }: BadgeProps) {
+  return (
+    <div
+      className={cn(badgeVariants({ variant, disabled }), className)}
+      aria-disabled={disabled}
+      {...props}
+    />
+  );
+}
+
+export { Badge, badgeVariants };

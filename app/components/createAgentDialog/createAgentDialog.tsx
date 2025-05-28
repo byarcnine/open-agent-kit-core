@@ -40,7 +40,7 @@ const CreateAgentDialog = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="green">
+        <Button variant="default">
           <PlusCircle className="h-4 w-4" />
           New Agent
         </Button>
@@ -90,7 +90,7 @@ const CreateAgentDialog = ({
               placeholder="Optional agent description"
             />
           </div>
-          <Button type="submit" variant="green" className="w-full">
+          <Button type="submit" variant="default" className="w-full">
             Create Agent
           </Button>
         </Form>

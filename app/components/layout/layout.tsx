@@ -23,7 +23,7 @@ const Layout = ({
     <div className={cn("flex-1 flex-shrink-0 w-full overflow-hidden")}>
       <div className="h-full w-full flex flex-col md:grid md:grid-cols-[300px_1fr] lg:grid-cols-[330px_1fr]">
         {/* Desktop Sidebar */}
-        <div className="hidden border-r bg-zinc-200/40 md:block">
+        <div className="hidden border-r bg-sky-100/30 md:block">
           <div className="flex h-full max-h-screen flex-col gap-4">
             <div className="flex items-center border-b px-4 py-4">
               <Link
@@ -41,7 +41,7 @@ const Layout = ({
                   <div className="flex flex-col flex-1 overflow-hidden">
                     <span className="truncate">{agentName || "OAK"}</span>
                     <span className="text-xs text-muted-foreground">
-                      {"Agent Dashboard"}
+                      Dashboard
                     </span>
                   </div>
                 </span>

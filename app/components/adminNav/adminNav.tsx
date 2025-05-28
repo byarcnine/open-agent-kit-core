@@ -113,27 +113,31 @@ export const AdminNav = ({
         <Tool className="h-4 w-4" />
         Plugins & MCPs
       </Link>
-      {pluginMenuItems.map((item) => {
-        const href = `/agent/${agentId}/plugins/${item.href}`;
-        return (
-          <Link
-            to={href}
-            prefetch="intent"
-            key={item.label}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-              {
-                "bg-stone-900 text-white hover:text-white":
-                  location.pathname.includes(href),
-              },
-            )}
-          >
-            <CornerDownRight className="h-4 w-4" />
-            <FeatherIcon className="h-4 w-4" iconName={item.icon} />
-            {item.label}
-          </Link>
-        );
-      })}
+      {pluginMenuItems.length > 0 && (
+        <div className="mt-1">
+          {pluginMenuItems.map((item) => {
+            const href = `/agent/${agentId}/plugins/${item.href}`;
+            return (
+              <Link
+                to={href}
+                prefetch="intent"
+                key={item.label}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary bg-stone-900",
+                  {
+                    "bg-stone-900 text-white hover:text-white":
+                      location.pathname.includes(href),
+                  },
+                )}
+              >
+                <CornerDownRight className="h-4 w-4" />
+                <FeatherIcon className="h-4 w-4" iconName={item.icon} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
       <Link
         to={`/agent/${agentId}/users`}
         prefetch="intent"

@@ -109,19 +109,23 @@ export default function Plugins() {
                           Available for all agents
                         </Badge>
                       )}
-                      {!plugin.isGlobal && plugin.agents && (
-                        <h3 className="text-xs mb-2 text-muted-foreground font-medium">
-                          Available for Agents:
-                        </h3>
-                      )}
-                      {!plugin.isGlobal && (
-                        <div className="text-sm text-muted-foreground flex flex-wrap gap-2 max-w-full">
-                          {plugin.agents.map((agent) => (
-                            <div key={agent.id}>
-                              <Badge variant="outline">{agent.name}</Badge>
+                      {!plugin.isGlobal && plugin.agents.length > 0 && (
+                        <>
+                          <h3 className="text-xs mb-2 text-muted-foreground font-medium">
+                            {plugin.agents.length > 5
+                              ? `Available for ${plugin.agents.length} Agents. Click to edit.`
+                              : `Available for Agents`}
+                          </h3>
+                          {plugin.agents.length <= 5 && (
+                            <div className="text-sm text-muted-foreground flex flex-wrap gap-2 max-w-full">
+                              {plugin.agents.map((agent) => (
+                                <div key={agent.id}>
+                                  <Badge variant="outline">{agent.name}</Badge>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </CardContent>

@@ -30,7 +30,6 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --radius-lg: var(--radius);
-  --color-oak-green: #64D855;
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
   --default-font-family: "Inter", "ui-sans-serif", "system-ui", "sans-serif",
@@ -64,7 +63,6 @@
     --chart-4: hsl(43 74% 66%);
     --chart-5: hsl(27 87% 67%);
     --radius: 0.5rem;
-    --oak-green: #64D855;
   }
 
   .dark {
@@ -92,7 +90,6 @@
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
-    --oak-green: #64D855;
   }
 }
 

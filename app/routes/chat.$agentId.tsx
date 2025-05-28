@@ -234,7 +234,7 @@ const ChatOverview = () => {
             Chats
           </h2>
           <Link
-            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-oak-green text-accent-foreground hover:bg-oak-green/90 mb-8"
+            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-green-600 text-accent-foreground hover:bg-green-400 mb-8"
             to={`/chat/${agentId}`}
             reloadDocument
           >
