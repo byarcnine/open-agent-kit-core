@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import calendar from "dayjs/plugin/calendar";
 import Layout from "~/components/layout/layout";
-import { MessageCircle, PlusCircle, MoreVertical, Box } from "react-feather";
+import { MessageCircle, PlusCircle, MoreVertical, Box, Plus } from "react-feather";
 import { PERMISSIONS } from "~/types/auth";
 import { useEffect, useState } from "react";
 import { Intent } from "./chat.$agentId._index";
@@ -234,11 +234,11 @@ const ChatOverview = () => {
             Chats
           </h2>
           <Link
-            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-green-600 text-accent-foreground hover:bg-green-400 mb-8"
+            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 mb-8"
             to={`/chat/${agentId}`}
             reloadDocument
           >
-            <PlusCircle className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
             New Conversation
           </Link>
           {currentConversationsByDay.map(({ date, conversations }) => (

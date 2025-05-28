@@ -1,10 +1,14 @@
 import {
+  Book,
+  BookOpen,
   Clipboard,
   CornerDownRight,
   Database,
   Inbox,
   MessageSquare,
+  Play,
   Settings,
+  Star,
   Tool,
   Type,
   Users,
@@ -22,7 +26,7 @@ export const AdminNav = ({
   const { agentId } = useParams();
   const location = useLocation();
   return (
-    <nav className="grid items-start md:px-2 text-sm">
+    <nav className="flex flex-col md:px-2 text-sm h-full w-full">
       <Link
         to={`/agent/${agentId}`}
         prefetch="intent"
@@ -34,23 +38,13 @@ export const AdminNav = ({
           },
         )}
       >
-        <Type className="h-4 w-4" />
-        Playground
+        <Play className="h-4 w-4" />
+        <div className="flex flex-col">
+          <span className="font-medium">Playground</span>
+          <span className="text-xs">Interact with the agent</span>
+        </div>
       </Link>
-      <Link
-        to={`/agent/${agentId}/conversations`}
-        prefetch="intent"
-        className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-          {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/conversations`),
-          },
-        )}
-      >
-        <MessageSquare className="h-4 w-4" />
-        Conversations
-      </Link>
+
       <Link
         to={`/agent/${agentId}/prompts`}
         prefetch="intent"
@@ -62,8 +56,11 @@ export const AdminNav = ({
           },
         )}
       >
-        <Clipboard className="h-4 w-4" />
-        System Prompt
+        <Star className="h-4 w-4" />
+        <div className="flex flex-col">
+          <span className="font-medium">Prompt</span>
+          <span className="text-xs">Create guidelines for your agent</span>
+        </div>
       </Link>
       <Link
         to={`/agent/${agentId}/knowledge`}
@@ -77,8 +74,12 @@ export const AdminNav = ({
         )}
       >
         <Database className="h-4 w-4" />
-        Knowledge
+        <div className="flex flex-col">
+          <span className="font-medium">Knowledge</span>
+          <span className="text-xs">Add your documents and data</span>
+        </div>
       </Link>
+
       <Link
         to={`/agent/${agentId}/feedback`}
         prefetch="intent"
@@ -91,7 +92,10 @@ export const AdminNav = ({
         )}
       >
         <Inbox className="h-4 w-4" />
-        Feedback
+        <div className="flex flex-col">
+          <span className="font-medium">Feedback</span>
+          <span className="text-xs">Review and manage agent feedback</span>
+        </div>
       </Link>
       <Link
         to={`/agent/${agentId}/plugins`}
@@ -111,7 +115,10 @@ export const AdminNav = ({
         )}
       >
         <Tool className="h-4 w-4" />
-        Plugins & MCPs
+        <div className="flex flex-col">
+          <span className="font-medium">Tools</span>
+          <span className="text-xs">Used by agents to complete tasks</span>
+        </div>
       </Link>
       {pluginMenuItems.length > 0 && (
         <div className="mt-1">
@@ -138,35 +145,24 @@ export const AdminNav = ({
           })}
         </div>
       )}
-      <Link
-        to={`/agent/${agentId}/users`}
-        prefetch="intent"
-        className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-          {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/users`),
-          },
-        )}
-      >
-        <Users className="h-4 w-4" />
-        Users
-      </Link>
-      <Link
-        to={`/agent/${agentId}/settings`}
-        prefetch="intent"
-        className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-          {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/settings`),
-          },
-        )}
-      >
-        <Settings className="h-4 w-4" />
-        Agent Settings
-      </Link>
 
+      <Link
+        to={`/agent/${agentId}/conversations`}
+        prefetch="intent"
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          {
+            "bg-stone-900 text-white hover:text-white":
+              location.pathname.includes(`/agent/${agentId}/conversations`),
+          },
+        )}
+      >
+        <BookOpen className="h-4 w-4" />
+        <div className="flex flex-col">
+          <span className="font-medium">History</span>
+          <span className="text-xs">View recent agent conversations</span>
+        </div>
+      </Link>
       <a
         href={`/chat/${agentId}`}
         target="_blank"
@@ -180,8 +176,42 @@ export const AdminNav = ({
         )}
       >
         <MessageSquare className="h-4 w-4" />
-        Chat
+        <div className="flex flex-col">
+          <span className="font-medium">Chat</span>
+          <span className="text-xs">Opens chat without the admin UI</span>
+        </div>
       </a>
+
+      <div className="mt-auto mb-4">
+        <Link
+          to={`/agent/${agentId}/users`}
+          prefetch="intent"
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+            {
+              "bg-stone-900 text-white hover:text-white":
+                location.pathname.includes(`/agent/${agentId}/users`),
+            },
+          )}
+        >
+          <Users className="h-4 w-4" />
+          Manage Users
+        </Link>
+        <Link
+          to={`/agent/${agentId}/settings`}
+          prefetch="intent"
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+            {
+              "bg-stone-900 text-white hover:text-white":
+                location.pathname.includes(`/agent/${agentId}/settings`),
+            },
+          )}
+        >
+          <Settings className="h-4 w-4" />
+          Manage Settings
+        </Link>
+      </div>
     </nav>
   );
 };

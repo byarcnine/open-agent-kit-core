@@ -37,7 +37,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             )}
           >
             <Tool className="h-4 w-4" />
-            Tools & Plugins
+            Agent Tools
           </Link>
         )}
         <div
@@ -57,7 +57,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
           )}
         >
           <BookOpen className="h-4 w-4" />
-          Global Knowledge Base
+          Knowledge
           <div className="text-xs rounded-md text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
             coming soon
           </div>
