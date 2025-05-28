@@ -233,7 +233,7 @@ const Prompt = () => {
 
   return (
     <div className="py-8 px-4 md:p-8 w-full flex flex-col">
-      <h1 className="text-3xl mb-4">System Prompt Editor</h1>
+      <h1 className="text-3xl mb-4">Manage Prompt</h1>
       <div className="mb-6 text-muted-foreground">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-4 text-primary">
           <div className="bg-muted p-2 rounded-md">

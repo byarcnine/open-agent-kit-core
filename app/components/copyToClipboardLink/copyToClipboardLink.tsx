@@ -24,7 +24,7 @@ const CopyToClipboardLink = ({ link }: { link: string }) => {
   return (
     <button
       onClick={() => handleCopyLink(link)}
-      className="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none"
+      className="text-sky-600 hover:text-sky-800 hover:underline focus:outline-none"
     >
       {justCopied ? (
         "Copied!"

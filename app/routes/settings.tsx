@@ -99,7 +99,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       invites.map((invite) => ({
         ...invite,
         link: `${APP_URL()}/invite/${invite.id}`,
-      }))
+      })),
     );
   const licensePromise = getLicenseFromSettings();
   const usageStatsPromise = getUsageStats();
@@ -173,7 +173,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (!result.success) {
         return data<ActionData>(
           { success: false, intent, error: result.error.issues[0].message },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -186,7 +186,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (existingUser) {
         return data<ActionData>(
           { success: false, intent, error: "User already exists" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -201,7 +201,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await sendInvitationEmail(email, inviteLink);
       return data<ActionData>(
         { success: true, intent, message: "Invitation sent successfully" },
-        { status: 200 }
+        { status: 200 },
       );
     }
     case "updateRole": {
@@ -213,7 +213,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
       return data<ActionData>(
         { success: true, intent, message: "Role updated successfully" },
-        { status: 200 }
+        { status: 200 },
       );
     }
     case "addLicense": {
@@ -222,14 +222,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         await setLicense(license as string);
         return data<ActionData>(
           { success: true, intent, message: "License added successfully" },
-          { status: 200 }
+          { status: 200 },
         );
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Unknown error";
         console.error(errorMessage);
         return data<ActionData>(
           { success: false, intent, error: errorMessage },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -306,10 +306,14 @@ const Settings = () => {
               <h2 className="text-lg font-medium">Manage License</h2>
               <div className="flex gap-2">
                 {license.valid && (
-                  <Badge className="bg-oak-green block">Valid</Badge>
+                  <Badge disabled className="bg-green-600 block">
+                    Valid
+                  </Badge>
                 )}
                 {!license.valid && licenseNeeded && (
-                  <Badge className="bg-destructive">Invalid</Badge>
+                  <Badge disabled className="bg-destructive">
+                    Invalid
+                  </Badge>
                 )}
               </div>
             </div>
@@ -353,8 +357,9 @@ const Settings = () => {
             <div className="gap-2 float-left pt-4">
               <div className="flex flex-col gap-2">
                 <Badge
+                  disabled
                   className={cn("block", {
-                    "bg-oak-green":
+                    "bg-green-600":
                       usageStats.userCount <= MAX_USERS || license.valid,
                     "bg-red-400":
                       usageStats.userCount > MAX_USERS && !license.valid,
@@ -364,8 +369,9 @@ const Settings = () => {
                   {license.valid ? "∞" : MAX_USERS}
                 </Badge>
                 <Badge
+                  disabled
                   className={cn("block", {
-                    "bg-oak-green":
+                    "bg-green-600":
                       usageStats.agentCount <= MAX_AGENTS || license.valid,
                     "bg-red-400":
                       usageStats.agentCount > MAX_AGENTS && !license.valid,
@@ -375,8 +381,9 @@ const Settings = () => {
                   {license.valid ? "∞" : MAX_AGENTS}
                 </Badge>
                 <Badge
+                  disabled
                   className={cn("block", {
-                    "bg-oak-green":
+                    "bg-green-600":
                       usageStats.documentsCount <= MAX_DOCUMENTS ||
                       license.valid,
                     "bg-red-400":
@@ -437,7 +444,7 @@ const Settings = () => {
                               role: value,
                               intent: "updateRole",
                             },
-                            { method: "post" }
+                            { method: "post" },
                           );
                         }}
                       >
@@ -479,7 +486,7 @@ const Settings = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Invite Link</TableHead>
+                <TableHead className="w-25">Invite Link</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
