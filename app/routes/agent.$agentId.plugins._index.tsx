@@ -20,7 +20,6 @@ import {
 } from "~/components/ui/card";
 import { getPluginsForAgent } from "~/lib/plugins/availability.server";
 import NoDataCard from "~/components/ui/no-data-card";
-import { prisma } from "@db/db.server";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -39,7 +38,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Loader, Trash2 } from "react-feather";
-import { createMCPClient } from "~/lib/mcp/client.server";
+import {
+  addMCPToAgent,
+  createMCPClient,
+  getMCPById,
+  getMCPsForAgent,
+  removeMCPFromAgent,
+} from "~/lib/mcp/client.server";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { PERMISSIONS } from "~/types/auth";
 
@@ -53,7 +58,7 @@ type AddMcpResponse =
       success: true;
       error?: never;
       tools: { [key: string]: { description: string } };
-      newMcp: Awaited<ReturnType<typeof prisma.mCPs.create>>;
+      newMcp: Awaited<ReturnType<typeof addMCPToAgent>>;
     }
   | {
       _action: "addMcp";
@@ -97,20 +102,7 @@ type ActionResponse = AddMcpResponse | FetchToolsResponse | RemoveMcpResponse;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const pluginsPromise = getPluginsForAgent(params.agentId as string);
-  const mcpPromise = prisma.mCPs.findMany({
-    where: {
-      agentId: params.agentId as string,
-    },
-    select: {
-      id: true,
-      name: true,
-      type: true,
-      connectionArgs: true,
-      agentId: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const mcpPromise = getMCPsForAgent(params.agentId as string);
   return { plugins: await pluginsPromise, mcp: await mcpPromise };
 };
 
@@ -133,7 +125,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     try {
-      const mcp = await prisma.mCPs.findUnique({ where: { id: mcpId } });
+      const mcp = await getMCPById(mcpId);
       if (!mcp) {
         return data(
           { _action: "fetchTools", error: "MCP not found" },
@@ -148,7 +140,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         mcpClient = await createMCPClient({
           transport: {
             type: "sse",
-            url: connectionArgs.connectionString,
+            url: connectionArgs.url,
             headers: connectionArgs.headers || {},
           },
         });
@@ -194,9 +186,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     try {
       // Optional: Check if MCP exists before deleting
-      const existingMcp = await prisma.mCPs.findUnique({
-        where: { id: mcpId },
-      });
+      const existingMcp = await getMCPById(mcpId);
       if (!existingMcp) {
         return data(
           { _action: "removeMcp", error: "MCP not found" },
@@ -204,9 +194,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         );
       }
 
-      await prisma.mCPs.delete({
-        where: { id: mcpId },
-      });
+      await removeMCPFromAgent(agentId, mcpId);
 
       return data({ _action: "removeMcp", success: true, removedMcpId: mcpId });
     } catch (error) {
@@ -267,15 +255,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         await mcpClient.close();
 
         // Save to database
-        const newMcp = await prisma.mCPs.create({
-          data: {
-            agentId,
-            type,
-            name,
-            connectionArgs: {
-              ...(parsedArgs || {}),
-              connectionString,
-            },
+        const newMcp = await addMCPToAgent(agentId, {
+          type,
+          name,
+          connectionArgs: {
+            ...(parsedArgs || {}),
+            url: connectionString,
           },
         });
 
@@ -313,15 +298,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         await mcpClient.close();
 
         // Save to database
-        const newMcp = await prisma.mCPs.create({
-          data: {
-            agentId,
-            type,
-            name,
-            connectionArgs: {
-              args,
-              command,
-            },
+        const newMcp = await addMCPToAgent(agentId, {
+          type,
+          name,
+          connectionArgs: {
+            args,
+            command,
           },
         });
 
@@ -742,8 +724,7 @@ const KnowledgeProvider = () => {
                 <CardContent className="flex-grow">
                   {mcp.type === "SSE" && (
                     <p className="text-sm">
-                      URL:{" "}
-                      {(mcp.connectionArgs as any)?.connectionString || "N/A"}
+                      URL: {(mcp.connectionArgs as any)?.url || "N/A"}
                     </p>
                   )}
                   {mcp.type === "STDIO" && (

@@ -58,7 +58,10 @@ export const streamConversation = async (
   }
   const config = getConfig();
 
-  const modelForAgent = await getModelForAgent(agentId, config);
+  const [modelForAgent, user] = await Promise.all([
+    getModelForAgent(agentId, config),
+    prisma.user.findUnique({ where: { id: userId } }),
+  ]);
   const TOKEN_LIMIT = getModelContextLimit(modelForAgent.model.modelId) * 0.8;
 
   // Add the user message to the conversation
@@ -114,6 +117,7 @@ export const streamConversation = async (
     conversation.id,
     meta,
     messages,
+    user,
   );
 
   const [systemPrompt, tools, model] = await Promise.all([

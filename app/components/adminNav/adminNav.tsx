@@ -100,7 +100,13 @@ export const AdminNav = ({
           "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/plugins`),
+              location.pathname.includes(`/agent/${agentId}/plugins`) &&
+              // If the current path includes any of the plugin menu items, don't highlight the plugins link
+              !pluginMenuItems.some((item) =>
+                location.pathname.includes(
+                  `/agent/${agentId}/plugins/${item.href}`,
+                ),
+              ),
           },
         )}
       >

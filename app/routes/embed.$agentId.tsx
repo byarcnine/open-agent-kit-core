@@ -43,8 +43,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     throw data({ error: "Agent is not public" }, { status: 403, headers });
   }
 
-  const toolNames = toolNameIdentifierList();
-  const chatSettings = await getChatSettings(agentId as string);
+  const toolNamesPromise = toolNameIdentifierList();
+  const chatSettingsPromise = getChatSettings(agentId as string);
+  const [toolNames, chatSettings] = await Promise.all([
+    toolNamesPromise,
+    chatSettingsPromise,
+  ]);
 
   return data(
     { agent, toolNames, chatSettings },

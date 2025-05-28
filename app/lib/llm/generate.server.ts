@@ -3,6 +3,8 @@ import { getSystemPrompt } from "./systemPrompts.server";
 import type { OAKConfig } from "~/types/config";
 import { getModelForAgent } from "./modelManager.server";
 import { prepareToolsForAgent } from "./tools.server";
+import type { SessionUser } from "~/types/auth";
+import type { User } from "@prisma/client";
 
 export const generateSingleMessage =
   (config: OAKConfig) =>
@@ -13,11 +15,12 @@ export const generateSingleMessage =
     options?: {
       disableTools?: boolean;
     },
+    user?: User | SessionUser,
   ) => {
     const [system = "", model, tools] = await Promise.all([
       systemPrompt || getSystemPrompt("default", agentId),
       getModelForAgent(agentId, config),
-      prepareToolsForAgent(agentId, "0", {}, []),
+      prepareToolsForAgent(agentId, "0", {}, [], user),
     ]);
 
     const messages: CoreMessage[] = [
@@ -42,10 +45,11 @@ export const generateSingleMessage =
   };
 
 export const generateConversation =
-  (config: OAKConfig) => async (agentId: string, messages: Message[]) => {
+  (config: OAKConfig) =>
+  async (agentId: string, messages: Message[], user?: User | SessionUser) => {
     const [model, tools] = await Promise.all([
       getModelForAgent(agentId, config),
-      prepareToolsForAgent(agentId, "0", {}, messages),
+      prepareToolsForAgent(agentId, "0", {}, messages, user),
     ]);
     const completion = await generateText({
       model: model.model,

@@ -61,8 +61,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ params }: { params: { agentId: string } }) => {
-  const toolNames = toolNameIdentifierList();
-  const chatSettings = await getChatSettings(params.agentId);
+  const toolNamesPromise = toolNameIdentifierList();
+  const chatSettingsPromise = getChatSettings(params.agentId);
+  const [toolNames, chatSettings] = await Promise.all([
+    toolNamesPromise,
+    chatSettingsPromise,
+  ]);
   return { toolNames, chatSettings };
 };
 

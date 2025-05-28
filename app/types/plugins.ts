@@ -31,7 +31,7 @@ export type PluginType = {
    */
   userRoutes?: RouteConfigEntry[];
   menuItems?: MenuItem[];
-  tools?: ToolConfig[];
+  tools?: ToolConfig[] | (() => Promise<ToolConfig[]>);
 };
 
 export type PluginConfig = Omit<PluginType, "name">;
