@@ -4,7 +4,7 @@ import {
   data,
 } from "react-router";
 import { getCorsHeaderForAgent } from "./utils";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import { createChallenge, verifySolution } from "altcha-lib";
 
 const HMAC_KEY = process.env.APP_SECRET!;
@@ -18,7 +18,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       headers: {
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, x-oak-session-token",
       },
     });
   }
@@ -44,18 +45,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const corsHeaders = await getCorsHeaderForAgent(
     request.headers.get("Origin") as string,
-    agentId
+    agentId,
   );
 
   const isValid = await verifySolution(altchaSolution, HMAC_KEY);
   if (!isValid) {
-    return data({ error: "Captcha verification failed" }, { status: 403, headers: corsHeaders });
+    return data(
+      { error: "Captcha verification failed" },
+      { status: 403, headers: corsHeaders },
+    );
   }
 
-  const jwtToken = jwt.sign(
-    { verified: true },
-    process.env.APP_SECRET!,
-    { expiresIn: "15m" }
-  );
+  const jwtToken = jwt.sign({ verified: true }, process.env.APP_SECRET!, {
+    expiresIn: "15m",
+  });
   return data({ jwt: jwtToken }, { status: 200, headers: corsHeaders });
 };
