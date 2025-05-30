@@ -34,6 +34,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, x-oak-session-token",
     },
   });
 };
