@@ -3,11 +3,14 @@ import {
   data,
   type LoaderFunctionArgs,
 } from "react-router";
-import { canUserAccessAgent, verifyChatSessionTokenForPublicAgent } from "~/lib/auth/hasAccess.server";
+import {
+  canUserAccessAgent,
+  verifyChatSessionTokenForPublicAgent,
+} from "~/lib/auth/hasAccess.server";
 import { getSession } from "~/lib/auth/auth.server";
 import { streamConversation } from "~/lib/llm/streamConversation.server";
 import { getCorsHeaderForAgent } from "./utils";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import { getChatSettings } from "~/lib/llm/chat.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -19,7 +22,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       headers: {
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, x-oak-session-token",
       },
     });
   }
@@ -31,7 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const corsHeaders = await getCorsHeaderForAgent(
     request.headers.get("Origin") as string,
-    agentId
+    agentId,
   );
 
   const session = await getSession(request);
@@ -43,7 +47,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const meta = body.meta || {};
   // make sure the agent is public or the user has access to the agent
   const canAccess = await canUserAccessAgent(session?.user, agentId);
-  const chatSessionAllowed = canAccess || await verifyChatSessionTokenForPublicAgent(request, agentId);
+  const chatSessionAllowed =
+    canAccess || (await verifyChatSessionTokenForPublicAgent(request, agentId));
 
   if (!canAccess && !chatSessionAllowed) {
     return data(
@@ -51,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       {
         status: 403,
         headers: corsHeaders,
-      }
+      },
     );
   }
 
@@ -62,20 +67,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       userId,
       customIdentifier,
       body.messages,
-      meta
+      meta,
     );
 
     const chatSettings = await getChatSettings(agentId);
-    const maintainConversationSession = chatSettings?.embedSettings?.maintainConversationSession;
+    const maintainConversationSession =
+      chatSettings?.embedSettings?.maintainConversationSession;
 
-    let oakConversationToken = session?.user.id ?
-      undefined :
-      jwt.sign({ conversationId }, process.env.APP_SECRET || "" as string, { expiresIn: (maintainConversationSession || 0) * 60 });
+    let oakConversationToken = session?.user.id
+      ? undefined
+      : jwt.sign({ conversationId }, process.env.APP_SECRET || ("" as string), {
+          expiresIn: (maintainConversationSession || 0) * 60,
+        });
 
     return stream.toDataStreamResponse({
       headers: {
         "x-conversation-id": conversationId,
-        ...(oakConversationToken ? { "x-oak-conversation-token": oakConversationToken } : {}),
+        ...(oakConversationToken
+          ? { "x-oak-conversation-token": oakConversationToken }
+          : {}),
         ...corsHeaders,
       },
       getErrorMessage(error) {
@@ -95,7 +105,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       {
         status: 500,
         headers: corsHeaders,
-      }
+      },
     );
   }
 };
