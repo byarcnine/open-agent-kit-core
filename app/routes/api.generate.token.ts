@@ -1,7 +1,6 @@
 import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
-  data,
 } from "react-router";
 import { getCorsHeaderForAgent } from "./utils";
 import jwt from "jsonwebtoken";
@@ -29,9 +28,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     expires: new Date(Date.now() + 5 * 60 * 1000),
     maxnumber: 200_000,
   });
-  return data(challenge, {
-    status: 200,
-    headers: {
+
+  return new Response(
+    JSON.stringify(challenge),
+    {
+      status: 200,
+      headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Headers":
@@ -52,8 +54,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const isValid = await verifySolution(altchaSolution, HMAC_KEY);
   if (!isValid) {
-    return data(
-      { error: "Captcha verification failed" },
+    return new Response(
+      JSON.stringify({ error: "Captcha verification failed" }),
       { status: 403, headers: corsHeaders },
     );
   }
@@ -61,5 +63,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const jwtToken = jwt.sign({ verified: true }, process.env.APP_SECRET!, {
     expiresIn: "15m",
   });
-  return data({ jwt: jwtToken }, { status: 200, headers: corsHeaders });
+  return new Response(
+    JSON.stringify({ jwt: jwtToken }),
+    { status: 200, headers: corsHeaders },
+  );
 };

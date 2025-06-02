@@ -51,8 +51,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     canAccess || (await verifyChatSessionTokenForPublicAgent(request, agentId));
 
   if (!canAccess && !chatSessionAllowed) {
-    return data(
-      { error: "Unauthorized" },
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
       {
         status: 403,
         headers: corsHeaders,
@@ -100,8 +100,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   } catch (error) {
     console.error(error);
-    return data(
-      { error: "An error occurred" },
+    return new Response(
+      JSON.stringify({ error: "An error occurred" }),
       {
         status: 500,
         headers: corsHeaders,

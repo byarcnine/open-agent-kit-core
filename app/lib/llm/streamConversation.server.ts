@@ -61,7 +61,7 @@ export const streamConversation = async (
 
   const [modelForAgent, user] = await Promise.all([
     getModelForAgent(agentId, config),
-    prisma.user.findUnique({ where: { id: userId } }),
+    userId ? prisma.user.findUnique({ where: { id: userId } }) : undefined,
   ]);
   const TOKEN_LIMIT = getModelContextLimit(modelForAgent.model.modelId) * 0.8;
 
