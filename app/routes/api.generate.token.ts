@@ -1,7 +1,6 @@
 import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
-  data,
 } from "react-router";
 import { getCorsHeaderForAgent } from "./utils";
 import jwt from "jsonwebtoken";
