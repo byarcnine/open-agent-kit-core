@@ -1,7 +1,8 @@
+import type { SessionUser } from "~/types/auth";
 import { getConfig } from "../config/config";
 import OAKProvider from "../lib";
 import { getToolsForAgent } from "../tools/tools.server";
-import { prisma } from "@db/db.server";
+import { prisma, type User } from "@db/db.server";
 import {
   experimental_createMCPClient as createMCPClient,
   type Message,
@@ -20,15 +21,15 @@ const getMCPTools = async (agentId: string) => {
       const type = mcp.type;
       if (type === "SSE") {
         const connectionArgs = mcp.connectionArgs as {
-          connectionString: string;
+          url: string;
           [x: string]: any;
         };
-        const { connectionString, ...additionalArgs } = connectionArgs;
+        const { url, ...additionalArgs } = connectionArgs;
 
         const mcpClient = await createMCPClient({
           transport: {
             type: "sse",
-            url: connectionString,
+            url: url,
             ...(additionalArgs || {}),
           },
         });
@@ -80,6 +81,7 @@ export const prepareToolsForAgent = async (
   conversationId: string,
   meta: Record<string, any>,
   messages: Message[],
+  user?: User | SessionUser | null,
 ) => {
   const pluginToolsPromise = getToolsForAgent(agentId).then(async (r) => {
     // get tools ready
@@ -92,7 +94,7 @@ export const prepareToolsForAgent = async (
             agentId,
             meta,
             config: getConfig(),
-            provider: OAKProvider(getConfig(), t.pluginName as string),
+            provider: OAKProvider(getConfig(), t.pluginName as string, user),
             messages,
           }),
         ];

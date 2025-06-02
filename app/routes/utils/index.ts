@@ -19,13 +19,17 @@ export const urlAllowedForAgent = async (origin: string, agentId: string) => {
   return isOriginAllowed;
 };
 
-export const getCorsHeaderForAgent = async (origin: string, agentId: string) => {
+export const getCorsHeaderForAgent = async (
+  origin: string,
+  agentId: string,
+) => {
   const isOriginAllowed = await urlAllowedForAgent(origin, agentId);
 
   if (isOriginAllowed) {
     return {
       "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, x-oak-session-token",
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     };
   }

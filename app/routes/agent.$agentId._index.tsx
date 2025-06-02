@@ -8,8 +8,12 @@ import { getChatSettings } from "~/lib/llm/chat.server";
 export const loader: LoaderFunction = async ({ params }) => {
   // fetch agent
 
-  const settings = await getChatSettings(params.agentId as string);
-  const toolNames = toolNameIdentifierList();
+  const settingsPromise = getChatSettings(params.agentId as string);
+  const toolNamesPromise = toolNameIdentifierList();
+  const [settings, toolNames] = await Promise.all([
+    settingsPromise,
+    toolNamesPromise,
+  ]);
   return {
     chatSettings: settings,
     toolNames,

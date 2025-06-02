@@ -33,10 +33,7 @@ Object.entries(pluginConfigs).forEach(
     importedPlugins.push({
       ...plugin.default,
       name: packageInfo.name,
-      tools: plugin.default.tools?.map((t) => ({
-        ...t,
-        pluginName: packageInfo.name,
-      })),
+      tools: plugin.default.tools,
     });
   },
 );
@@ -45,16 +42,37 @@ export const getPlugins = (): PluginType[] => {
   return importedPlugins;
 };
 
-export function getTools(): ToolConfig[] {
-  return importedPlugins
-    .map((plugin) =>
-      plugin.tools?.map((tool) => ({
-        ...tool,
-        pluginName: plugin.name,
-      })),
+/**
+ * Get tools for plugins
+ * @param pluginIdentifiers - Optional array of plugin identifiers to filter by. If not provided, all tools will be returned.
+ * @returns Promise<ToolConfig[]> - Array of tools
+ */
+export async function getTools(
+  pluginIdentifiers?: string[],
+): Promise<ToolConfig[]> {
+  const toolPromises = importedPlugins
+    .filter(
+      (plugin) => !pluginIdentifiers || pluginIdentifiers.includes(plugin.name),
     )
-    .flat()
-    .filter((i) => !!i);
+    .map((plugin) => {
+      if (typeof plugin.tools === "function") {
+        return plugin.tools().then((tools) =>
+          tools.map((tool) => ({
+            ...tool,
+            identifier: `${plugin.name}__${tool.identifier}`,
+            pluginName: plugin.name,
+          })),
+        );
+      }
+      return plugin.tools?.map((tool) => ({
+        ...tool,
+        identifier: `${plugin.name}__${tool.identifier}`,
+        pluginName: plugin.name,
+      }));
+    });
+
+  const resolvedTools = await Promise.all(toolPromises);
+  return resolvedTools.flat().filter((i) => !!i) as ToolConfig[];
 }
 
 export const getPluginNameForSlug = (slug: string) => {
