@@ -1,5 +1,3 @@
-> ⚠️ **Note:** OAK is currently in beta - expect some bugs and issues. We are working hard to fix them!
-
 # Welcome to OPEN AGENT KIT (OAK)
 
 OAK is an extensible open source platform for building and deploying AI agents!
