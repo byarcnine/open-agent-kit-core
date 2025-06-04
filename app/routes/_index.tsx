@@ -122,6 +122,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             },
           },
       include: {
+        agentUsers: {
+          include: {
+            user: true,
+          },
+        },
         _count: {
           select: {
             agentUsers: {
