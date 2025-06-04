@@ -157,8 +157,8 @@ const Index = () => {
       navigate(`/agent/${agentId}`);
     }
   };
+  
   // Filter agents based on search input
-
   const filteredAgents = search
     ? agents.filter((agent) =>
         agent.name.toLowerCase().includes(search.toLowerCase()),
