@@ -149,7 +149,7 @@ export const AdminNav = ({
         </div>
       </Link>
       {pluginMenuItems.length > 0 && (
-        <div className="mt-1">
+        <div className="mt-1 gap-1 flex flex-col">
           {pluginMenuItems.map((item) => {
             const href = `/agent/${agentId}/plugins/${item.href}`;
             return (
@@ -158,9 +158,9 @@ export const AdminNav = ({
                 prefetch="intent"
                 key={item.label}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary bg-stone-900",
+                  "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
                   {
-                    "bg-stone-900 text-white hover:text-white":
+                    "bg-zinc-400/30 text-primary hover:bg-zinc-400/40":
                       location.pathname.includes(href),
                   },
                 )}
