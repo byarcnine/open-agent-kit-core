@@ -24,7 +24,7 @@
     "publish:major": "npm version major && npm run build && npm publish --access public",
     "publish:alpha": "npm version prerelease --preid=alpha && npm run build && npm publish --tag alpha --access public && git push && git push --tags",
     "generate": "npx prisma generate",
-    "prebuild": "npm run generate",
+    "prebuild": "npm run generate && node utils/installPlugins.js",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "tsc"
