@@ -2,7 +2,7 @@
   "name": "@open-agent-kit/core",
   "sideEffects": false,
   "type": "module",
-  "version": "0.1.28-alpha.1",
+  "version": "0.1.28-alpha.2",
   "license": "UNLICENSED",
   "private": false,
   "main": "./lib_dist/oak-provider.cjs",
