@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Trash2, Check, X, Edit, PlusSquare } from "react-feather";
-import { parseFile } from "~/lib/knowledge/parseFile.sever";
+import { parseFile } from "~/lib/knowledge/parseFile.server";
 import { type FileUpload, parseFormData } from "@mjackson/form-data-parser";
 import { prisma } from "@db/db.server";
 import { createKnowledgeDocumentFromText } from "~/lib/knowledge/embedding.server";

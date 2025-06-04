@@ -21,10 +21,7 @@ export const toolNameIdentifierList = async () => {
   const pluginTools = await getTools();
   const tools = [...pluginTools, ...defaultTools.tools];
   const toolNames = Object.fromEntries(
-    tools.map((t) => [
-      t.pluginName ? `${t.pluginName}__${t.identifier}` : t.identifier,
-      t.name,
-    ]),
+    tools.map((t) => [t.identifier, t.name]),
   ) as Record<string, string>;
   toolNamesCache = toolNames;
   return toolNames;
