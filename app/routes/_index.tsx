@@ -103,27 +103,51 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
   const canEditAllAgents = await hasPermission(user, PERMISSIONS.EDIT_AGENT);
   const canViewAllAgents = await hasPermission(user, PERMISSIONS.VIEW_AGENT);
-  const agents = await prisma.agent.findMany({
-    where: canViewAllAgents
-      ? undefined
-      : {
-          agentUsers: {
-            some: {
-              userId: user.id,
+  const globalUserCount = await prisma.user.count({
+    where: {
+      role: {
+        in: ["SUPER_ADMIN", "EDIT_ALL_AGENTS", "VIEW_ALL_AGENTS"],
+      },
+    },
+  });
+  const agents = (
+    await prisma.agent.findMany({
+      where: canViewAllAgents
+        ? undefined
+        : {
+            agentUsers: {
+              some: {
+                userId: user.id,
+              },
+            },
+          },
+      include: {
+        _count: {
+          select: {
+            agentUsers: {
+              where: {
+                user: {
+                  role: {
+                    notIn: [
+                      "SUPER_ADMIN",
+                      "EDIT_ALL_AGENTS",
+                      "VIEW_ALL_AGENTS",
+                    ],
+                  },
+                },
+              },
             },
           },
         },
-    include: {
-      agentUsers: {
-        where: {
-          userId: user.id,
-        },
       },
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
+      orderBy: {
+        name: "asc",
+      },
+    })
+  ).map((agent) => ({
+    ...agent,
+    activeUserCount: agent._count.agentUsers + globalUserCount,
+  }));
   return {
     agents,
     user: user as SessionUser,
@@ -157,7 +181,7 @@ const Index = () => {
       navigate(`/agent/${agentId}`);
     }
   };
-  
+
   // Filter agents based on search input
   const filteredAgents = search
     ? agents.filter((agent) =>
