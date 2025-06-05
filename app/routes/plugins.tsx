@@ -264,8 +264,7 @@ export default function Plugins() {
   // Helper function to check if a store plugin is already installed
   const isStorePluginInstalled = (storePlugin: StorePlugin): boolean => {
     const packageName = getNpmPackageName(storePlugin.url);
-    const installedPlugins = pkg.dependencies as Record<string, string>;
-    return installedPlugins[packageName] !== undefined;
+    return plugins.some((p) => p.name === packageName);
   };
 
   // Helper function to check if a store plugin is pending installation
