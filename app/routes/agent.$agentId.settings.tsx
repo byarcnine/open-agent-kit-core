@@ -337,8 +337,8 @@ const AgentSettings = () => {
   return (
     <div className="w-full py-8 px-4 md:p-8 space-y-6">
       <h1 className="text-3xl font-medium mb-6">Agent Settings</h1>
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+      <Tabs defaultValue="general" className="w-auto">
+        <TabsList className="grid w-full max-w-md grid-cols-4 mb-6">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="embed">Embed</TabsTrigger>
@@ -746,34 +746,36 @@ const AgentSettings = () => {
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="maintainConversationSession">
                       Maintain Conversation Session in Embed
-                  </Label>
-                  <Input
-                    type="number"
-                    id="maintainConversationSession"
-                    name="maintainConversationSession"
-                    className="border"
-                    defaultValue={chatSettings?.embedSettings?.maintainConversationSession}
-                    placeholder="Enter number of minutes"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                      If enabled, the agent will maintain a conversation
-                      session in the browser's session storage when the agent
-                      is embedded.
+                    </Label>
+                    <Input
+                      type="number"
+                      id="maintainConversationSession"
+                      name="maintainConversationSession"
+                      className="border"
+                      defaultValue={
+                        chatSettings?.embedSettings?.maintainConversationSession
+                      }
+                      placeholder="Enter number of minutes"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      If enabled, the agent will maintain a conversation session
+                      in the browser's session storage when the agent is
+                      embedded.
                     </p>
                   </div>
                   <div className="flex flex-col space-y-2 mt-4">
-                    <Label htmlFor="embedWidgetTitle">
-                      Embed Window Title
-                  </Label>
-                  <Input
-                    type="text"
-                    id="embedWidgetTitle"
-                    name="embedWidgetTitle"
-                    className="border"
-                    defaultValue={chatSettings?.embedSettings?.embedWidgetTitle}
-                    placeholder="Enter embed widget title"
-                  />
-                  <p className="text-sm text-muted-foreground">
+                    <Label htmlFor="embedWidgetTitle">Embed Window Title</Label>
+                    <Input
+                      type="text"
+                      id="embedWidgetTitle"
+                      name="embedWidgetTitle"
+                      className="border"
+                      defaultValue={
+                        chatSettings?.embedSettings?.embedWidgetTitle
+                      }
+                      placeholder="Enter embed widget title"
+                    />
+                    <p className="text-sm text-muted-foreground">
                       This title will be displayed in the chat widget when the
                       agent is embedded in a website.
                     </p>

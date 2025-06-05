@@ -75,26 +75,27 @@ export default function Screen() {
   const errorMessage = error || loaderError;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center ">
       <div className="container relative min-h-screen flex-col items-center justify-center grid grid-cols-1 lg:max-w-none lg:grid-cols-2 lg:px-0">
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-          <div className="absolute inset-0 bg-zinc-900" />
+          <div className="absolute inset-0 bg-zinc-800" />
           <div className="relative z-20 flex items-center text-lg font-medium">
-            <div className="rounded-xl overflow-hidden">
+            <div className="rounded-md overflow-hidden fade-in delay-75">
               <img
                 src="/assets/logo.svg"
                 alt="OAK - Open Agent Kit"
                 className="w-12"
               />
             </div>
-            <span className="text-4xl ml-4">Open Agent Kit</span>
+            <span className="text-4xl ml-4 fade-in delay-150">Welcome to OAK</span>
           </div>
-          <div className="relative z-20 mt-auto text-xl">
-            Building and Deploying Custom AI Agents - Your Way
+          <div className="relative z-20 mt-auto text-xl max-w-lg fade-in delay-300">
+            The Enterprise Platform for Building and Deploying Custom AI Agents
+            - Your Way
           </div>
         </div>
 
-        <div className="w-full max-w-md p-8 space-y-6 mx-auto col-span-1">
+        <div className="w-full max-w-md p-8 space-y-6 mx-auto col-span-1 border rounded-md bg-sky-100/30 fade-in delay-150">
           <div className="flex justify-center">
             <div className="rounded-xl overflow-hidden lg:hidden">
               <img
@@ -156,7 +157,7 @@ export default function Screen() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">or</span>
+                  <span className="px-2 text-gray-500">or</span>
                 </div>
               </div>
               <Form onSubmit={handleGoogleLogin}>

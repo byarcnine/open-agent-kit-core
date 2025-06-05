@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, Menu, X } from "react-feather";
+import { ChevronLeft, LogOut, Menu, X } from "react-feather";
 import { Link } from "react-router";
 import type { User } from "better-auth";
 import { authClient } from "../../lib/auth/auth.client";
@@ -23,27 +23,43 @@ const Layout = ({
     <div className={cn("flex-1 flex-shrink-0 w-full overflow-hidden")}>
       <div className="h-full w-full flex flex-col md:grid md:grid-cols-[300px_1fr] lg:grid-cols-[330px_1fr]">
         {/* Desktop Sidebar */}
-        <div className="hidden border-r bg-zinc-200/40 md:block">
+        <div className="hidden border-r bg-sky-100/30 md:block">
           <div className="flex h-full max-h-screen flex-col gap-4">
-            <div className="flex items-center border-b px-4 py-4">
+            <div
+              className={cn(
+                "flex items-center border-b bg-zinc-400/10",
+                agentName ? "p-3" : "p-4",
+              )}
+            >
               <Link
                 to="/"
-                className="flex flex-col gap-1 font-medium w-full overflow-hidden"
+                className="flex flex-col gap-1 w-full overflow-hidden"
               >
                 <span className="text-base flex items-center gap-2">
-                  <div className="rounded-md overflow-hidden flex-shrink-0">
-                    <img
-                      src="/assets/logo.svg"
-                      alt="OAK - Open Agent Kit"
-                      className="w-8"
-                    />
-                  </div>
-                  <div className="flex flex-col flex-1 overflow-hidden">
-                    <span className="truncate">{agentName || "OAK"}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {"Agent Dashboard"}
-                    </span>
-                  </div>
+                  {agentName ? (
+                    <div className="flex gap-2 items-center">
+                      <div className="bg-sky-800/20 p-2 rounded-md overflow-hidden flex-shrink-0">
+                        <ChevronLeft className="h-4 w-4 cursor-pointer" />
+                      </div>
+                      <span className="truncate">{agentName}</span>
+                    </div>
+                  ) : (
+                    <div className="rounded-md overflow-hidden flex-shrink-0">
+                      <img
+                        src="/assets/logo.svg"
+                        alt="OAK - Open Agent Kit"
+                        className="w-8"
+                      />
+                    </div>
+                  )}
+                  {!agentName && (
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                      <span className="truncate">OAK</span>
+                      <span className="text-xs text-muted-foreground">
+                        Enterprise GenAI Platform
+                      </span>
+                    </div>
+                  )}
                 </span>
               </Link>
             </div>
@@ -53,7 +69,7 @@ const Layout = ({
               </div>
 
               {user && (
-                <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">
+                <div className="flex items-center justify-between gap-2 px-4 py-4 border-t bg-zinc-400/10">
                   <Link
                     to="/user/settings"
                     title="Settings"
@@ -85,15 +101,37 @@ const Layout = ({
         </div>
 
         {/* Mobile Header & Navigation */}
-        <div className="md:hidden w-full flex flex-col max-h-screen">
-          <header className="flex items-center justify-between px-4 py-4 bg-zinc-200/40 border-b">
+        <div className="md:hidden w-full flex flex-col max-h-screen ">
+          <header
+            className={cn(
+              "flex items-center justify-between bg-zinc-400/10 border-b",
+              agentName ? "p-3" : "p-4",
+            )}
+          >
             <Link to="/" className="flex items-center gap-2">
-              <img
-                src="/assets/logo.svg"
-                alt="OAK - Open Agent Kit"
-                className="w-8"
-              />
-              <span>{agentName || "OAK Dashboard"}</span>
+              {agentName ? (
+                <div className="flex gap-2 items-center">
+                  <div className="bg-sky-800/20 p-2 rounded-md overflow-hidden flex-shrink-0">
+                    <ChevronLeft className="h-4 w-4 cursor-pointer" />
+                  </div>
+                  <span className="truncate">{agentName}</span>
+                </div>
+              ) : (
+                <img
+                  src="/assets/logo.svg"
+                  alt="OAK - Open Agent Kit"
+                  className="w-8"
+                />
+              )}
+
+              {!agentName && (
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <span className="truncate">OAK</span>
+                  <span className="text-xs text-muted-foreground">
+                    Enterprise GenAI Platform
+                  </span>
+                </div>
+              )}
             </Link>
             <button
               onClick={() => setMobileNavOpen((prev) => !prev)}
@@ -107,8 +145,8 @@ const Layout = ({
             </button>
           </header>
           {mobileNavOpen && (
-            <nav className="border-t bg-zinc-200/40 shadow-md overflow-hidden flex flex-col">
-              <div className="px-4 py-4 overflow-y-auto overflow-x-hidden">
+            <nav className="border-t bg-sky-100/30 shadow-md overflow-hidden flex flex-col">
+              <div className="px-2 py-4 overflow-y-auto overflow-x-hidden">
                 {navComponent}
               </div>
               {user && (
