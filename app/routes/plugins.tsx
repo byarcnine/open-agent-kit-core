@@ -17,7 +17,13 @@ import {
 } from "~/lib/plugins/availability.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useState, useEffect } from "react";
-import { Settings, Loader, Package, ExternalLink, Box } from "react-feather";
+import {
+  Settings,
+  Loader,
+  Package,
+  ExternalLink,
+  Download,
+} from "react-feather";
 import { prisma } from "@db/db.server";
 import AgentAvailabilitySelector from "~/components/agentAvailabilitySelector/agentAvailabilitySelector";
 import { toast, Toaster } from "sonner";
@@ -39,7 +45,6 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import pkg from "../../package.json";
-import { cn } from "~/lib/utils";
 
 // Define the return type for the add NPM plugin action
 type AddNpmPluginResponse =
@@ -60,8 +65,26 @@ type SetAvailabilityResponse = {
   success: boolean;
 };
 
+type NpmPlugin = {
+  name: string;
+  status: "pending" | "installed" | "failed";
+  lastUpdated: string; // ISO string
+};
+
+// Add type for store plugins
+type StorePlugin = {
+  name: string;
+  description: string;
+  url: string;
+  icon: string;
+  categories: string[];
+};
+
 // Update ActionResponse to include AddNpmPluginResponse
-type ActionResponse = AddNpmPluginResponse | SetAvailabilityResponse;
+type ActionResponse =
+  | AddNpmPluginResponse
+  | SetAvailabilityResponse
+  | NpmPlugin;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
@@ -73,24 +96,47 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     where: { key: "npm_plugins" },
   });
 
-  const [agents, plugins, npmPluginsConfig] = await Promise.all([
+  // Fetch store plugins from the API
+  const storePluginsPromise = fetch(
+    "https://api.open-agent-kit.com/plugins/list",
+  )
+    .then((response) => response.json())
+    .then((data) => data.plugins as StorePlugin[])
+    .catch((error) => {
+      console.error("Failed to fetch store plugins:", error);
+      return [] as StorePlugin[];
+    });
+
+  const [agents, plugins, npmPluginsConfig, storePlugins] = await Promise.all([
     agentsPromise,
     pluginsWithAvailabilityPromise,
     npmPluginsConfigPromise,
+    storePluginsPromise,
   ]);
 
   const installedPlugins = pkg.dependencies as Record<string, string>;
 
-  const npmPlugins = ((npmPluginsConfig?.value as string[]) || []).map(
-    (plugin: string) => {
+  const npmPlugins = ((npmPluginsConfig?.value as NpmPlugin[]) || []).map(
+    (plugin) => {
       return {
-        name: plugin,
-        isInstalled: installedPlugins[plugin] !== undefined,
+        ...plugin,
+        isInstalled: installedPlugins[plugin.name] !== undefined,
       };
     },
   );
 
-  return { agents, plugins, npmPlugins, user: user as SessionUser };
+  const hasPendingPlugins = npmPlugins.some(
+    (plugin) => plugin.status === "pending",
+  );
+
+  return {
+    agents,
+    plugins,
+    npmPlugins,
+    storePlugins,
+    user: user as SessionUser,
+    hasPendingPlugins,
+  };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -119,14 +165,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         if (existingConfig) {
           // Config exists, update it by adding the new plugin
-          const currentPlugins = existingConfig.value as string[];
+          const currentPlugins = existingConfig.value as NpmPlugin[];
 
           // Check if plugin already exists to avoid duplicates
-          if (!currentPlugins.includes(pluginName)) {
+          if (!currentPlugins.find((p) => p.name === pluginName)) {
             await tx.globalConfig.update({
               where: { key: "npm_plugins" },
               data: {
-                value: [...currentPlugins, pluginName],
+                value: [
+                  ...currentPlugins,
+                  {
+                    name: pluginName,
+                    status: "pending",
+                    lastUpdated: new Date().toISOString(),
+                  },
+                ],
               },
             });
           }
@@ -135,7 +188,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           await tx.globalConfig.create({
             data: {
               key: "npm_plugins",
-              value: [pluginName],
+              value: [
+                {
+                  name: pluginName,
+                  status: "pending",
+                  lastUpdated: new Date().toISOString(),
+                },
+              ],
             },
           });
         }
@@ -182,7 +241,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Plugins() {
-  const { plugins, user, agents, npmPlugins } = useLoaderData<typeof loader>();
+  const { plugins, user, agents, npmPlugins, storePlugins, hasPendingPlugins } =
+    useLoaderData<typeof loader>();
   const [selectedPluginIdentifier, setSelectedPluginIdentifier] = useState<
     string | null
   >(null);
@@ -197,6 +257,37 @@ export default function Plugins() {
   const isSubmittingAddNpmPlugin =
     navigation.state === "submitting" &&
     navigation.formData?.get("_action") === "addNPMPlugin";
+
+  // Helper function to get the NPM package name from the URL
+  const getNpmPackageName = (url: string): string => {
+    const urlParts = url.split("/");
+    return urlParts[urlParts.length - 1];
+  };
+
+  // Helper function to check if a store plugin is already installed
+  const isStorePluginInstalled = (storePlugin: StorePlugin): boolean => {
+    const packageName = getNpmPackageName(storePlugin.url);
+    const installedPlugins = pkg.dependencies as Record<string, string>;
+    return installedPlugins[packageName] !== undefined;
+  };
+
+  // Helper function to check if a store plugin is pending installation
+  const isStorePluginPending = (storePlugin: StorePlugin): boolean => {
+    const packageName = getNpmPackageName(storePlugin.url);
+    return npmPlugins.some(
+      (plugin) => plugin.name === packageName && plugin.status === "pending",
+    );
+  };
+
+  // Function to install a store plugin
+  const installStorePlugin = (storePlugin: StorePlugin) => {
+    const packageName = getNpmPackageName(storePlugin.url);
+    const formData = new FormData();
+    formData.append("_action", "addNPMPlugin");
+    formData.append("pluginName", packageName);
+
+    fetcher.submit(formData, { method: "POST" });
+  };
 
   // Resets the state associated with the 'Add NPM Plugin' dialog whenever it is closed.
   useEffect(() => {
@@ -242,88 +333,64 @@ export default function Plugins() {
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">
-        <div className="flex flex-row items-center justify-between pb-8">
-          <h1 className="text-3xl font-medium">Installed Plugins</h1>
-          <Dialog
-            open={isAddNpmPluginOpen}
-            onOpenChange={setIsAddNpmPluginOpen}
-          >
-            <DialogTrigger asChild>
-              <Button>Add NPM Plugin</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add NPM Plugin</DialogTitle>
-                <DialogDescription>
-                  Add an NPM package as a plugin to extend agent capabilities
-                  globally
-                </DialogDescription>
-              </DialogHeader>
-
-              {addNpmPluginError && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{addNpmPluginError}</AlertDescription>
-                </Alert>
-              )}
-
-              {addNpmPluginSuccess && (
-                <Alert className="mt-2 border-green-500 text-green-700 dark:border-green-700 [&>svg]:text-green-700 dark:[&>svg]:text-green-500">
-                  <AlertTitle>Success</AlertTitle>
-                  <AlertDescription>
-                    NPM plugin added successfully! The plugin will be available
-                    after the next rebuild.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {addNpmPluginSuccess ? (
-                <DialogFooter>
-                  <Button onClick={() => setIsAddNpmPluginOpen(false)}>
-                    Continue
-                  </Button>
-                </DialogFooter>
-              ) : (
-                <Form method="post" className="space-y-4 mt-4">
-                  <input type="hidden" name="_action" value="addNPMPlugin" />
-
-                  <div className="space-y-2">
-                    <Label htmlFor="pluginName">NPM Package Name</Label>
-                    <Input
-                      id="pluginName"
-                      name="pluginName"
-                      placeholder="@example/agent-plugin"
-                      required
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Enter the exact NPM package name (e.g., @langchain/core,
-                      uuid, axios)
-                    </p>
+        {hasPendingPlugins && (
+          <div className="mb-6 relative overflow-hidden rounded-lg border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 dark:border-orange-800 dark:from-orange-950 dark:to-amber-950">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-100/50 to-amber-100/50 dark:from-orange-900/30 dark:to-amber-900/30"></div>
+            <div className="relative px-6 py-4">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <Loader className="h-6 w-6 text-orange-600 dark:text-orange-400 animate-spin" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-200">
+                        Installing Plugins
+                      </h3>
+                      <p className="mt-1 text-sm text-orange-700 dark:text-orange-300">
+                        {
+                          npmPlugins.filter((p) => p.status === "pending")
+                            .length
+                        }{" "}
+                        plugin(s) are being installed and will be available
+                        after the next rebuild:
+                      </p>
+                      <ul className="mt-1 text-sm text-orange-700 dark:text-orange-300 list-disc list-inside">
+                        {npmPlugins
+                          .filter((p) => p.status === "pending")
+                          .map((plugin) => (
+                            <li key={plugin.name}>{plugin.name}</li>
+                          ))}
+                      </ul>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                    >
+                      {npmPlugins.filter((p) => p.status === "pending").length}{" "}
+                      pending
+                    </Badge>
                   </div>
+                </div>
+              </div>
 
-                  <DialogFooter>
-                    <Button type="submit" disabled={isSubmittingAddNpmPlugin}>
-                      {isSubmittingAddNpmPlugin ? (
-                        <>
-                          <Loader className="mr-2 h-4 w-4 animate-spin" />{" "}
-                          Adding...
-                        </>
-                      ) : (
-                        "Add Plugin"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </Form>
-              )}
-            </DialogContent>
-          </Dialog>
+              {/* Progress bar animation */}
+              <div className="mt-3 relative">
+                <div className="overflow-hidden h-2 bg-orange-200 dark:bg-orange-800 rounded-full">
+                  <div className="h-full bg-gradient-to-r from-orange-400 to-amber-400 dark:from-orange-500 dark:to-amber-500 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-row items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold">Installed Plugins</h1>
         </div>
-        <div className="flex flex-col flex-1">
-          {(!plugins || plugins.length === 0) &&
-          (!npmPlugins || npmPlugins.length === 0) ? (
+        <div className="flex flex-col flex-1 mb-8">
+          {!plugins || plugins.length === 0 ? (
             <NoDataCard
-              headline="No plugins found"
-              description="There are no plugins available for your agents."
+              headline="No plugins installed"
+              description="There are currently no plugins installed. You can add local plugins through the plugins folder in your project or install plugins from the store."
               className="my-auto"
             />
           ) : (
@@ -404,75 +471,208 @@ export default function Plugins() {
                   </div>
                 </div>
               )}
-
-              {/* NPM Plugins Section */}
-              {npmPlugins && npmPlugins.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Box className="w-5 h-5" />
-                    <h2 className="text-xl font-semibold">NPM Plugins</h2>
-                    <Badge variant="secondary" className="ml-2">
-                      {npmPlugins.length}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 gap-4">
-                    {npmPlugins.map((plugin) => (
-                      <Card key={plugin.name} className="flex flex-col">
-                        <CardHeader className="flex flex-col">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <CardTitle className="text-base">
-                                {plugin.name}
-                              </CardTitle>
-                              <Badge
-                                variant="secondary"
-                                className="text-xs px-2 py-1"
-                              >
-                                NPM
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            NPM package added to global configuration
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex flex-col">
-                            <Badge
-                              className={cn(
-                                "mb-2 justify-center mr-auto",
-                                plugin.isInstalled
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                  : "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-                              )}
-                              variant="outline"
-                            >
-                              {plugin.isInstalled ? "Installed" : "Pending"}
-                            </Badge>
-                            <div className="text-xs text-muted-foreground">
-                              This plugin will be available after the next
-                              application rebuild.
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Empty state when we have no plugins of either type */}
-              {(!plugins || plugins.length === 0) &&
-                (!npmPlugins || npmPlugins.length === 0) && (
-                  <NoDataCard
-                    headline="No plugins installed"
-                    description="Install plugins to extend your agents' capabilities."
-                    className="my-auto"
-                  />
-                )}
             </div>
           )}
         </div>
+
+        {/* Store Plugins Section */}
+        {storePlugins && storePlugins.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                <h2 className="text-xl font-semibold">Store Plugins</h2>
+                <Badge variant="secondary" className="ml-2">
+                  {storePlugins.length}
+                </Badge>
+              </div>
+              <Dialog
+                open={isAddNpmPluginOpen}
+                onOpenChange={setIsAddNpmPluginOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button>Add NPM Plugin</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Add NPM Plugin</DialogTitle>
+                    <DialogDescription>
+                      Add a plugin to OAK to extend agent capabilities.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {addNpmPluginError && (
+                    <Alert variant="destructive" className="mt-2">
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{addNpmPluginError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {addNpmPluginSuccess && (
+                    <Alert className="mt-2 border-green-500 text-green-700 dark:border-green-700 [&>svg]:text-green-700 dark:[&>svg]:text-green-500">
+                      <AlertTitle>Success</AlertTitle>
+                      <AlertDescription>
+                        NPM plugin added successfully! The plugin will be
+                        available after the next rebuild.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {addNpmPluginSuccess ? (
+                    <DialogFooter>
+                      <Button onClick={() => setIsAddNpmPluginOpen(false)}>
+                        Continue
+                      </Button>
+                    </DialogFooter>
+                  ) : (
+                    <Form method="post" className="space-y-4 mt-4">
+                      <input
+                        type="hidden"
+                        name="_action"
+                        value="addNPMPlugin"
+                      />
+
+                      <div className="space-y-2">
+                        <Label htmlFor="pluginName">NPM Package Name</Label>
+                        <Input
+                          id="pluginName"
+                          name="pluginName"
+                          placeholder="@example/agent-plugin"
+                          required
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Enter the exact NPM package name (e.g.,
+                          oak-translator, oak-sample-plugin, oak-google-drive)
+                        </p>
+                      </div>
+
+                      <DialogFooter>
+                        <Button
+                          type="submit"
+                          disabled={isSubmittingAddNpmPlugin}
+                        >
+                          {isSubmittingAddNpmPlugin ? (
+                            <>
+                              <Loader className="mr-2 h-4 w-4 animate-spin" />{" "}
+                              Adding...
+                            </>
+                          ) : (
+                            "Add Plugin"
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </Form>
+                  )}
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 gap-4">
+              {storePlugins.map((plugin) => {
+                const isInstalled = isStorePluginInstalled(plugin);
+                const isPending = isStorePluginPending(plugin);
+
+                return (
+                  <Card key={plugin.name} className="flex flex-col">
+                    <CardHeader className="flex flex-col">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {plugin.icon && (
+                            <img
+                              src={plugin.icon}
+                              alt={`${plugin.name} icon`}
+                              className="w-6 h-6 rounded"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                          )}
+                          <CardTitle className="text-base">
+                            {plugin.name}
+                          </CardTitle>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="text-xs px-2 py-1"
+                          >
+                            Store
+                          </Badge>
+                          <a
+                            href={plugin.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="opacity-60 hover:opacity-100 transition-opacity"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                      {plugin.description && (
+                        <div className="text-sm text-muted-foreground mb-4">
+                          {plugin.description}
+                        </div>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col space-y-3">
+                        {plugin.categories && plugin.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {plugin.categories.map((category) => (
+                              <Badge
+                                key={category}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {category}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="mt-auto">
+                          {isInstalled ? (
+                            <Badge
+                              className="w-full justify-center bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              variant="outline"
+                            >
+                              Installed
+                            </Badge>
+                          ) : isPending ? (
+                            <Badge
+                              className="w-full justify-center bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                              variant="outline"
+                            >
+                              Installing...
+                            </Badge>
+                          ) : (
+                            <Button
+                              onClick={() => installStorePlugin(plugin)}
+                              className="w-full"
+                              size="sm"
+                              disabled={fetcher.state === "submitting"}
+                            >
+                              {fetcher.state === "submitting" ? (
+                                <>
+                                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                                  Installing...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Install
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <AgentAvailabilitySelector
           agents={agents}
           selectedPlugin={
