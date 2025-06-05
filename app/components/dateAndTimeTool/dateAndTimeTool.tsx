@@ -1,5 +1,5 @@
 import { Clock } from "react-feather";
-import type { DateTimeToolResult } from "~/types/tools";
+import type { DateTimeToolResult } from "../../types/tools";
 import "./dateAndTimeTool.scss";
 
 export const DateTimeAndDayTool = (props: { result?: DateTimeToolResult }) => {

@@ -1,6 +1,6 @@
 import Markdown from "react-markdown";
 import { CopyBlock, atomOneLight } from "react-code-blocks";
-import type { ChatSettings } from "~/types/chat";
+import type { ChatSettings } from "../../types/chat";
 import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
 import type { DetailedHTMLProps } from "react";
 import { useContext } from "react";

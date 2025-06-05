@@ -9,10 +9,10 @@ import {
   Type,
   Users,
 } from "react-feather";
-import { cn } from "~/lib/utils";
+import { cn } from "../../lib/utils";
 import { Link, useLocation, useParams } from "react-router";
-import type { MenuItem } from "~/types/plugins";
-import FeatherIcon from "~/components/featherIcon/featherIcon";
+import type { MenuItem } from "../../types/plugins";
+import FeatherIcon from "../featherIcon/featherIcon";
 
 export const AdminNav = ({
   pluginMenuItems = [],

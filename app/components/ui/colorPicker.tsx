@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Button } from "~/components/ui/button";
+import { Button } from "./button";
 import { ChevronDown } from "react-feather";
 
 interface ColorPickerProps {
@@ -9,7 +9,8 @@ interface ColorPickerProps {
   colorPalette: string[];
 }
 
-const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(({ value, onChange, colorPalette }, ref) => {
+const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
+  ({ value, onChange, colorPalette }, ref) => {
     return (
       <Popover.Root>
         <Popover.Trigger asChild>
@@ -53,7 +54,7 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(({ value,
         </Popover.Portal>
       </Popover.Root>
     );
-  }
+  },
 );
 
 ColorPicker.displayName = "ColorPicker";

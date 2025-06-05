@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { LogOut, Menu, X } from "react-feather";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import type { User } from "better-auth";
-import { authClient } from "~/lib/auth/auth.client";
-import { cn } from "~/lib/utils";
+import { authClient } from "../../lib/auth/auth.client";
+import { cn } from "../../lib/utils";
 import "./layout.scss";
 
 const Layout = ({
