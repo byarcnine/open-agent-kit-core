@@ -44,7 +44,6 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import pkg from "../../package.json";
 
 // Define the return type for the add NPM plugin action
 type AddNpmPluginResponse =
@@ -114,13 +113,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     storePluginsPromise,
   ]);
 
-  const installedPlugins = pkg.dependencies as Record<string, string>;
-
   const npmPlugins = ((npmPluginsConfig?.value as NpmPlugin[]) || []).map(
     (plugin) => {
       return {
         ...plugin,
-        isInstalled: installedPlugins[plugin.name] !== undefined,
+        isInstalled: plugins.some((p) => p.name === plugin.name),
       };
     },
   );
