@@ -76,5 +76,9 @@ export async function getTools(
 }
 
 export const getPluginNameForSlug = (slug: string) => {
+  if (importedPlugins.some((plugin) => plugin.name === slug)) {
+    // this is the actual plugin identifier
+    return slug;
+  }
   return importedPlugins.find((plugin) => plugin.slug === slug)?.name;
 };

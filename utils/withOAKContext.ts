@@ -22,7 +22,10 @@ export const withOAKContext = serverOnly$(
     return (async (args: LoaderOrActionArgs) => {
       const path = args.request.url.split("/");
       const indexOfPlugin = path.indexOf("plugins");
-      const pluginSlug = path[indexOfPlugin + 1];
+      // UI routes are prefix with /plugins/[pluginSlug|
+      // global routes are prefix with the plugin identifier only
+      const pluginSlug =
+        indexOfPlugin !== -1 ? path[indexOfPlugin + 1] : path[0];
       const pluginSlugWithoutParams = pluginSlug.split("?")[0];
       const pluginName = getPluginNameForSlug(
         pluginSlugWithoutParams,
