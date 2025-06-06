@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -47,53 +48,74 @@ const CreateAgentDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Configure New Agent</DialogTitle>
+          <DialogTitle>Create A New Agent</DialogTitle>
+          <DialogDescription>
+            Choose how you want to create your agent. You can either create a
+            new agent from scratch or use an existing agent template.
+          </DialogDescription>
         </DialogHeader>
-        <Form method="post" className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Agent Name*</Label>
-            <Input
-              id="name"
-              name="name"
-              required
-              placeholder="Enter a unique name for your agent."
-              onChange={(e) => {
-                setName(e.target.value);
-              }}
-            />
-            {errors?.name && (
-              <p className="text-sm text-destructive">{errors.name[0]}</p>
-            )}
+        <div className="flex gap-2">
+          <div className="border rounded-md p-4 bg-secondary text-secondary-foreground flex-1">
+            <h3 className="text-lg font-semibold">Create from Scratch</h3>
+            <p className="text-sm text-muted-foreground">
+              Start with a blank agent and customize it to your needs.
+            </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="slug">Agent Slug*</Label>
-            <Input
-              id="slug"
-              name="slug"
-              required
-              value={!isSlugDirty ? slugFromName : undefined}
-              pattern="^[a-z0-9-]+$"
-              placeholder="e.g., my-agent-name"
-              onChange={(e) => {
-                setIsSlugDirty(true);
-              }}
-            />
-            {errors?.slug && (
-              <p className="text-sm text-destructive">{errors.slug[0]}</p>
-            )}
+          <div className="border rounded-md p-4 bg-secondary text-secondary-foreground flex-1">
+            <h3 className="text-lg font-semibold">Choose Agent Template</h3>
+            <p className="text-sm text-muted-foreground">
+              Select from a list of predefined agent templates to get started
+              quickly.
+            </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Optional agent description"
-            />
-          </div>
-          <Button type="submit" variant="default" className="w-full">
-            Create Agent
-          </Button>
-        </Form>
+        </div>
+        {false && (
+          <Form method="post" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Agent Name*</Label>
+              <Input
+                id="name"
+                name="name"
+                required
+                placeholder="Enter a unique name for your agent."
+                onChange={(e) => {
+                  setName(e.target.value);
+                }}
+              />
+              {errors?.name && (
+                <p className="text-sm text-destructive">{errors.name[0]}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="slug">Agent Slug*</Label>
+              <Input
+                id="slug"
+                name="slug"
+                required
+                value={!isSlugDirty ? slugFromName : undefined}
+                pattern="^[a-z0-9-]+$"
+                placeholder="e.g., my-agent-name"
+                onChange={(e) => {
+                  setIsSlugDirty(true);
+                }}
+              />
+              {errors?.slug && (
+                <p className="text-sm text-destructive">{errors.slug[0]}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Optional agent description"
+              />
+            </div>
+            <Button type="submit" variant="default" className="w-full">
+              Create Agent
+            </Button>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
