@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { MessageRole } from "~/types/chat";
 import "../public/embed/core.css";
+import { type Message } from "@ai-sdk/react";
 
 export type ChatComponentType = {
   apiUrl?: string;
@@ -8,9 +9,14 @@ export type ChatComponentType = {
   agentId: string;
   avatarImageURL?: string;
   initialMessage?: string;
+  onMessage?: (messages: Message[]) => void;
 };
 
 const containerId = "oak-chat-container";
+
+export interface ChatModuleRef {
+  setInput: (input: string) => void;
+}
 
 /**
  * ChatModule is a standalone chat component that can be used in any React project.
@@ -19,13 +25,27 @@ const containerId = "oak-chat-container";
  * @param agentId - The ID of the agent to use for the chat.
  * @param meta - The meta object to pass to the chat. The meta object can be accessed by the tools.
  */
-function ChatModule({
-  apiUrl,
-  agentId,
-  meta,
-  avatarImageURL,
-  initialMessage,
-}: ChatComponentType) {
+const ChatModule = forwardRef<ChatModuleRef, ChatComponentType>((
+  {
+    apiUrl,
+    agentId,
+    meta,
+    avatarImageURL,
+    initialMessage,
+    onMessage,
+  },
+  ref
+) => {
+  const chatAPIRef = useRef<any>(null);
+
+  useImperativeHandle(ref, () => ({
+    setInput: (input: string) => {
+      if (chatAPIRef.current) {
+        chatAPIRef.current.setInput(input);
+      }
+    }
+  }), []);
+
   useEffect(() => {
     const showError = (message: string) => {
       const container = document.getElementById(containerId);
@@ -75,12 +95,13 @@ function ChatModule({
         ] : [];
 
         // @ts-ignore
-        ChatComponent.renderChatComponent(containerId, {
+        chatAPIRef.current = ChatComponent.renderChatComponent(containerId, {
           agentId,
           apiUrl,
           meta,
           avatarImageURL,
           initialMessages,
+          onMessage: onMessage,
         });
       } catch (e: any) {
         showError(`Error: An unexpected error occurred. ${e.message}`);
@@ -88,11 +109,14 @@ function ChatModule({
     });
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+      chatAPIRef.current = null;
     };
-  }, [apiUrl, agentId, meta, initialMessage]);
+  }, [apiUrl, agentId, meta, initialMessage, onMessage]);
 
   return <div id={containerId} />;
-}
+});
 
 export default ChatModule;

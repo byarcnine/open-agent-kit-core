@@ -14,11 +14,15 @@
   <!-- Add the script to load the agent. -->
   <script src="http://localhost:5173/chat_widget/chatWidget.bundle.umd.js"></script>
   <script>
-    // Initialize the chat component
-    OAKChatWidget.renderChatWidget(undefined, {
-      agentId: "peters-agent",
-      apiUrl: "http://localhost:5173"
+
+    const oakChatWidget = OAKChatWidget.renderChatWidget(undefined, {
+      agentId: "your-agent-id",
+      apiUrl: "http://localhost:5173",
+      onMessage: (messages) => {
+        console.log("on message", messages);
+      }
     });
+
   </script>
 </body>
 
