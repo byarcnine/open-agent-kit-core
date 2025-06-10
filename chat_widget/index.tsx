@@ -21,7 +21,7 @@ const FloatingChatWidget = React.forwardRef<ChatRef, ChatWidgetProps>((props, fo
   const initialMessageShown = sessionStorage.getItem("initialMessageShown");
   const [chatInitialized, setChatInitialized] = useState(false);
   const [title, setTitle] = useState<string>("");
-  const [initialMessage, setInitialMessage] = useState<string>();
+  const [initialMessage, setInitialMessage] = useState<string>("");
   const [showPopup, setShowPopup] = useState(false);
   const chatRef = useRef<ChatRef>(null);
 
