@@ -1,7 +1,7 @@
 import { useChat, type Message } from "@ai-sdk/react";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageRole, type ChatSettings } from "~/types/chat";
-import { initialChatSettings } from "~/constants/chat";
+import { MessageRole, type ChatSettings } from "../types/chat";
+import { initialChatSettings } from "../constants/chat";
 import { solveChallenge } from "altcha-lib";
 
 type UseOakChatArgs = {

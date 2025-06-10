@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import CodeEditor from "react-simple-code-editor";
 import Prism from "prismjs";
-import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
+import ClientOnlyComponent from "../clientOnlyComponent/clientOnlyComponent";
 import "prismjs/themes/prism.css";
 
 interface CustomCodeEditorProps {

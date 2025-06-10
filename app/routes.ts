@@ -51,12 +51,20 @@ export const routes = (
             .flatMap((p) =>
               prefix(
                 `plugins/${p.slug}`,
-                (p.adminRoutes ?? p.routes)?.map((r) => {
-                  if (r.index) {
-                    return index(`${routesDirPrefix}${p.name}/${r.file}`);
-                  }
-                  return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
-                }) || [],
+                (p.adminRoutes ?? p.routes)
+                  ?.map((r) => {
+                    if (r.index) {
+                      return index(`${routesDirPrefix}${p.name}/${r.file}`);
+                    }
+                    if (r.path?.startsWith("//")) {
+                      return undefined;
+                    }
+                    return route(
+                      r.path,
+                      `${routesDirPrefix}${p.name}/${r.file}`,
+                    );
+                  })
+                  .filter((r) => r !== undefined) || [],
               ),
             ),
           // Knowledge Routes
@@ -80,12 +88,17 @@ export const routes = (
         .flatMap((p) =>
           prefix(
             `chat/:agentId/plugins/${p.slug}`,
-            p.userRoutes?.map((r) => {
-              if (r.index) {
-                return index(`${routesDirPrefix}${p.name}/${r.file}`);
-              }
-              return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
-            }) || [],
+            p.userRoutes
+              ?.map((r) => {
+                if (r.index) {
+                  return index(`${routesDirPrefix}${p.name}/${r.file}`);
+                }
+                if (r.path?.startsWith("//")) {
+                  return undefined;
+                }
+                return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
+              })
+              .filter((r) => r !== undefined) || [],
           ),
         ),
       route(
@@ -110,6 +123,20 @@ export const routes = (
       "api/agentChatSettings/:agentId",
       `${corePrefix}/api.agentChatSettings.$agentId.ts`,
     ),
+    ...(plugins.flatMap((p) => {
+      const combinedRoutes = [
+        ...(p.userRoutes ?? []),
+        ...(p.adminRoutes ?? []),
+      ];
+      return combinedRoutes
+        .filter((r) => r.path?.startsWith("//"))
+        .map((r) =>
+          route(
+            `${p.name}/${r.path?.replace("//", "")}`,
+            `${routesDirPrefix}${p.name}/${r.file}`,
+          ),
+        );
+    }) || []),
   ] satisfies RouteConfig;
 };
 

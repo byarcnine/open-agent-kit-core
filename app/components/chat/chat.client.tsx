@@ -3,10 +3,11 @@ import React, { useEffect, useMemo } from "react";
 import { type Message } from "@ai-sdk/react";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
-import { type ChatSettings } from "~/types/chat";
-import useOakChat from "~/hooks/useOakChat";
+import { type ChatSettings } from "../../types/chat";
+import useOakChat from "../../hooks/useOakChat";
 import ChatInput from "./chatInput";
-import { initialChatSettings } from "~/constants/chat";
+import { initialChatSettings } from "../../constants/chat";
+
 interface ChatContextType {
   isEmbed: boolean;
   chatSettings: ChatSettings;

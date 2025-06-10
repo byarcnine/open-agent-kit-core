@@ -1,8 +1,8 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "react-feather";
 
-import { cn } from "~/lib/utils";
-import { Button, buttonVariants } from "~/components/ui/button";
+import { cn } from "../../lib/utils";
+import { Button, buttonVariants } from "./button";
 import { Link, type LinkProps } from "react-router";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {

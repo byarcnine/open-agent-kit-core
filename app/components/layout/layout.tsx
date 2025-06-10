@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import { LogOut, Menu, X, ChevronDown, Check } from "react-feather";
-import { Link, useNavigate } from "react-router";
+import { useState } from "react";
+import { ChevronLeft, LogOut, Menu, X } from "react-feather";
+import { Link } from "react-router";
 import type { User } from "better-auth";
-import { authClient } from "~/lib/auth/auth.client";
-import { cn } from "~/lib/utils";
+import { authClient } from "../../lib/auth/auth.client";
+import { cn } from "../../lib/utils";
 import "./layout.scss";
 
 type Space = {
@@ -75,70 +75,45 @@ const Layout = ({
     <div className={cn("flex-1 flex-shrink-0 w-full overflow-hidden")}>
       <div className="h-full w-full flex flex-col md:grid md:grid-cols-[300px_1fr] lg:grid-cols-[330px_1fr]">
         {/* Desktop Sidebar */}
-        <div className="hidden border-r bg-zinc-200/40 md:block">
+        <div className="hidden border-r bg-sky-100/30 md:block">
           <div className="flex h-full max-h-screen flex-col gap-4">
-            <div className="flex items-center border-b px-4 py-4">
-              <div className="relative w-full" ref={dropdownRef}>
-                <button
-                  onClick={() => setSpaceDropdownOpen(!spaceDropdownOpen)}
-                  className="flex items-center gap-2 w-full text-left hover:bg-zinc-100 rounded-md p-2 transition-colors"
-                >
-                  <div className="rounded-md overflow-hidden flex-shrink-0">
-                    <img
-                      src="/assets/logo.svg"
-                      alt="OAK - Open Agent Kit"
-                      className="w-8"
-                    />
-                  </div>
-                  <div className="flex flex-col flex-1 overflow-hidden">
-                    <span className="truncate font-medium">
-                      {currentSpace?.name || agentName || "OAK"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {currentSpace?.description || "Agent Dashboard"}
-                    </span>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 text-muted-foreground transition-transform",
-                      spaceDropdownOpen && "rotate-180",
-                    )}
-                  />
-                </button>
-
-                {spaceDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
-                    {spaces.length > 0 ? (
-                      spaces.map((space) => (
-                        <button
-                          key={space.id}
-                          onClick={() => {
-                            onSpaceChange?.(space);
-                            setSpaceDropdownOpen(false);
-                          }}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-zinc-50 transition-colors"
-                        >
-                          <div className="flex flex-col flex-1">
-                            <span className="font-medium">{space.name}</span>
-                            {space.description && (
-                              <span className="text-xs text-muted-foreground">
-                                {space.description}
-                              </span>
-                            )}
-                          </div>
-                          {currentSpace?.id === space.id && (
-                            <Check className="h-4 w-4 text-primary" />
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">
-                        No spaces available
+            <div
+              className={cn(
+                "flex items-center border-b bg-zinc-400/10",
+                agentName ? "p-3" : "p-4",
+              )}
+            >
+              <Link
+                to="/"
+                className="flex flex-col gap-1 w-full overflow-hidden"
+              >
+                <span className="text-base flex items-center gap-2">
+                  {agentName ? (
+                    <div className="flex gap-2 items-center">
+                      <div className="bg-sky-800/20 p-2 rounded-md overflow-hidden flex-shrink-0">
+                        <ChevronLeft className="h-4 w-4 cursor-pointer" />
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      <span className="truncate">{agentName}</span>
+                    </div>
+                  ) : (
+                    <div className="rounded-md overflow-hidden flex-shrink-0">
+                      <img
+                        src="/assets/logo.svg"
+                        alt="OAK - Open Agent Kit"
+                        className="w-8"
+                      />
+                    </div>
+                  )}
+                  {!agentName && (
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                      <span className="truncate">OAK</span>
+                      <span className="text-xs text-muted-foreground">
+                        Enterprise GenAI Platform
+                      </span>
+                    </div>
+                  )}
+                </span>
+              </Link>
             </div>
             <div className="flex-1 flex justify-between flex-col overflow-auto scrollbar-none">
               <div className="overflow-auto scrollbar-none flex-1">
@@ -146,7 +121,7 @@ const Layout = ({
               </div>
 
               {user && (
-                <div className="flex items-center justify-between gap-2 px-4 py-4 border-t">
+                <div className="flex items-center justify-between gap-2 px-4 py-4 border-t bg-zinc-400/10">
                   <Link
                     to="/user/settings"
                     title="Settings"
@@ -178,15 +153,37 @@ const Layout = ({
         </div>
 
         {/* Mobile Header & Navigation */}
-        <div className="md:hidden w-full flex flex-col max-h-screen">
-          <header className="flex items-center justify-between px-4 py-4 bg-zinc-200/40 border-b">
+        <div className="md:hidden w-full flex flex-col max-h-screen ">
+          <header
+            className={cn(
+              "flex items-center justify-between bg-zinc-400/10 border-b",
+              agentName ? "p-3" : "p-4",
+            )}
+          >
             <Link to="/" className="flex items-center gap-2">
-              <img
-                src="/assets/logo.svg"
-                alt="OAK - Open Agent Kit"
-                className="w-8"
-              />
-              <span>{agentName || "OAK Dashboard"}</span>
+              {agentName ? (
+                <div className="flex gap-2 items-center">
+                  <div className="bg-sky-800/20 p-2 rounded-md overflow-hidden flex-shrink-0">
+                    <ChevronLeft className="h-4 w-4 cursor-pointer" />
+                  </div>
+                  <span className="truncate">{agentName}</span>
+                </div>
+              ) : (
+                <img
+                  src="/assets/logo.svg"
+                  alt="OAK - Open Agent Kit"
+                  className="w-8"
+                />
+              )}
+
+              {!agentName && (
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <span className="truncate">OAK</span>
+                  <span className="text-xs text-muted-foreground">
+                    Enterprise GenAI Platform
+                  </span>
+                </div>
+              )}
             </Link>
             <button
               onClick={() => setMobileNavOpen((prev) => !prev)}
@@ -200,8 +197,8 @@ const Layout = ({
             </button>
           </header>
           {mobileNavOpen && (
-            <nav className="border-t bg-zinc-200/40 shadow-md overflow-hidden flex flex-col">
-              <div className="px-4 py-4 overflow-y-auto overflow-x-hidden">
+            <nav className="border-t bg-sky-100/30 shadow-md overflow-hidden flex flex-col">
+              <div className="px-2 py-4 overflow-y-auto overflow-x-hidden">
                 {navComponent}
               </div>
               {user && (
