@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageRole, type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
 import { solveChallenge } from "altcha-lib";
+import { getApiUrl } from "~/components/chat/utils";
 
 type UseOakChatArgs = {
   onConversationStart?: (conversationId: string) => void;
@@ -99,10 +100,7 @@ const useOakChat = ({
   // const [selectedAction, setSelectedAction] = useState<"default" | "deep-research" | "search-web">("default");
   const supportedFileTypes = chatSettings?.supportedFileTypes || [];
 
-  const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(
-    /\/$/,
-    "",
-  );
+  const API_URL = getApiUrl(isEmbed, apiUrl);
 
   const avatar = avatarImageURL || `${API_URL}/assets/oak_leaf.svg`;
 
