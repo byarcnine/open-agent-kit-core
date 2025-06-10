@@ -30,6 +30,12 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import {
+  AgentCard,
+  AgentCardContent,
+  AgentCardHeader,
+  AgentCardTitle,
+} from "~/components/ui/agent-card";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -234,8 +240,12 @@ const Index = () => {
                 className="w-full max-w-md"
               >
                 <TabsList>
-                  <TabsTrigger value="grid">Grid</TabsTrigger>
-                  <TabsTrigger value="list">List</TabsTrigger>
+                  <TabsTrigger reduced value="grid">
+                    Grid
+                  </TabsTrigger>
+                  <TabsTrigger reduced value="list">
+                    List
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -263,13 +273,13 @@ const Index = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                   {filteredAgents &&
                     filteredAgents.map((agent) => (
-                      <Card
+                      <AgentCard
                         key={agent.id}
                         className="justify-between flex flex-col"
                       >
-                        <CardHeader className="flex flex-row justify-between">
+                        <AgentCardHeader className="flex flex-row justify-between">
                           <div className="flex-1">
-                            <CardTitle>{agent.name}</CardTitle>
+                            <AgentCardTitle>{agent.name}</AgentCardTitle>
                             <p className="text-sm text-muted-foreground mt-2">
                               {agent.description || "No description"}
                             </p>
@@ -282,8 +292,8 @@ const Index = () => {
                               </div>
                             </div>
                           )}
-                        </CardHeader>
-                        <CardContent>
+                        </AgentCardHeader>
+                        <AgentCardContent>
                           <div className="flex flex-wrap gap-2">
                             <Link
                               className="block flex-1"
@@ -307,8 +317,8 @@ const Index = () => {
                               </Link>
                             )}
                           </div>
-                        </CardContent>
-                      </Card>
+                        </AgentCardContent>
+                      </AgentCard>
                     ))}
                 </div>
               )}
@@ -316,7 +326,7 @@ const Index = () => {
               filteredAgents &&
               filteredAgents.length > 0 ? (
                 <div className="">
-                  <div className="border shadow-xs rounded-md overflow-hidden">
+                  <div className="border shadow-xs rounded-xl overflow-hidden">
                     <Table className="w-full bg-sky-100/30">
                       <TableHeader>
                         <TableRow>

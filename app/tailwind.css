@@ -63,6 +63,7 @@
     --chart-4: hsl(43 74% 66%);
     --chart-5: hsl(27 87% 67%);
     --radius: 0.5rem;
+    --primary-blue: hsl(220, 87%, 53%);
   }
 
   .dark {
@@ -90,6 +91,7 @@
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
+    --primary-blue: hsla(217, 91%, 63%);
   }
 }
 

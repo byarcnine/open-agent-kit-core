@@ -579,7 +579,7 @@ const KnowledgeProvider = () => {
                     <h3 className="text-lg font-medium">
                       Available Tools: {Object.keys(addedTools).length}
                     </h3>
-                    <div className="mt-2 max-h-60 overflow-y-auto border rounded-md p-3">
+                    <div className="mt-2 max-h-60 overflow-y-auto border rounded-xl p-3">
                       {Object.keys(addedTools).map((key: string, index) => (
                         <div
                           key={index}
@@ -804,7 +804,7 @@ const KnowledgeProvider = () => {
               Object.keys(fetcher.data.tools).length > 0 ? (
                 <div className="space-y-3">
                   {Object.entries(fetcher.data.tools).map(([key, tool]) => (
-                    <div key={key} className="border rounded-md p-3">
+                    <div key={key} className="border rounded-xl p-3">
                       <p className="font-medium">{key}</p>
                       {tool.description && (
                         <p className="text-sm text-muted-foreground mt-1">

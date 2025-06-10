@@ -38,13 +38,13 @@ const Layout = ({
               <span className="text-base flex items-center gap-2">
                 {agentName ? (
                 <div className="flex gap-2 items-center">
-                  <div className="bg-sky-800/20 p-2 rounded-md overflow-hidden flex-shrink-0">
+                  <div className="bg-sky-800/20 p-2 rounded-xl overflow-hidden flex-shrink-0">
                   <ChevronLeft className="h-4 w-4 cursor-pointer" />
                   </div>
                   <span className="truncate">{agentName}</span>
                 </div>
                 ) : (
-                <div className="rounded-md overflow-hidden flex-shrink-0">
+                <div className="rounded-xl overflow-hidden flex-shrink-0">
                   <img
                   src="/assets/logo.svg"
                   alt="OAK - Open Agent Kit"
@@ -111,7 +111,7 @@ const Layout = ({
               <Link to="/" className="flex items-center gap-2">
                 {agentName ? (
                   <div className="flex gap-2 items-center">
-                    <div className="bg-sky-800/20 p-2 rounded-md overflow-hidden flex-shrink-0">
+                    <div className="bg-sky-800/20 p-2 rounded-xl overflow-hidden flex-shrink-0">
                       <ChevronLeft className="h-4 w-4 cursor-pointer" />
                     </div>
                     <span className="truncate">{agentName}</span>

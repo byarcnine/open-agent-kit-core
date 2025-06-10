@@ -31,7 +31,7 @@ export const AdminNav = ({
         to={`/agent/${agentId}`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
               location.pathname === `/agent/${agentId}`,
@@ -53,7 +53,7 @@ export const AdminNav = ({
         to={`/agent/${agentId}/prompts`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
               location.pathname.includes(`/agent/${agentId}/prompts`),
@@ -76,7 +76,7 @@ export const AdminNav = ({
         to={`/agent/${agentId}/knowledge`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
               location.pathname.includes(`/agent/${agentId}/knowledge`),
@@ -100,7 +100,7 @@ export const AdminNav = ({
         to={`/agent/${agentId}/feedback`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
               location.pathname.includes(`/agent/${agentId}/feedback`),
@@ -123,7 +123,7 @@ export const AdminNav = ({
         to={`/agent/${agentId}/plugins`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
               location.pathname.includes(`/agent/${agentId}/plugins`) &&
@@ -162,7 +162,7 @@ export const AdminNav = ({
                 prefetch="intent"
                 key={item.label}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+                  "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
                   {
                     "bg-zinc-400/30 text-primary hover:bg-zinc-400/40":
                       location.pathname.includes(href),
@@ -182,7 +182,7 @@ export const AdminNav = ({
         to={`/agent/${agentId}/conversations`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
               location.pathname.includes(`/agent/${agentId}/conversations`),
@@ -206,7 +206,7 @@ export const AdminNav = ({
         target="_blank"
         rel="noreferrer"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
           {
             "bg-stone-900 text-white hover:text-white":
               location.pathname.includes(`/chat/${agentId}`),
@@ -229,7 +229,7 @@ export const AdminNav = ({
           to={`/agent/${agentId}/users`}
           prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
             {
               "bg-stone-900 text-white hover:text-white":
                 location.pathname.includes(`/agent/${agentId}/users`),
@@ -252,7 +252,7 @@ export const AdminNav = ({
           to={`/agent/${agentId}/settings`}
           prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
             {
               "bg-stone-900 text-white hover:text-white":
                 location.pathname.includes(`/agent/${agentId}/settings`),

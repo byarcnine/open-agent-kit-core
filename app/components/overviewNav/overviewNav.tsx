@@ -1,4 +1,13 @@
-import { BookOpen, Cpu, Settings, Tool, User, Zap } from "react-feather";
+import {
+  Activity,
+  BookOpen,
+  Cpu,
+  DollarSign,
+  Settings,
+  Tool,
+  User,
+  Zap,
+} from "react-feather";
 import { cn } from "~/lib/utils";
 import { Link, useLocation } from "react-router";
 import type { SessionUser } from "~/types/auth";
@@ -13,7 +22,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
           to="/"
           prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate",
             {
               "bg-stone-900 text-white hover:text-white":
                 location.pathname === "/",
@@ -32,7 +41,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             to="/plugins"
             prefetch="intent"
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate",
+              "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate",
               {
                 "bg-stone-900 text-white hover:text-white":
                   location.pathname === "/plugins",
@@ -48,34 +57,56 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
         )}
         <div
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
           )}
         >
           <Cpu className="h-4 w-4" />
           Agent Templates
-          <div className="text-xs rounded-md text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
             coming soon
           </div>
         </div>
         <div
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
           )}
         >
           <BookOpen className="h-4 w-4" />
           Knowledge
-          <div className="text-xs rounded-md text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
             coming soon
           </div>
         </div>
         <div
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
           )}
         >
           <Zap className="h-4 w-4" />
           Workflows
-          <div className="text-xs rounded-md text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
+            coming soon
+          </div>
+        </div>
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
+          )}
+        >
+          <Activity className="h-4 w-4" />
+          Insights & Analytics
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
+            coming soon
+          </div>
+        </div>
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground pointer-events-none truncate",
+          )}
+        >
+          <DollarSign className="h-4 w-4" />
+          Cost Control
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-gray-300 p-1 truncate">
             coming soon
           </div>
         </div>
@@ -86,7 +117,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             to="/settings"
             prefetch="intent"
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+              "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
               {
                 "bg-stone-900 text-white hover:text-white":
                   location.pathname === "/settings",
