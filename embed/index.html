@@ -15,10 +15,14 @@
   <script src="http://localhost:5173/embed/chat.bundle.umd.js"></script>
   <script>
     // Initialize the chat component
-    ChatComponent.renderChatComponent('chat-container', {
+    const oakChatComponent = ChatComponent.renderChatComponent('chat-container', {
       agentId: "your-agent-id",
-      apiUrl: "http://localhost:5173"
+      apiUrl: "http://localhost:5173",
+      onMessage: (messages) => {
+        console.log("on message", messages);
+      }
     });
+
   </script>
 </body>
 

@@ -1,5 +1,5 @@
 import "./chat.scss";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useImperativeHandle, forwardRef } from "react";
 import { type Message } from "@ai-sdk/react";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
@@ -7,6 +7,7 @@ import { type ChatSettings } from "~/types/chat";
 import useOakChat from "~/hooks/useOakChat";
 import ChatInput from "./chatInput";
 import { initialChatSettings } from "~/constants/chat";
+
 interface ChatContextType {
   isEmbed: boolean;
   chatSettings: ChatSettings;
@@ -17,7 +18,11 @@ export const ChatContext = React.createContext<ChatContextType>({
   chatSettings: initialChatSettings,
 });
 
-const Chat = (props: {
+export interface ChatRef {
+  setInput: (input: string) => void;
+}
+
+interface ChatProps {
   onConversationStart?: (conversationId: string) => void;
   onMessage?: (messages: Message[]) => void;
   initialMessages?: Message[];
@@ -32,7 +37,9 @@ const Chat = (props: {
   avatarImageURL?: string;
   anchorToBottom?: boolean;
   onEmbedInit?: (chatSettings: ChatSettings) => void;
-}) => {
+}
+
+const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
   const {
     avatar,
     conversationId,
@@ -57,12 +64,19 @@ const Chat = (props: {
     supportedFileTypes,
     textareaRef,
     fileInputRef,
+    setInput,
   } = useOakChat(props);
+
+  // Expose setInput function through ref
+  useImperativeHandle(ref, () => ({
+    setInput: (input: string) => setInput(input),
+  }), []);
 
   const chatContext = useMemo(
     () => ({ isEmbed: !!props.isEmbed, chatSettings }),
     [props.isEmbed, chatSettings],
   );
+
   useEffect(() => {
     if (props.onMessage) {
       props.onMessage(messages);
@@ -148,6 +162,6 @@ const Chat = (props: {
       </div>
     </ChatContext.Provider>
   );
-};
+});
 
 export default Chat;
