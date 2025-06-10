@@ -52,6 +52,23 @@ export class HierarchicalPermissionChecker {
     return this.hasInheritedPermission(requiredScope, targetReferenceId);
   }
 
+  inheritedFrom(scope: string, userPermissions: string[]) {
+    return Object.entries(AVAILABLE_PERMISSIONS)
+      .flatMap(([_, value]) => {
+        return Object.entries(value)
+          .map(([key, permission]) => {
+            if (!userPermissions.includes(key)) {
+              return undefined;
+            }
+            if (this.matchesPermissionPattern(scope, permission.grants)) {
+              return permission;
+            }
+          })
+          .filter((p) => p !== undefined);
+      })
+      .filter((key) => key !== undefined);
+  }
+
   private hasDirectPermission(scope: string, referenceId: string): boolean {
     return this.userPermissions.some(
       (p) => p.scope === scope && p.referenceId === referenceId,
@@ -62,99 +79,69 @@ export class HierarchicalPermissionChecker {
     requiredScope: string,
     targetReferenceId: string,
   ): boolean {
-    const [context, permission] = requiredScope.split(".");
+    const [context] = requiredScope.split(".");
 
-    // Check global permissions first
+    // Check if any user permission grants the required permission
     for (const userPerm of this.userPermissions) {
-      if (userPerm.scope.startsWith("global.")) {
-        const inheritedPerms = getPermissionGrants("global", userPerm.scope);
-
-        if (this.matchesPermissionPattern(requiredScope, inheritedPerms)) {
-          return true;
-        }
+      if (
+        this.permissionGrantsRequired(
+          userPerm,
+          requiredScope,
+          targetReferenceId,
+          context,
+        )
+      ) {
+        return true;
       }
     }
 
-    // If checking space permission, check space permissions for inheritance
-    if (context === "space") {
-      for (const userPerm of this.userPermissions) {
-        if (
-          userPerm.scope.startsWith("space.") &&
-          userPerm.referenceId === targetReferenceId
-        ) {
-          const inheritedPerms = getPermissionGrants("space", userPerm.scope);
+    return false;
+  }
 
-          if (this.matchesPermissionPattern(requiredScope, inheritedPerms)) {
-            return true;
-          }
-        }
-      }
+  private permissionGrantsRequired(
+    userPerm: PermissionContext,
+    requiredScope: string,
+    targetReferenceId: string,
+    context: string,
+  ): boolean {
+    const [userContext] = userPerm.scope.split(".");
+    const inheritedPerms = getPermissionGrants(userContext, userPerm.scope);
 
-      // Check if agent permissions in this space grant space permissions
-      const agentsInSpace = this.spaceAgentMap.get(targetReferenceId) || [];
-      for (const userPerm of this.userPermissions) {
-        if (
-          userPerm.scope.startsWith("agent.") &&
-          agentsInSpace.includes(userPerm.referenceId)
-        ) {
-          const inheritedPerms = getPermissionGrants("agent", userPerm.scope);
-
-          if (this.matchesPermissionPattern(requiredScope, inheritedPerms)) {
-            return true;
-          }
-        }
-      }
+    if (!this.matchesPermissionPattern(requiredScope, inheritedPerms)) {
+      return false;
     }
 
-    // If checking agent permission, check space permissions
-    if (context === "agent") {
-      const agentSpaceId = this.getSpaceForAgent(targetReferenceId);
-      if (agentSpaceId) {
-        for (const userPerm of this.userPermissions) {
-          if (
-            userPerm.scope.startsWith("space.") &&
-            userPerm.referenceId === agentSpaceId
-          ) {
-            const inheritedPerms = getPermissionGrants("space", userPerm.scope);
+    // Check if this permission applies to the target
+    return this.permissionAppliesToTarget(userPerm, targetReferenceId, context);
+  }
 
-            if (this.matchesPermissionPattern(requiredScope, inheritedPerms)) {
-              return true;
-            }
-          }
-        }
-      }
+  private permissionAppliesToTarget(
+    userPerm: PermissionContext,
+    targetReferenceId: string,
+    context: string,
+  ): boolean {
+    const [userContext] = userPerm.scope.split(".");
+
+    // Global permissions apply everywhere
+    if (userContext === "global") {
+      return true;
     }
 
-    // Check same-level inheritance for both space and agent permissions
-    if (context === "space") {
-      for (const userPerm of this.userPermissions) {
-        if (
-          userPerm.scope.startsWith("space.") &&
-          userPerm.referenceId === targetReferenceId
-        ) {
-          const inheritedPerms = getPermissionGrants("space", userPerm.scope);
-
-          if (inheritedPerms.includes(requiredScope)) {
-            return true;
-          }
-        }
-      }
+    // Direct match
+    if (userPerm.referenceId === targetReferenceId) {
+      return true;
     }
 
-    if (context === "agent") {
-      // Check agent permissions for same agent
-      for (const userPerm of this.userPermissions) {
-        if (
-          userPerm.scope.startsWith("agent.") &&
-          userPerm.referenceId === targetReferenceId
-        ) {
-          const inheritedPerms = getPermissionGrants("agent", userPerm.scope);
+    // Space permissions apply to agents in that space
+    if (userContext === "space" && context === "agent") {
+      const agentsInSpace = this.spaceAgentMap.get(userPerm.referenceId) || [];
+      return agentsInSpace.includes(targetReferenceId);
+    }
 
-          if (inheritedPerms.includes(requiredScope)) {
-            return true;
-          }
-        }
-      }
+    // Agent permissions apply to their space
+    if (userContext === "agent" && context === "space") {
+      const agentSpaceId = this.getSpaceForAgent(userPerm.referenceId);
+      return agentSpaceId === targetReferenceId;
     }
 
     return false;

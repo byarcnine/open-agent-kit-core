@@ -83,6 +83,7 @@ export const AVAILABLE_PERMISSIONS = {
     "space.invite_users": {
       name: "Invite Users",
       description: "Can invite new users to this space",
+      grants: [],
     },
     "space.create_agent": {
       name: "Create Agent",
@@ -114,6 +115,10 @@ export const AVAILABLE_PERMISSIONS = {
     "agent.chat": {
       name: "Chat",
       description: "Can interact with this agent",
+      grants: [],
     },
   },
-};
+} as Record<
+  string,
+  Record<string, { name: string; description: string; grants: string[] }>
+>;

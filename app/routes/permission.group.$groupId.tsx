@@ -5,6 +5,7 @@ import {
   type ActionFunctionArgs,
   data,
   Link,
+  Form,
 } from "react-router";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
@@ -186,16 +187,17 @@ const HierarchicalPermissionSection = ({
     referenceId: string,
   ) => void;
 }) => {
-  const [showInherited, setShowInherited] = useState(false);
-
   const getPermissionStatus = (permission: string) => {
     const hasDirect = permissions.includes(permission);
     const hasInherited =
       !hasDirect && checker.hasPermission(permission, referenceId);
-
+    const inheritedFrom = checker
+      .inheritedFrom(permission, permissions)
+      .map((p) => p.name);
     return {
       hasDirect,
       hasInherited,
+      inheritedFrom,
       hasAny: hasDirect || hasInherited,
     };
   };
@@ -218,16 +220,14 @@ const HierarchicalPermissionSection = ({
     }
   };
 
-  const directPermissions = availablePermissions.filter(
-    ([key, permissionEntry]) => permissions.includes(getPermissionScope(key)),
+  const directPermissions = availablePermissions.filter(([key]) =>
+    permissions.includes(getPermissionScope(key)),
   );
 
-  const inheritedPermissions = availablePermissions.filter(
-    ([key, permissionEntry]) => {
-      const status = getPermissionStatus(getPermissionScope(key));
-      return status.hasInherited;
-    },
-  );
+  const inheritedPermissions = availablePermissions.filter(([key]) => {
+    const status = getPermissionStatus(getPermissionScope(key));
+    return status.hasInherited;
+  });
 
   return (
     <div className="border rounded-lg p-4 bg-white">
@@ -248,7 +248,7 @@ const HierarchicalPermissionSection = ({
         </div>
       </div>
 
-      <form method="post" className="space-y-4">
+      <Form method="post" className="space-y-4">
         <input type="hidden" name="intent" value="updatePermissions" />
         <input type="hidden" name="context" value={context} />
         <input type="hidden" name="referenceId" value={referenceId} />
@@ -273,7 +273,8 @@ const HierarchicalPermissionSection = ({
                     id={`${context}-${referenceId}-${permissionScope}`}
                     name="permissions"
                     value={permissionScope}
-                    checked={status.hasDirect}
+                    checked={status.hasAny}
+                    disabled={status.hasInherited && !status.hasDirect}
                     onChange={(e) =>
                       onPermissionChange(
                         permissionScope,
@@ -281,7 +282,11 @@ const HierarchicalPermissionSection = ({
                         referenceId,
                       )
                     }
-                    className="rounded border border-gray-300"
+                    className={`rounded border ${
+                      status.hasInherited && !status.hasDirect
+                        ? "border-blue-300 bg-blue-50 text-blue-600"
+                        : "border-gray-300"
+                    }`}
                   />
                   <div className="flex-1">
                     <Label
@@ -301,7 +306,8 @@ const HierarchicalPermissionSection = ({
                       <div className="flex items-center gap-1 mt-1">
                         <ArrowDown className="h-3 w-3 text-blue-600" />
                         <span className="text-xs text-blue-600">
-                          Available via inheritance
+                          Available via inheritance from{" "}
+                          {status.inheritedFrom.join(", ")}.
                         </span>
                       </div>
                     )}
@@ -318,75 +324,10 @@ const HierarchicalPermissionSection = ({
             })}
           </div>
         </div>
-
-        {/* Inherited Permissions Display */}
-        {inheritedPermissions.length > 0 && (
-          <div className="pt-4 border-t">
-            <button
-              type="button"
-              onClick={() => setShowInherited(!showInherited)}
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-3"
-            >
-              {showInherited ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-              Inherited Permissions ({inheritedPermissions.length})
-              <Info className="h-3 w-3" />
-            </button>
-
-            {showInherited && (
-              <div className="space-y-2">
-                {inheritedPermissions.map(([key, permissionEntry]) => {
-                  const permissionScope = getPermissionScope(key);
-                  const permissionName = getPermissionName(permissionEntry);
-                  return (
-                    <div
-                      key={permissionScope}
-                      className="flex items-center gap-3 p-2 bg-blue-50 rounded border border-blue-200"
-                    >
-                      <ArrowDown className="h-4 w-4 text-blue-600" />
-                      <div className="flex-1">
-                        <span className="text-sm font-medium text-blue-900">
-                          {permissionName}
-                        </span>
-                        <div className="text-xs text-blue-600">
-                          Inherited from higher-level permission
-                        </div>
-                      </div>
-                      <Check className="h-4 w-4 text-blue-600" />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Permission Flow Visualization for Agents */}
-        {context === "agent" &&
-          (directPermissions.length > 0 || inheritedPermissions.length > 0) && (
-            <div className="pt-4 border-t">
-              <h5 className="font-medium text-sm text-muted-foreground mb-2">
-                Permission Flow
-              </h5>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="px-2 py-1 bg-purple-100 rounded">Global</span>
-                <ArrowDown className="h-3 w-3" />
-                <span className="px-2 py-1 bg-blue-100 rounded">Space</span>
-                <ArrowDown className="h-3 w-3" />
-                <span className="px-2 py-1 bg-green-100 rounded font-medium">
-                  Agent
-                </span>
-              </div>
-            </div>
-          )}
-
         <Button type="submit" size="sm">
           Update {title} Permissions
         </Button>
-      </form>
+      </Form>
     </div>
   );
 };
@@ -573,6 +514,21 @@ const PermissionGroupDetail = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Global Permissions</CardTitle>
+                  <div className="pt-2 pb-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="px-2 py-1 bg-purple-100 rounded">
+                        Global
+                      </span>
+                      <ArrowDown className="h-3 w-3" />
+                      <span className="px-2 py-1 bg-blue-100 rounded">
+                        Space
+                      </span>
+                      <ArrowDown className="h-3 w-3" />
+                      <span className="px-2 py-1 bg-green-100 rounded font-medium">
+                        Agent
+                      </span>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <HierarchicalPermissionSection
