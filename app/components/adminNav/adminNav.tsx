@@ -138,9 +138,13 @@ export const AdminNav = ({
       >
         <Tool
           className={cn("h-4 w-4", {
-            "text-green-600": location.pathname.includes(
-              `/agent/${agentId}/plugins`,
-            ),
+            "text-green-600":
+              location.pathname.includes(`/agent/${agentId}/plugins`) &&
+              !pluginMenuItems.some((item) =>
+                location.pathname.includes(
+                  `/agent/${agentId}/plugins/${item.href}`,
+                ),
+              ),
           })}
         />
         <div className="flex flex-col">
