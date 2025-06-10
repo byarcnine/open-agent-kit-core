@@ -22,6 +22,7 @@ type UseOakChatArgs = {
 
 type UseOakChatReturn = {
   conversationId: string | undefined;
+  apiUrl: string | undefined;
   chatSettings: ChatSettings;
   toolNames: Record<string, string>;
   chatInitialized: boolean;
