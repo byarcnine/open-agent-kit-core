@@ -27,10 +27,10 @@ export const routes = (
       index(`${corePrefix}/_index.tsx`),
       route("settings", `${corePrefix}/settings.tsx`),
       route("plugins", `${corePrefix}/plugins.tsx`),
-
+      route("space/:spaceId", `${corePrefix}/space.$spaceId._index.tsx`),
       // Agent-specific routes
       layout(`${corePrefix}/agent.$agentId.tsx`, [
-        ...prefix("/agent/:agentId/", [
+        ...prefix("/space/:spaceId/agent/:agentId/", [
           index(`${corePrefix}/agent.$agentId._index.tsx`),
           route("feedback", `${corePrefix}/agent.$agentId.feedback.tsx`),
           route("plugins", `${corePrefix}/agent.$agentId.plugins._index.tsx`),

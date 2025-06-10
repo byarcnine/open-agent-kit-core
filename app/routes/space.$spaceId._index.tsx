@@ -6,6 +6,7 @@ import {
   useLoaderData,
   Link,
   useActionData,
+  data,
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -18,15 +19,15 @@ import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
-import CreateSpaceDialog from "~/components/createSpaceDialog/createSpaceDialog";
+import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
 import { useState } from "react";
-// import { Badge } from "~/components/ui/badge";
+import { Badge } from "~/components/ui/badge";
 
-const CreateSpaceSchema = z.object({
-  name: z.string().min(1, "Space name is required"),
+const CreateAgentSchema = z.object({
+  name: z.string().min(1, "Agent name is required"),
   slug: z
     .string()
-    .min(3, "Space slug is required and must be at least 3 characters")
+    .min(3, "Agent slug is required and must be at least 3 characters")
     .regex(
       /^[a-z0-9-]+$/,
       "Slug must contain only lowercase letters, numbers, and hyphens",
@@ -34,19 +35,20 @@ const CreateSpaceSchema = z.object({
   description: z.string().optional(),
 });
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { spaceId } = params;
   const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT);
   const canCreateAgent = user.role === "SUPER_ADMIN";
   if (!canCreateAgent) {
     return {
       errors: {
-        slug: ["You are not authorized to create spaces"],
+        slug: ["You are not authorized to create agents"],
       },
     };
   }
   const formData = await request.formData();
 
-  const validation = CreateSpaceSchema.safeParse({
+  const validation = CreateAgentSchema.safeParse({
     name: formData.get("name"),
     slug: formData.get("slug"),
     description: formData.get("description"),
@@ -61,39 +63,82 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { name, slug } = validation.data;
 
   try {
-    const space = await prisma.space.create({
+    const agent = await prisma.agent.create({
       data: {
         id: slug,
         name,
         description: validation.data.description || null,
+        agentUsers: {
+          create: {
+            userId: user.id,
+            role: "OWNER",
+          },
+        },
+        systemPrompts: {
+          create: {
+            key: "default",
+            prompt: "You are a helpful assistant.",
+          },
+        },
+        space: {
+          connect: {
+            id: spaceId,
+          },
+        },
       },
     });
-    return redirect(`/space/${space.id}`);
+    return redirect(`/agent/${agent.id}`);
   } catch (error) {
     return {
       errors: {
-        slug: ["Space with this slug already exists"],
+        slug: ["Agent with this slug already exists"],
       },
     };
   }
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { spaceId } = params;
   const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
-  const agents = await prisma.space.findMany({
+  const agentsPromise = prisma.agent.findMany({
+    where: {
+      spaceId: spaceId,
+    },
+    include: {
+      agentUsers: {
+        where: {
+          userId: user.id,
+        },
+      },
+    },
     orderBy: {
       name: "asc",
     },
   });
+  const spacePromise = prisma.space.findUnique({
+    where: {
+      id: spaceId,
+    },
+  });
+  const [agents, space] = await Promise.all([agentsPromise, spacePromise]);
+  if (!space) {
+    throw data(null, { status: 404 });
+  }
   return {
     agents,
+    space,
     user: user as SessionUser,
+    canEditAllAgents: true, // TODO: check if user has permission to edit all agents in this space
   };
 };
 
 const Index = () => {
-  const { agents, user } = useLoaderData<typeof loader>();
+  const { agents, user, canEditAllAgents } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const userCanEdit = (agent: (typeof agents)[0]) =>
+    canEditAllAgents ||
+    agent.agentUsers[0]?.role === "OWNER" ||
+    agent.agentUsers[0]?.role === "EDITOR";
 
   const [search, setSearch] = useState("");
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,7 +155,10 @@ const Index = () => {
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col h-full">
         <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
-          <h1 className="text-3xl font-medium">My Spaces</h1>
+          <h1 className="text-3xl font-medium">My Agents</h1>
+          {canEditAllAgents && (
+            <CreateAgentDialog errors={actionData?.errors} />
+          )}
         </div>
         <div>
           <Input
@@ -128,14 +176,16 @@ const Index = () => {
           {filteredAgents && filteredAgents.length === 0 ? (
             <NoDataCard
               className="my-auto"
-              headline={search ? "No agents found" : "No spaces created"}
+              headline={search ? "No agents found" : "No agents created"}
               description={
                 search
                   ? "Try a different search term"
-                  : "Create your first space!"
+                  : "Create your first agent!"
               }
             >
-              <CreateSpaceDialog errors={actionData?.errors} />
+              {canEditAllAgents && !search && (
+                <CreateAgentDialog errors={actionData?.errors} />
+              )}
             </NoDataCard>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -153,13 +203,13 @@ const Index = () => {
                         </p>
                       </div>
                       <div className="ml-auto">
-                        {/* {userCanEdit(agent) && (
+                        {userCanEdit(agent) && (
                           <Link className="flex-1" to={`/agent/${agent.id}`}>
                             <Badge variant="outline">
                               <Settings className="h-4 w-4" />
                             </Badge>
                           </Link>
-                        )} */}
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent>

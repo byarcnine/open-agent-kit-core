@@ -86,6 +86,8 @@ model Agent {
   AgentPluginData      AgentPluginData[]
   MCPs                 MCPs[]
   KnowledgeDocumentTag KnowledgeDocumentTag[]
+  space                Space                  @relation(fields: [spaceId], references: [id])
+  spaceId              String
 
   @@map("agent")
 }
@@ -212,6 +214,47 @@ model AgentUser {
   @@map("agent_user")
 }
 
+model Permission {
+  id                String           @id @default(cuid())
+  scope             String
+  referenceId       String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  // a permission either belongs to a user or a permission group
+  userId            String
+  user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionGroupId String?
+  permissionGroup   PermissionGroup? @relation(fields: [permissionGroupId], references: [id])
+
+  @@unique([scope, referenceId, userId])
+  @@map("permission")
+}
+
+model PermissionGroup {
+  id                   String                @id @default(cuid())
+  name                 String
+  description          String
+  userPermissionGroups UserPermissionGroup[]
+  permissions          Permission[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@map("permission_group")
+}
+
+model UserPermissionGroup {
+  id                String          @id @default(cuid())
+  userId            String
+  permissionGroupId String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionGroup   PermissionGroup @relation(fields: [permissionGroupId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([userId, permissionGroupId])
+  @@map("user_permission_group")
+}
+
 model Invitation {
   id    String @id @default(cuid())
   email String
@@ -280,21 +323,34 @@ model QueueJob {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  userAgents    AgentUser[]
-  role          GlobalUserRole @default(VIEW_EDIT_ASSIGNED_AGENTS)
-  conversations Conversation[]
-  name          String
-  emailVerified Boolean
-  image         String?
-  sessions      Session[]
-  accounts      Account[]
-  Usage         Usage[]
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  userAgents           AgentUser[]
+  role                 GlobalUserRole        @default(VIEW_EDIT_ASSIGNED_AGENTS)
+  conversations        Conversation[]
+  name                 String
+  emailVerified        Boolean
+  image                String?
+  sessions             Session[]
+  accounts             Account[]
+  usage                Usage[]
+  permission           Permission[]
+  userPermissionGroups UserPermissionGroup[]
 
   @@map("user")
+}
+
+model Space {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  agents      Agent[]
+
+  @@map("space")
 }
 
 model Session {
