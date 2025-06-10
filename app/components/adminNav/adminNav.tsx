@@ -1,10 +1,14 @@
 import {
+  Book,
+  BookOpen,
   Clipboard,
   CornerDownRight,
   Database,
   Inbox,
   MessageSquare,
+  Play,
   Settings,
+  Star,
   Tool,
   Type,
   Users,
@@ -22,84 +26,109 @@ export const AdminNav = ({
   const { agentId } = useParams();
   const location = useLocation();
   return (
-    <nav className="grid items-start md:px-2 text-sm lg:px-4">
+    <nav className="flex flex-col gap-0.5 md:px-2 text-sm h-full w-full">
       <Link
         to={`/agent/${agentId}`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
           {
-            "bg-stone-900 text-white hover:text-white":
+            "bg-blue-500/10 text-blue-600":
               location.pathname === `/agent/${agentId}`,
           },
         )}
       >
-        <Type className="h-4 w-4" />
-        Playground
+        <Play
+          className={cn("h-4 w-4", {
+            "text-blue-500": location.pathname === `/agent/${agentId}`,
+          })}
+        />
+        <div className="flex flex-col">
+          <span className="">Playground</span>
+          <span className="text-xs">Interact with the agent</span>
+        </div>
       </Link>
-      <Link
-        to={`/agent/${agentId}/conversations`}
-        prefetch="intent"
-        className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-          {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/conversations`),
-          },
-        )}
-      >
-        <MessageSquare className="h-4 w-4" />
-        Conversations
-      </Link>
+
       <Link
         to={`/agent/${agentId}/prompts`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
           {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/prompts`),
+            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+              `/agent/${agentId}/prompts`,
+            ),
           },
         )}
       >
-        <Clipboard className="h-4 w-4" />
-        System Prompt
+        <Star
+          className={cn("h-4 w-4", {
+            "text-blue-500": location.pathname.includes(
+              `/agent/${agentId}/prompts`,
+            ),
+          })}
+        />
+        <div className="flex flex-col">
+          <span className="">Prompt</span>
+          <span className="text-xs">Create guidelines for your agent</span>
+        </div>
       </Link>
       <Link
         to={`/agent/${agentId}/knowledge`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
           {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/knowledge`),
+            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+              `/agent/${agentId}/knowledge`,
+            ),
           },
         )}
       >
-        <Database className="h-4 w-4" />
-        Knowledge
+        <Database
+          className={cn("h-4 w-4", {
+            "text-blue-500": location.pathname.includes(
+              `/agent/${agentId}/knowledge`,
+            ),
+          })}
+        />
+        <div className="flex flex-col">
+          <span className="">Knowledge</span>
+          <span className="text-xs">Add your documents and data</span>
+        </div>
       </Link>
+
       <Link
         to={`/agent/${agentId}/feedback`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
           {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/feedback`),
+            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+              `/agent/${agentId}/feedback`,
+            ),
           },
         )}
       >
-        <Inbox className="h-4 w-4" />
-        Feedback
+        <Inbox
+          className={cn("h-4 w-4", {
+            "text-blue-500": location.pathname.includes(
+              `/agent/${agentId}/feedback`,
+            ),
+          })}
+        />
+        <div className="flex flex-col">
+          <span className="">Feedback</span>
+          <span className="text-xs">Review and manage agent feedback</span>
+        </div>
       </Link>
       <Link
         to={`/agent/${agentId}/plugins`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
           {
-            "bg-stone-900 text-white hover:text-white":
+            "bg-blue-500/10 text-blue-600":
               location.pathname.includes(`/agent/${agentId}/plugins`) &&
               // If the current path includes any of the plugin menu items, don't highlight the plugins link
               !pluginMenuItems.some((item) =>
@@ -110,74 +139,148 @@ export const AdminNav = ({
           },
         )}
       >
-        <Tool className="h-4 w-4" />
-        Plugins & MCPs
+        <Tool
+          className={cn("h-4 w-4", {
+            "text-blue-500":
+              location.pathname.includes(`/agent/${agentId}/plugins`) &&
+              !pluginMenuItems.some((item) =>
+                location.pathname.includes(
+                  `/agent/${agentId}/plugins/${item.href}`,
+                ),
+              ),
+          })}
+        />
+        <div className="flex flex-col">
+          <span className="">Tools</span>
+          <span className="text-xs">Used by agents to complete tasks</span>
+        </div>
       </Link>
-      {pluginMenuItems.map((item) => {
-        const href = `/agent/${agentId}/plugins/${item.href}`;
-        return (
-          <Link
-            to={href}
-            prefetch="intent"
-            key={item.label}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-              {
-                "bg-stone-900 text-white hover:text-white":
-                  location.pathname.includes(href),
-              },
-            )}
-          >
-            <CornerDownRight className="h-4 w-4" />
-            <FeatherIcon className="h-4 w-4" iconName={item.icon} />
-            {item.label}
-          </Link>
-        );
-      })}
-      <Link
-        to={`/agent/${agentId}/users`}
-        prefetch="intent"
-        className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-          {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/users`),
-          },
-        )}
-      >
-        <Users className="h-4 w-4" />
-        Users
-      </Link>
-      <Link
-        to={`/agent/${agentId}/settings`}
-        prefetch="intent"
-        className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
-          {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/agent/${agentId}/settings`),
-          },
-        )}
-      >
-        <Settings className="h-4 w-4" />
-        Agent Settings
-      </Link>
+      {pluginMenuItems.length > 0 && (
+        <div className="mt-1 gap-1 flex flex-col">
+          {pluginMenuItems.map((item) => {
+            const href = `/agent/${agentId}/plugins/${item.href}`;
+            return (
+              <Link
+                to={href}
+                prefetch="intent"
+                key={item.label}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+                  {
+                    "bg-zinc-400/30 text-primary hover:bg-zinc-400/40":
+                      location.pathname.includes(href),
+                  },
+                )}
+              >
+                <CornerDownRight className="h-4 w-4" />
+                <FeatherIcon className="h-4 w-4" iconName={item.icon} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
+      <Link
+        to={`/agent/${agentId}/conversations`}
+        prefetch="intent"
+        className={cn(
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          {
+            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+              `/agent/${agentId}/conversations`,
+            ),
+          },
+        )}
+      >
+        <BookOpen
+          className={cn("h-4 w-4", {
+            "text-blue-500": location.pathname.includes(
+              `/agent/${agentId}/conversations`,
+            ),
+          })}
+        />
+        <div className="flex flex-col">
+          <span className="">History</span>
+          <span className="text-xs">View recent agent conversations</span>
+        </div>
+      </Link>
       <a
         href={`/chat/${agentId}`}
         target="_blank"
         rel="noreferrer"
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
           {
-            "bg-stone-900 text-white hover:text-white":
-              location.pathname.includes(`/chat/${agentId}`),
+            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+              `/chat/${agentId}`,
+            ),
           },
         )}
       >
-        <MessageSquare className="h-4 w-4" />
-        Chat
+        <MessageSquare
+          className={cn("h-4 w-4", {
+            "text-blue-500": location.pathname.includes(`/chat/${agentId}`),
+          })}
+        />
+        <div className="flex flex-col">
+          <span className="">Chat</span>
+          <span className="text-xs">Opens chat without the admin UI</span>
+        </div>
       </a>
+
+      <div className="mt-auto mb-4 border-t pt-4">
+        <Link
+          to={`/agent/${agentId}/users`}
+          prefetch="intent"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+            {
+              "bg-blue-500/10 text-blue-600": location.pathname.includes(
+                `/agent/${agentId}/users`,
+              ),
+            },
+          )}
+        >
+          <Users
+            className={cn("h-4 w-4", {
+              "text-blue-500": location.pathname.includes(
+                `/agent/${agentId}/users`,
+              ),
+            })}
+          />
+          <div className="flex flex-col">
+            <span className="">Users</span>
+            <span className="text-xs">Manage agent access and roles</span>
+          </div>
+        </Link>
+        <Link
+          to={`/agent/${agentId}/settings`}
+          prefetch="intent"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+            {
+              "bg-blue-500/10 text-blue-600": location.pathname.includes(
+                `/agent/${agentId}/settings`,
+              ),
+            },
+          )}
+        >
+          <Settings
+            className={cn("h-4 w-4", {
+              "text-blue-500": location.pathname.includes(
+                `/agent/${agentId}/settings`,
+              ),
+            })}
+          />
+          <div className="flex flex-col">
+            <span className="">Settings</span>
+            <span className="text-xs">
+              Choose model, default parameters etc.
+            </span>
+          </div>
+        </Link>
+      </div>
     </nav>
   );
 };

@@ -26,7 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { AlertTriangle } from "react-feather";
+import { AlertTriangle, Lock, Thermometer } from "react-feather";
 import { type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
 import {
@@ -336,9 +336,9 @@ const AgentSettings = () => {
 
   return (
     <div className="w-full py-8 px-4 md:p-8 space-y-6">
-      <h1 className="text-3xl font-medium mb-6">Agent Settings</h1>
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+      <h1 className="text-3xl mb-6">Agent Settings</h1>
+      <Tabs defaultValue="general" className="w-auto">
+        <TabsList className="grid w-full max-w-md grid-cols-4 mb-6">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="embed">Embed</TabsTrigger>
@@ -347,18 +347,22 @@ const AgentSettings = () => {
           )}
         </TabsList>
         <TabsContent value="general">
-          <Card>
+          <Card className="max-w-3xl">
             <CardHeader>
               <CardTitle>General Settings</CardTitle>
             </CardHeader>
             <CardContent>
-              <Form method="post" className="space-y-4">
+              <Form method="post" className="space-y-4 mt-4">
                 <input
                   type="hidden"
                   name="intent"
                   value={Intent.UPDATE_GENERAL_SETTINGS}
                 />
-                <div title="General Settings">
+                <div
+                  title="General Settings"
+                  className="flex flex-col gap-2 mb-8"
+                >
+                  <Label htmlFor="description">Agent Name</Label>
                   <Input
                     id="name"
                     name="name"
@@ -371,7 +375,7 @@ const AgentSettings = () => {
                     </p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col space-y-2 mb-8">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
@@ -387,12 +391,12 @@ const AgentSettings = () => {
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2 flex-col">
+                <div className="flex gap-2 flex-col mb-8">
                   <Label htmlFor="model">Model</Label>
                   <Select
                     name="model"
                     defaultValue={
-                      (agent.modelSettings as ModelSettings)?.model || ""
+                      (agent.modelSettings as ModelSettings)?.model || undefined
                     }
                   >
                     <SelectTrigger>
@@ -408,8 +412,16 @@ const AgentSettings = () => {
                   </Select>
                 </div>
                 <div className="flex flex-col space-y-2">
-                  <Label htmlFor="temperature">Temperature</Label>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="flex items-center" htmlFor="temperature">
+                      <Thermometer width={16} />
+                      Temperature
+                    </Label>
+                    <span className="text-xs h-[35px] aspect-square bg-blue-500/10 text-blue-600 rounded-xl flex items-center justify-center">
+                      {temperature.toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center space-x-2 my-4">
                     <Slider
                       id="temperature"
                       name="temperature"
@@ -420,30 +432,35 @@ const AgentSettings = () => {
                       onValueChange={(newVal: number[]) =>
                         setTemperature(newVal[0])
                       }
-                      className="w-[calc(100%-40px)] max-w-[250px]"
                     />
-                    <span className="text-sm w-[40px] text-right">
-                      {temperature.toFixed(2)}
-                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Controls randomness: Lowering results in less random
-                    completions. As the temperature approaches zero, the model
-                    will become deterministic and repetitive.
-                  </p>
+                  <div className="flex justify-between mb-4">
+                    <p className="text-xs text-muted-foreground">
+                      More focused
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      More creative
+                    </p>
+                  </div>
                   {actionData?.errors?.temperature && (
                     <p className="text-sm text-red-500">
                       {actionData.errors.temperature[0]}
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2 flex-col">
-                  <Label htmlFor="isPublic">Public Agent</Label>
-                  <p className="text-sm text-muted-foreground">
-                    If enabled the agent is public and can be embed to websites
-                    and other tools.
-                  </p>
+                <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-xl">
+                  <div className="bg-white rounded-xl aspect-square p-3">
+                    <Lock size={20} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="isPublic">Public Agent</Label>
+                    <p className="text-sm text-muted-foreground">
+                      If enabled the agent is public and can be embed to
+                      websites and other tools.
+                    </p>
+                  </div>
                   <Switch
+                    className="ml-auto"
                     id="isPublic"
                     name="isPublic"
                     defaultChecked={isPublic}
@@ -451,7 +468,7 @@ const AgentSettings = () => {
                   />
                 </div>
                 {isPublic && (
-                  <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col space-y-2 pt-4">
                     <Label htmlFor="allowedUrls">Add Allowed URLs</Label>
                     <Input
                       id="allowedUrls"
@@ -460,14 +477,17 @@ const AgentSettings = () => {
                       defaultValue={agent.allowedUrls.join(",")}
                       placeholder="Enter allowed URLs separated by commas"
                     />
-                    <p className="text-sm text-muted-foreground">
-                      Enter allowed URLs separated by commas where the agent can
-                      be embedded.
+                    <p className="text-xs text-muted-foreground max-w-lg">
+                      URLs where the agent can be embedded. Seperate multiple
+                      URLs with commas. If you want to allow all URLs, leave
+                      this field empty.
                     </p>
                   </div>
                 )}
 
-                <Button type="submit">Save Changes</Button>
+                <Button className="mt-4" variant="blue" type="submit" size="lg">
+                  Save Changes
+                </Button>
               </Form>
             </CardContent>
           </Card>
@@ -699,7 +719,7 @@ const AgentSettings = () => {
 
                 <span className="mb-2 block font-medium text-sm">JS Embed</span>
                 <div className="flex flex-row gap-2 mb-4">
-                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-md">
+                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-xl">
                     {`
 <!-- Add the container where you want to render the agent. -->
 <div id="chat-container"></div>
@@ -722,7 +742,7 @@ const AgentSettings = () => {
                   iFrame Embed
                 </span>
                 <div className="flex flex-row gap-2 mb-4">
-                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-md">
+                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-xl">
                     {`
 <iframe src="${appUrl}/embed/${agent.id}" width="100%" height="100%"></iframe>
                 `}
@@ -746,34 +766,36 @@ const AgentSettings = () => {
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="maintainConversationSession">
                       Maintain Conversation Session in Embed
-                  </Label>
-                  <Input
-                    type="number"
-                    id="maintainConversationSession"
-                    name="maintainConversationSession"
-                    className="border"
-                    defaultValue={chatSettings?.embedSettings?.maintainConversationSession}
-                    placeholder="Enter number of minutes"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                      If enabled, the agent will maintain a conversation
-                      session in the browser's session storage when the agent
-                      is embedded.
+                    </Label>
+                    <Input
+                      type="number"
+                      id="maintainConversationSession"
+                      name="maintainConversationSession"
+                      className="border"
+                      defaultValue={
+                        chatSettings?.embedSettings?.maintainConversationSession
+                      }
+                      placeholder="Enter number of minutes"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      If enabled, the agent will maintain a conversation session
+                      in the browser's session storage when the agent is
+                      embedded.
                     </p>
                   </div>
                   <div className="flex flex-col space-y-2 mt-4">
-                    <Label htmlFor="embedWidgetTitle">
-                      Embed Window Title
-                  </Label>
-                  <Input
-                    type="text"
-                    id="embedWidgetTitle"
-                    name="embedWidgetTitle"
-                    className="border"
-                    defaultValue={chatSettings?.embedSettings?.embedWidgetTitle}
-                    placeholder="Enter embed widget title"
-                  />
-                  <p className="text-sm text-muted-foreground">
+                    <Label htmlFor="embedWidgetTitle">Embed Window Title</Label>
+                    <Input
+                      type="text"
+                      id="embedWidgetTitle"
+                      name="embedWidgetTitle"
+                      className="border"
+                      defaultValue={
+                        chatSettings?.embedSettings?.embedWidgetTitle
+                      }
+                      placeholder="Enter embed widget title"
+                    />
+                    <p className="text-sm text-muted-foreground">
                       This title will be displayed in the chat widget when the
                       agent is embedded in a website.
                     </p>

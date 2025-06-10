@@ -54,26 +54,27 @@ export default function Screen() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="container relative min-h-screen flex-col items-center justify-center grid grid-cols-1 lg:max-w-none lg:grid-cols-2 lg:px-0">
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-          <div className="absolute inset-0 bg-zinc-900" />
+          <div className="absolute inset-0 bg-zinc-800" />
           <div className="relative z-20 flex items-center text-lg font-medium">
-            <div className="rounded-xl overflow-hidden">
+            <div className="rounded-xl overflow-hidden fade-in delay-75">
               <img
                 src="/assets/logo.svg"
                 alt="OAK - Open Agent Kit"
                 className="w-12"
               />
             </div>
-            <span className="text-4xl ml-4">Open Agent Kit</span>
+            <span className="text-4xl ml-4 fade-in delay-150">Welcome to OAK</span>
           </div>
-          <div className="relative z-20 mt-auto text-xl">
-            Building and Deploying Custom AI Agents - Your Way
-          </div>
+            <div className="relative z-20 mt-auto text-xl max-w-lg fade-in delay-300">
+            The Enterprise Platform for Building and Deploying Custom AI Agents
+            - Your Way
+            </div>
         </div>
 
-        <div className="w-full max-w-md mx-auto p-8 space-y-6">
+        <div className="w-full max-w-md mx-auto p-8 space-y-6 border rounded-xl bg-sky-100/30 fade-in delay-150">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-medium">
               {mode === "reset" ? "Reset Password" : "Request Password Reset"}
@@ -147,10 +148,7 @@ export default function Screen() {
           </Form>
 
           <div className="text-center text-sm text-gray-500">
-            <Link
-              to="/auth/login"
-              className="underline hover:text-gray-900"
-            >
+            <Link to="/auth/login" className="underline hover:text-gray-900">
               Remember your password? Sign in
             </Link>
           </div>

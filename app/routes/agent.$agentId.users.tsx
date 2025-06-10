@@ -201,7 +201,7 @@ const AgentUsersView = () => {
         </NoDataCard>
       )}
       {users && users.length > 0 && (
-        <div className="rounded-md border">
+        <div className="rounded-xl border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -297,7 +297,7 @@ const AgentUsersView = () => {
       {invitations.length > 0 && (
         <>
           <h2 className="mt-8 mb-4 text-lg font-medium">Invites</h2>
-          <div className="rounded-md border">
+          <div className="rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>

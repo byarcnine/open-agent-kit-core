@@ -28,7 +28,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ data, onSave, onClose, isOpen }
         <DialogHeader>
           <DialogTitle>Edit Metadata</DialogTitle>
         </DialogHeader>
-        <div className="overflow-auto max-h-[70vh] w-full rounded-md">
+        <div className="overflow-auto max-h-[70vh] w-full rounded-xl">
           <ReactJson
             src={localData}
             onEdit={(edit) => setLocalData(edit.updated_src)}

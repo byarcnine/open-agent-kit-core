@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import calendar from "dayjs/plugin/calendar";
 import Layout from "~/components/layout/layout";
-import { MessageCircle, PlusCircle, MoreVertical, Box } from "react-feather";
+import { MessageCircle, PlusCircle, MoreVertical, Box, Plus } from "react-feather";
 import { PERMISSIONS } from "~/types/auth";
 import { useEffect, useState } from "react";
 import { Intent } from "./chat.$agentId._index";
@@ -215,7 +215,7 @@ const ChatOverview = () => {
                     key={p.slug}
                     to={`/chat/${agentId}/plugins/${p.slug}`}
                     className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-2 mb-8",
+                      "flex items-center gap-2 rounded-xl px-3 py-2 mb-8",
                       location.pathname.startsWith(
                         `/chat/${agentId}/plugins/${p.slug}`,
                       )
@@ -234,11 +234,11 @@ const ChatOverview = () => {
             Chats
           </h2>
           <Link
-            className="flex items-center gap-2 rounded-md px-3 py-2 transition-all bg-oak-green text-accent-foreground hover:bg-oak-green/90 mb-8"
+            className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 mb-8"
             to={`/chat/${agentId}`}
             reloadDocument
           >
-            <PlusCircle className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
             New Conversation
           </Link>
           {currentConversationsByDay.map(({ date, conversations }) => (
@@ -252,7 +252,7 @@ const ChatOverview = () => {
                   <Popover.Root key={c.id}>
                     <div
                       className={cn(
-                        "flex justify-between transition-all rounded-md text-sm font-normal relative group",
+                        "flex justify-between transition-all rounded-xl text-sm font-normal relative group",
                         currentConversationIndex === c.id
                           ? "bg-stone-900 text-white"
                           : "hover:bg-stone-900 hover:text-white text-neutral-900",
@@ -261,7 +261,7 @@ const ChatOverview = () => {
                       {editMode === c.id ? (
                         <input
                           type="text"
-                          className={`w-full flex-1 block py-2 px-3 rounded-md text-sm font-normal focus:outline-none`}
+                          className={`w-full flex-1 block py-2 px-3 rounded-xl text-sm font-normal focus:outline-none`}
                           defaultValue={c.tagline || ""}
                           key={c.id}
                           onChange={(e) => setNewTagline(e.target.value)}
@@ -272,7 +272,7 @@ const ChatOverview = () => {
                         />
                       ) : (
                         <Link
-                          className={`py-2 block px-3 flex-1 rounded-md text-sm font-normal`}
+                          className={`py-2 block px-3 flex-1 rounded-xl text-sm font-normal`}
                           to={`/chat/${agentId}/${c.id}`}
                           key={c.id}
                           prefetch="intent"
@@ -298,7 +298,7 @@ const ChatOverview = () => {
                         side="right"
                         align="start"
                         sideOffset={0}
-                        className="p-2 bg-white rounded-md border w-40 shadow-sm text-sm z-10"
+                        className="p-2 bg-white rounded-xl border w-40 shadow-sm text-sm z-10"
                       >
                         <div className="flex flex-col space-y-1">
                           <button

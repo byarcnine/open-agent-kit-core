@@ -13,7 +13,7 @@ import {
 } from "~/lib/plugins/availability.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useState } from "react";
-import { Settings } from "react-feather";
+import { Search, Settings } from "react-feather";
 import { prisma } from "@db/db.server";
 import AgentAvailabilitySelector from "~/components/agentAvailabilitySelector/agentAvailabilitySelector";
 import { toast, Toaster } from "sonner";
@@ -21,6 +21,7 @@ import type { PluginWithAvailability } from "~/types/plugins";
 import { Badge } from "~/components/ui/badge";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
+import { Input } from "~/components/ui/input";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
@@ -51,6 +52,11 @@ export default function Plugins() {
     string | null
   >(null);
   const fetcher = useFetcher();
+  const [search, setSearch] = useState("");
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
 
   const onSetAvailability = async (isGlobal: boolean, agentIds: string[]) => {
     if (!selectedPluginIdentifier) return;
@@ -67,22 +73,41 @@ export default function Plugins() {
     );
   };
 
+  // Filter agents based on search input
+  const filteredPlugins = search
+    ? plugins.filter((plugin) =>
+        plugin.name.toLowerCase().includes(search.toLowerCase()),
+      )
+    : plugins;
+
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">
-        <div className="flex flex-row items-center justify-between pb-8">
-          <h1 className="text-3xl font-medium">Tools & Plugins</h1>
+        <div className="flex flex-col pb-8 gap-4">
+          <h1 className="text-3xl font-medium">Agent Tools</h1>
+          <div className="relative flex-1">
+            <Search className="absolute w-4 h-4 left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <Input
+              autoFocus
+              type="text"
+              placeholder="Search Agent Tools ..."
+              className="w-full max-w-md pl-8"
+              value={search}
+              onChange={handleSearch}
+              name="search"
+            />
+          </div>
         </div>
         <div className="flex flex-col flex-1">
-          {!plugins || plugins.length === 0 ? (
+          {!filteredPlugins || filteredPlugins.length === 0 ? (
             <NoDataCard
-              headline="No plugins found"
-              description="There are no plugins available for your agents."
+              headline="No tools found"
+              description="There are no agent tools available"
               className="my-auto"
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xxl:grid-cols-4 gap-4">
-              {plugins.map((plugin) => (
+              {filteredPlugins.map((plugin) => (
                 <Card key={plugin.name} className="flex flex-col">
                   <CardHeader className="flex flex-col">
                     <div className="flex items-center justify-between">
@@ -109,19 +134,23 @@ export default function Plugins() {
                           Available for all agents
                         </Badge>
                       )}
-                      {!plugin.isGlobal && plugin.agents && (
-                        <h3 className="text-xs mb-2 text-muted-foreground font-medium">
-                          Available for Agents:
-                        </h3>
-                      )}
-                      {!plugin.isGlobal && (
-                        <div className="text-sm text-muted-foreground flex flex-wrap gap-2 max-w-full">
-                          {plugin.agents.map((agent) => (
-                            <div key={agent.id}>
-                              <Badge variant="outline">{agent.name}</Badge>
+                      {!plugin.isGlobal && plugin.agents.length > 0 && (
+                        <>
+                          <h3 className="text-xs mb-2 text-muted-foreground font-medium">
+                            {plugin.agents.length > 5
+                              ? `Available for ${plugin.agents.length} Agents. Click to edit.`
+                              : `Available for Agents`}
+                          </h3>
+                          {plugin.agents.length <= 5 && (
+                            <div className="text-sm text-muted-foreground flex flex-wrap gap-2 max-w-full">
+                              {plugin.agents.map((agent) => (
+                                <div key={agent.id}>
+                                  <Badge variant="outline">{agent.name}</Badge>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </CardContent>

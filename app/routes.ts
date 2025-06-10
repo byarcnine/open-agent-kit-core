@@ -110,6 +110,7 @@ export const routes = (
       "api/agentChatSettings/:agentId",
       `${corePrefix}/api.agentChatSettings.$agentId.ts`,
     ),
+    route("api/feedback", `${corePrefix}/api.feedback.ts`),
   ] satisfies RouteConfig;
 };
 
