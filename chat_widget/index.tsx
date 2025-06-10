@@ -8,17 +8,20 @@ import { type Message } from "@ai-sdk/react";
 import ChatIcon from "./chatIcon";
 import ArrowDownIcon from "./arrowDown";
 
+interface ChatWidgetProps extends ChatComponentType {
+  floatingInitMessage?: string;
+}
 
 interface ChatWidgetAPI {
   setInput: (input: string) => void;
 }
 
-const FloatingChatWidget = React.forwardRef<ChatRef, ChatComponentType>((props, forwardedRef) => {
+const FloatingChatWidget = React.forwardRef<ChatRef, ChatWidgetProps>((props, forwardedRef) => {
   const [open, setOpen] = useState(false);
   const initialMessageShown = sessionStorage.getItem("initialMessageShown");
   const [chatInitialized, setChatInitialized] = useState(false);
   const [title, setTitle] = useState<string>("");
-  const [initialMessage, setInitialMessage] = useState<string>("");
+  const [initialMessage, setInitialMessage] = useState<string>();
   const [showPopup, setShowPopup] = useState(false);
   const chatRef = useRef<ChatRef>(null);
 
@@ -53,7 +56,7 @@ const FloatingChatWidget = React.forwardRef<ChatRef, ChatComponentType>((props, 
   const onEmbedInit = (chatSettings: ChatSettings) => {
     setChatInitialized(true);
     if (!initialMessageShown) {
-      setInitialMessage(chatSettings.initialMessage || "");
+      setInitialMessage(props.floatingInitMessage || chatSettings.initialMessage || "");
     }
     setTitle(chatSettings.embedSettings?.embedWidgetTitle || "");
   };
@@ -154,7 +157,7 @@ const FloatingChatWidget = React.forwardRef<ChatRef, ChatComponentType>((props, 
   );
 });
 
-export const renderChatWidget = (divId: string, config: ChatComponentType): ChatWidgetAPI | null => {
+export const renderChatWidget = (divId: string, config: ChatWidgetProps): ChatWidgetAPI | null => {
   let container = document.getElementById(divId);
   if (!container) {
     container = document.createElement("div");

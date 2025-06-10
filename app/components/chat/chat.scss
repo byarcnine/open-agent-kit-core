@@ -33,38 +33,52 @@
     &__empty-state {
       display: flex;
       flex-direction: column;
-      padding-top: 20vh;
+      padding-top: 10%;
       align-items: center;
       flex: 1;
       z-index: 1;
-      width: 100%;
       margin: 0 auto;
-      padding-left: 30px;
-      padding-right: 30px;
+      padding-left: 15px;
+      padding-right: 15px;
+      overflow-y: auto;
 
-      @media (min-width: 768px) {
-        padding-left: 0;
-        padding-right: 0;
+      @container chat-container (min-width: 768px) {
+        padding-left: 30px;
+        padding-right: 30px;
+        padding-top: 20%;
       }
 
       &-heading {
         font-size: 24px;
         font-weight: 500;
-        margin-bottom: 25.6px;
+
         color: var(--oak-color-primary);
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.3s;
+        max-width: 100%;
+        text-align: center;
+        word-wrap: break-word;
+
+        @container chat-container (min-width: 768px) {
+          margin-bottom: 18px;
+        }
       }
 
       &-subheading {
         font-size: 18px;
         font-weight: 400;
-        margin-bottom: 48px;
+        margin-bottom: 25px;
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.4s;
         text-align: center;
+        max-width: 100%;
+        word-wrap: break-word;
+
+        @container chat-container (min-width: 768px) {
+          margin-bottom: 48px;
+        }
       }
     }
 
@@ -240,7 +254,7 @@
       font-size: 16px;
       max-height: 300px;
 
-      @media (min-width: 768px) {
+      @container chat-container (min-width: 768px) {
         font-size: 14.4px;
       }
       &::-webkit-scrollbar {
@@ -371,7 +385,7 @@
       padding: 16px;
       grid-template-columns: repeat(1, 1fr);
       gap: 10px;
-      @media (min-width: 1024px) {
+      @container chat-container (min-width: 960px) {
         grid-template-columns: repeat(2, 1fr);
       }
 
