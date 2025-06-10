@@ -81,7 +81,7 @@ const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
     if (props.onMessage) {
       props.onMessage(messages);
     }
-  }, [messages.length]);
+  }, [messages?.[messages.length - 1]?.parts?.length]);
 
   if (!chatInitialized && props.isEmbed) {
     return (
