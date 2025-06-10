@@ -27,6 +27,11 @@ export const routes = (
       index(`${corePrefix}/_index.tsx`),
       route("settings", `${corePrefix}/settings.tsx`),
       route("plugins", `${corePrefix}/plugins.tsx`),
+      route("permissions", `${corePrefix}/permission._index.tsx`),
+      route(
+        "permissions/group/:groupId",
+        `${corePrefix}/permission.group.$groupId.tsx`,
+      ),
       route("space/:spaceId", `${corePrefix}/space.$spaceId._index.tsx`),
       // Agent-specific routes
       layout(`${corePrefix}/agent.$agentId.tsx`, [

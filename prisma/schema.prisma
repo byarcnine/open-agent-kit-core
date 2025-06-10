@@ -221,7 +221,7 @@ model Permission {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   // a permission either belongs to a user or a permission group
-  userId            String
+  userId            String?
   user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   permissionGroupId String?
   permissionGroup   PermissionGroup? @relation(fields: [permissionGroupId], references: [id])
@@ -328,11 +328,11 @@ model User {
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   userAgents           AgentUser[]
-  role                 GlobalUserRole        @default(VIEW_EDIT_ASSIGNED_AGENTS)
   conversations        Conversation[]
   name                 String
   emailVerified        Boolean
   image                String?
+  role                 GlobalUserRole        @default(VIEW_EDIT_ASSIGNED_AGENTS)
   sessions             Session[]
   accounts             Account[]
   usage                Usage[]
