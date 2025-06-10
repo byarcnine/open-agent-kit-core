@@ -23,11 +23,11 @@ const Layout = ({
     <div className={cn("flex-1 flex-shrink-0 w-full overflow-hidden")}>
       <div className="h-full w-full flex flex-col md:grid md:grid-cols-[300px_1fr] lg:grid-cols-[330px_1fr]">
         {/* Desktop Sidebar */}
-        <div className="hidden border-r bg-sky-100/30 md:block">
+        <div className="hidden border-r bg-blue-100/30 md:block">
           <div className="flex h-full max-h-screen flex-col gap-4">
             <div
               className={cn(
-              "flex items-center border-b bg-zinc-400/10",
+              "flex items-center border-b bg-white",
               agentName ? "p-3" : "p-4"
               )}
             >
@@ -38,8 +38,8 @@ const Layout = ({
               <span className="text-base flex items-center gap-2">
                 {agentName ? (
                 <div className="flex gap-2 items-center">
-                  <div className="bg-sky-800/20 p-2 rounded-xl overflow-hidden flex-shrink-0">
-                  <ChevronLeft className="h-4 w-4 cursor-pointer" />
+                  <div className="bg-primary p-2 rounded-xl overflow-hidden flex-shrink-0">
+                  <ChevronLeft className="h-4 w-4 cursor-pointer text-white" />
                   </div>
                   <span className="truncate">{agentName}</span>
                 </div>

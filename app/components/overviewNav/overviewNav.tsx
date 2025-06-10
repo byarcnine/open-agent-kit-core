@@ -22,9 +22,9 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
           to="/"
           prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate hover:bg-blue-500/10",
             {
-              "bg-stone-900 text-white hover:text-white":
+              "bg-blue-500/10 text-blue-600":
                 location.pathname === "/",
             },
             {
@@ -43,7 +43,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate",
               {
-                "bg-stone-900 text-white hover:text-white":
+                "bg-blue-500/10 text-blue-600":
                   location.pathname === "/plugins",
               },
               {
@@ -119,7 +119,7 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2 transition-all text-muted-foreground hover:text-primary",
               {
-                "bg-stone-900 text-white hover:text-white":
+                "bg-blue-500/10 text-blue-600":
                   location.pathname === "/settings",
               },
             )}
