@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData, type ActionFunctionArgs } from "react-router";
+import { Outlet, useLoaderData, useParams } from "react-router";
 import Layout from "~/components/layout/layout";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { type LoaderFunctionArgs, type MetaFunction } from "react-router";
@@ -25,11 +25,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 const Agent = () => {
   const loaderData = useLoaderData<typeof loader>();
   const { user, agent, pluginMenuItems } = loaderData;
+  const { spaceId } = useParams();
   return (
     <Layout
       navComponent={<AdminNav pluginMenuItems={pluginMenuItems} />}
       user={user}
       agentName={agent.name}
+      spaceId={spaceId}
     >
       <Outlet />
     </Layout>

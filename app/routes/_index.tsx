@@ -10,8 +10,8 @@ import {
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { hasAccess, hasPermission } from "~/lib/auth/hasAccess.server";
-import { MessageCircle, Search, Sliders, Users } from "react-feather";
+import { hasAccess } from "~/lib/auth/hasAccess.server";
+import { MessageCircle, Package, Search, Sliders, Users } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
@@ -19,7 +19,7 @@ import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
-import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
+import CreateSpaceDialog from "~/components/createSpaceDialog/createSpaceDialog";
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
@@ -30,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import CreateSpaceDialog from "~/components/createSpaceDialog/createSpaceDialog";
 
 const CreateSpaceSchema = z.object({
   name: z.string().min(1, "Space name is required"),
@@ -90,66 +89,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
-  const canEditAllAgents = await hasPermission(user, PERMISSIONS.EDIT_AGENT);
-  const canViewAllAgents = await hasPermission(user, PERMISSIONS.VIEW_AGENT);
-  const globalUserCount = await prisma.user.count({
-    where: {
-      role: {
-        in: ["SUPER_ADMIN", "EDIT_ALL_AGENTS", "VIEW_ALL_AGENTS"],
+  const spaces = await prisma.space.findMany({
+    include: {
+      _count: {
+        select: {
+          agents: true,
+        },
       },
     },
+    orderBy: {
+      name: "asc",
+    },
   });
-  const agents = (
-    await prisma.agent.findMany({
-      where: canViewAllAgents
-        ? undefined
-        : {
-            agentUsers: {
-              some: {
-                userId: user.id,
-              },
-            },
-          },
-      include: {
-        agentUsers: {
-          include: {
-            user: true,
-          },
-        },
-        _count: {
-          select: {
-            agentUsers: {
-              where: {
-                user: {
-                  role: {
-                    notIn: [
-                      "SUPER_ADMIN",
-                      "EDIT_ALL_AGENTS",
-                      "VIEW_ALL_AGENTS",
-                    ],
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    })
-  ).map((agent) => ({
-    ...agent,
-    activeUserCount: agent._count.agentUsers + globalUserCount,
-  }));
   return {
-    agents,
+    spaces,
     user: user as SessionUser,
   };
 };
 
 const Index = () => {
-  const { agents, user } = useLoaderData<typeof loader>();
+  const { spaces, user } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const [search, setSearch] = useState("");
@@ -172,11 +131,11 @@ const Index = () => {
   };
 
   // Filter agents based on search input
-  const filteredAgents = search
-    ? agents.filter((agent) =>
-        agent.name.toLowerCase().includes(search.toLowerCase()),
+  const filteredSpaces = search
+    ? spaces.filter((space) =>
+        space.name.toLowerCase().includes(search.toLowerCase()),
       )
-    : agents;
+    : spaces;
 
   useEffect(() => {
     const savedTab = sessionStorage.getItem("agentViewType");
@@ -192,7 +151,7 @@ const Index = () => {
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
-            <h1 className="text-3xl font-medium">My Agents</h1>
+            <h1 className="text-3xl font-medium">My Spaces</h1>
             <CreateSpaceDialog errors={actionData?.errors} />
           </div>
           <div className="flex flex-row items-center gap-2">
@@ -201,7 +160,7 @@ const Index = () => {
               <Input
                 autoFocus
                 type="text"
-                placeholder="Search Agents ..."
+                placeholder="Search Spaces ..."
                 className="w-full max-w-md pl-8"
                 value={search}
                 onChange={handleSearch}
@@ -225,7 +184,7 @@ const Index = () => {
           <div className="border-t mt-4 mb-8" />
         </div>
         <div className="flex-1 flex flex-col pb-8 overflow-auto scrollbar-none">
-          {filteredAgents && filteredAgents.length === 0 ? (
+          {filteredSpaces && filteredSpaces.length === 0 ? (
             <NoDataCard
               className="my-auto"
               headline={search ? "No agents found" : "No spaces created"}
@@ -241,44 +200,42 @@ const Index = () => {
             <>
               {agentViewType === "grid" && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                  {filteredAgents &&
-                    filteredAgents.map((agent) => (
+                  {filteredSpaces &&
+                    filteredSpaces.map((space) => (
                       <Card
-                        key={agent.id}
+                        key={space.id}
                         className="justify-between flex flex-col"
                       >
                         <CardHeader className="flex flex-row justify-between">
                           <div className="flex-1">
-                            <CardTitle>{agent.name}</CardTitle>
+                            <CardTitle>{space.name}</CardTitle>
                             <p className="text-sm text-muted-foreground mt-2">
-                              {agent.description || "No description"}
+                              {space.description || "No description"}
                             </p>
                           </div>
-                          {agent.activeUserCount && (
-                            <div className="ml-auto">
-                              <div className="ml-2 text-sm text-muted-foreground flex items-center">
-                                <Users className="h-4 w-4 inline mr-1" />
-                                {agent.activeUserCount}
-                              </div>
+                          <div className="ml-auto">
+                            <div className="ml-2 text-sm text-muted-foreground flex items-center">
+                              <Package className="h-4 w-4 inline mr-1" />
+                              {space._count.agents ?? "0"}
                             </div>
-                          )}
+                          </div>
                         </CardHeader>
                         <CardContent>
                           <div className="flex flex-wrap gap-2">
                             <Link
                               className="block flex-1"
-                              to={`/chat/${agent.id}`}
+                              to={`/space/${space.id}`}
                             >
                               <Button variant="default" className="w-full">
-                                <MessageCircle className="h-4 w-4" />
-                                Chat
+                                <Package className="h-4 w-4" />
+                                View Space
                               </Button>
                             </Link>
 
-                            {/* {userCanEdit(agent) && (
+                            {/* {userCanEdit(space) && (
                               <Link
                                 className="flex-1"
-                                to={`/agent/${agent.id}`}
+                                to={`/space/${space.id}`}
                               >
                                 <Button variant="outline" className="w-full">
                                   <Sliders className="h-4 w-4" />
@@ -293,8 +250,8 @@ const Index = () => {
                 </div>
               )}
               {agentViewType === "list" &&
-              filteredAgents &&
-              filteredAgents.length > 0 ? (
+              filteredSpaces &&
+              filteredSpaces.length > 0 ? (
                 <div className="">
                   <div className="border shadow-xs rounded-md overflow-hidden">
                     <Table className="w-full bg-sky-100/30">
@@ -308,25 +265,25 @@ const Index = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredAgents.map((agent) => (
+                        {filteredSpaces.map((space) => (
                           <TableRow
-                            onClick={() => handleTableRowClick(agent.id)}
+                            onClick={() => handleTableRowClick(space.id)}
                             className="cursor-pointer"
-                            key={agent.id}
+                            key={space.id}
                           >
-                            <TableCell>{agent.name}</TableCell>
+                            <TableCell>{space.name}</TableCell>
                             <TableCell className="max-md:hidden">
-                              {agent.description || "No description"}
+                              {space.description || "No description"}
                             </TableCell>
 
                             <TableCell>
-                              <Link to={`/chat/${agent.id}`}>
+                              <Link to={`/space/${space.id}`}>
                                 <Button variant="default" size="sm">
-                                  Chat
+                                  View Space
                                 </Button>
                               </Link>
-                              {/* {userCanEdit(agent) && (
-                                <Link to={`/agent/${agent.id}`}>
+                              {/* {userCanEdit(space) && (
+                                <Link to={`/space/${space.id}`}>
                                   <Button
                                     variant="outline"
                                     size="sm"

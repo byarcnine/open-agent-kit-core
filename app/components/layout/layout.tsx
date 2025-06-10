@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, LogOut, Menu, X } from "react-feather";
 import { Link } from "react-router";
 import type { User } from "better-auth";
@@ -35,17 +35,13 @@ const Layout = ({
   user,
   agentName,
   navComponent,
-  spaces = SPACES,
-  currentSpace,
-  onSpaceChange,
+  spaceId,
 }: {
   children: React.ReactNode;
   user?: User;
   agentName?: string;
   navComponent?: React.ReactNode;
-  spaces?: Space[];
-  currentSpace?: Space;
-  onSpaceChange?: (space: Space) => void;
+  spaceId?: string;
 }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [spaceDropdownOpen, setSpaceDropdownOpen] = useState(false);
@@ -84,7 +80,7 @@ const Layout = ({
               )}
             >
               <Link
-                to="/"
+                to={spaceId ? `/space/${spaceId}` : "/"}
                 className="flex flex-col gap-1 w-full overflow-hidden"
               >
                 <span className="text-base flex items-center gap-2">
