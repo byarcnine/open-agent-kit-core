@@ -286,7 +286,7 @@ const Index = () => {
                           </div>
                           {agent.activeUserCount && (
                             <div className="ml-auto">
-                              <div className="ml-2 text-sm text-muted-foreground flex items-center">
+                              <div className="ml-2 text-sm text-muted-foreground flex items-center rounded-md  bg-blue-100/50 p-1.5">
                                 <Users className="h-4 w-4 inline mr-1" />
                                 {agent.activeUserCount}
                               </div>
