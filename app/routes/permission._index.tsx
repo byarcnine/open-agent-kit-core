@@ -24,6 +24,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
 import { CreatePermissionGroupDialog } from "~/components/createPermissionGroupDialog/createPermissionGroupDialog";
+import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
 import { GLOBAL_ROLES } from "~/lib/auth/roles";
 import { z } from "zod";
 import { useEffect } from "react";
@@ -42,6 +43,17 @@ const inviteUserSchema = z.object({
 const createPermissionGroupSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
+});
+
+const manageUserPermissionGroupsSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  permissionGroups: z.string().transform((val) => {
+    try {
+      return JSON.parse(val) as string[];
+    } catch {
+      throw new Error("Invalid permission groups data");
+    }
+  }),
 });
 
 type ActionData = {
@@ -157,6 +169,63 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     }
 
+    case "manageUserPermissionGroups": {
+      const result = manageUserPermissionGroupsSchema.safeParse({
+        userId: formData.get("userId"),
+        permissionGroups: formData.get("permissionGroups"),
+      });
+
+      if (!result.success) {
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: result.error.issues[0].message,
+          },
+          { status: 400 },
+        );
+      }
+
+      const { userId, permissionGroups } = result.data;
+
+      try {
+        // Remove all existing user permission groups for this user
+        await prisma.userPermissionGroup.deleteMany({
+          where: {
+            userId,
+          },
+        });
+
+        // Add new user permission groups
+        if (permissionGroups.length > 0) {
+          await prisma.userPermissionGroup.createMany({
+            data: permissionGroups.map((groupId) => ({
+              userId,
+              permissionGroupId: groupId,
+            })),
+          });
+        }
+
+        return data<ActionData>(
+          {
+            success: true,
+            intent: intent as string,
+            message: "User permission groups updated successfully",
+          },
+          { status: 200 },
+        );
+      } catch (error) {
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: "Failed to update user permission groups",
+          },
+          { status: 500 },
+        );
+      }
+    }
+
     default:
       return data<ActionData>(
         { success: false, intent: intent as string, error: "Invalid action" },
@@ -225,6 +294,9 @@ const PermissionManagement = () => {
     if (actionData && actionData.intent === "createPermissionGroup") {
       toast.success(actionData.message);
     }
+    if (actionData && actionData.intent === "manageUserPermissionGroups") {
+      toast.success(actionData.message);
+    }
     if (actionData && actionData.error) {
       toast.error(actionData.error);
     }
@@ -266,6 +338,7 @@ const PermissionManagement = () => {
                     <TableHead>Permission Groups</TableHead>
                     <TableHead>Individual Permissions</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -310,6 +383,12 @@ const PermissionManagement = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {dayjs(user.createdAt).fromNow()}
+                      </TableCell>
+                      <TableCell>
+                        <ManageUserPermissionGroupsDialog
+                          user={user}
+                          permissionGroups={permissionGroups}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

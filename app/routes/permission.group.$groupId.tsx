@@ -150,10 +150,79 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Permission Group not found", { status: 404 });
   }
 
+  // Calculate inherited permissions count
+  const livePermissions = permissionGroup.permissions.map((p) => ({
+    scope: p.scope,
+    referenceId: p.referenceId,
+  }));
+
+  // Create space-agent mapping
+  const spaceAgentMap = new Map<string, string[]>();
+  spaces.forEach((space) => {
+    spaceAgentMap.set(
+      space.id,
+      space.agents.map((agent) => agent.id),
+    );
+  });
+
+  // Create hierarchical permission checker
+  const checker = new HierarchicalPermissionChecker(
+    livePermissions,
+    spaceAgentMap,
+  );
+
+  const getPermissionsForContext = (context: string, referenceId: string) => {
+    let contextPermissions = livePermissions.filter((p) => {
+      if (context === "global") {
+        return p.scope.startsWith("global.") && p.referenceId === "global";
+      } else if (context === "space") {
+        return p.scope.startsWith("space.") && p.referenceId === referenceId;
+      } else if (context === "agent") {
+        return p.scope.startsWith("agent.") && p.referenceId === referenceId;
+      }
+      return false;
+    });
+    return contextPermissions.map((p) => p.scope);
+  };
+
+  let inheritedPermissionsCount = 0;
+
+  // Check global permissions
+  Object.keys(AVAILABLE_PERMISSIONS.global).forEach((permission) => {
+    const directPermissions = getPermissionsForContext("global", "global");
+    const hasDirect = directPermissions.includes(permission);
+    const hasInherited =
+      !hasDirect && checker.hasPermission(permission, "global");
+    if (hasInherited) inheritedPermissionsCount++;
+  });
+
+  // Check space permissions
+  spaces.forEach((space) => {
+    Object.keys(AVAILABLE_PERMISSIONS.space).forEach((permission) => {
+      const directPermissions = getPermissionsForContext("space", space.id);
+      const hasDirect = directPermissions.includes(permission);
+      const hasInherited =
+        !hasDirect && checker.hasPermission(permission, space.id);
+      if (hasInherited) inheritedPermissionsCount++;
+    });
+
+    // Check agent permissions
+    space.agents.forEach((agent) => {
+      Object.keys(AVAILABLE_PERMISSIONS.agent).forEach((permission) => {
+        const directPermissions = getPermissionsForContext("agent", agent.id);
+        const hasDirect = directPermissions.includes(permission);
+        const hasInherited =
+          !hasDirect && checker.hasPermission(permission, agent.id);
+        if (hasInherited) inheritedPermissionsCount++;
+      });
+    });
+  });
+
   return {
     user,
     permissionGroup,
     spaces,
+    inheritedPermissionsCount,
   };
 };
 
@@ -333,7 +402,8 @@ const HierarchicalPermissionSection = ({
 };
 
 const PermissionGroupDetail = () => {
-  const { user, permissionGroup, spaces } = useLoaderData<typeof loader>();
+  const { user, permissionGroup, spaces, inheritedPermissionsCount } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const [openSpaces, setOpenSpaces] = useState<{ [key: string]: boolean }>({});
   const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
@@ -459,7 +529,18 @@ const PermissionGroupDetail = () => {
                     Total Permissions
                   </div>
                   <div className="text-2xl font-bold">
-                    {permissionGroup._count.permissions}
+                    {permissionGroup._count.permissions +
+                      inheritedPermissionsCount}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary" className="text-xs">
+                      {permissionGroup._count.permissions} direct
+                    </Badge>
+                    {inheritedPermissionsCount > 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        {inheritedPermissionsCount} inherited
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div>
