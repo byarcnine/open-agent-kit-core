@@ -26,7 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Activity, AlertTriangle, Lock } from "react-feather";
+import { Activity, AlertTriangle, Book, Lock } from "react-feather";
 import { type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
 import {
@@ -525,8 +525,9 @@ const AgentSettings = () => {
                   <div className="flex flex-col gap-1">
                     <Label htmlFor="isActive">Active Agent</Label>
                     <p className="text-sm text-muted-foreground">
-                      If enabled the agent is active and can be used in chats.
-                      If disabled, the agent will not be available for use.
+                      If enabled the agent is active and can be used by your
+                      team. If disabled, the agent will not be available for
+                      use.
                     </p>
                   </div>
                   <Switch
@@ -573,6 +574,30 @@ const AgentSettings = () => {
                     </p>
                   </div>
                 )}
+                <div className="flex flex-col mt-8">
+                  <span className="text-sm font-medium leading-none pb-2">
+                    Default Tools
+                  </span>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Book size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="isPublic">Knowledge Base</Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled, the agent will have access to the knowledge
+                        base and can answer questions based on it.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="isPublic"
+                      name="isPublic"
+                      defaultChecked={isPublic}
+                      onCheckedChange={setIsPublic}
+                    />
+                  </div>
+                </div>
                 <Button className="mt-4" type="submit">
                   Save Changes
                 </Button>
