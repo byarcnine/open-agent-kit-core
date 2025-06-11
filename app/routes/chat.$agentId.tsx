@@ -10,13 +10,11 @@ import {
   useLocation,
 } from "react-router";
 import { type Conversation, prisma } from "@db/db.server";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import calendar from "dayjs/plugin/calendar";
 import Layout from "~/components/layout/layout";
-import { MessageCircle, PlusCircle, MoreVertical, Box, Plus } from "react-feather";
-import { PERMISSIONS } from "~/types/auth";
+import { MessageCircle, MoreVertical, Box, Plus } from "react-feather";
 import { useEffect, useState } from "react";
 import { Intent } from "./chat.$agentId._index";
 import { loadConversations } from "./utils/chat";
@@ -24,6 +22,8 @@ import { Button } from "~/components/ui/button";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "~/lib/utils";
 import { getUserRoutesForAgent } from "~/lib/plugins/availability.server";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 // Initialize the plugins
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
@@ -61,7 +61,11 @@ const CONVERSATIONS_PER_PAGE = 25;
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { agentId } = params;
 
-  const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.chat"],
+    agentId,
+  );
   const conversationsPromise = loadConversations({
     page: 1,
     agentId: agentId as string,

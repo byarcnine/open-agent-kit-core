@@ -1,17 +1,12 @@
-import {
-  type ActionFunctionArgs,
-  data,
-  type LoaderFunctionArgs,
-} from "react-router";
-import {
-  canUserAccessAgent,
-  verifyChatSessionTokenForPublicAgent,
-} from "~/lib/auth/hasAccess.server";
+import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { verifyChatSessionTokenForPublicAgent } from "~/lib/auth/hasAccess.server";
 import { getSession } from "~/lib/auth/auth.server";
 import { streamConversation } from "~/lib/llm/streamConversation.server";
 import { getCorsHeaderForAgent } from "./utils";
 import jwt from "jsonwebtoken";
 import { getChatSettings } from "~/lib/llm/chat.server";
+import { checkPermissionHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -46,18 +41,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // the meta object can be access by the tool
   const meta = body.meta || {};
   // make sure the agent is public or the user has access to the agent
-  const canAccess = await canUserAccessAgent(session?.user, agentId);
+  const canAccess = await checkPermissionHierarchical(
+    request,
+    PERMISSION["agent.chat"],
+    agentId,
+  );
   const chatSessionAllowed =
     canAccess || (await verifyChatSessionTokenForPublicAgent(request, agentId));
 
-  if (!canAccess && !chatSessionAllowed) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      {
-        status: 403,
-        headers: corsHeaders,
-      },
-    );
+  if (!chatSessionAllowed) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 403,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -100,12 +96,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ error: "An error occurred" }),
-      {
-        status: 500,
-        headers: corsHeaders,
-      },
-    );
+    return new Response(JSON.stringify({ error: "An error occurred" }), {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 };

@@ -79,6 +79,23 @@ export const OverviewNav = ({ user }: { user: SessionUser }) => {
             coming soon
           </div>
         </div>
+        <Link
+          to="/permissions"
+          prefetch="intent"
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary truncate",
+            {
+              "bg-stone-900 text-white hover:text-white":
+                location.pathname === "/permissions",
+            },
+            {
+              "hover:bg-stone-900/10": location.pathname !== "/permissions",
+            },
+          )}
+        >
+          <User className="h-4 w-4" />
+          Users & Permissions
+        </Link>
       </nav>
       <nav className="md:px-2 text-sm mb-2">
         {canChangeGlobalSettings && (

@@ -6,7 +6,6 @@ import {
   useLoaderData,
   useActionData,
 } from "react-router";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { Button } from "~/components/ui/button";
 import { prisma } from "@db/db.server";
 import {
@@ -24,19 +23,28 @@ import { sessionStorage } from "~/lib/sessions.server";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import Layout from "~/components/layout/layout";
 import { authClient } from "~/lib/auth/auth.client";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
+import type { SessionUser } from "~/types/auth";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.edit_global_users"],
+  );
   return data({ user: user as SessionUser });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.edit_global_users"],
+  );
+
   const formData = await request.formData();
   const intent = formData.get("intent");
   const session = await sessionStorage.getSession(
-    request.headers.get("Cookie")
+    request.headers.get("Cookie"),
   );
 
   if (intent === "updateName") {
@@ -52,7 +60,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return data(
       { success: true, intent },
-      { headers: { "Set-Cookie": await sessionStorage.commitSession(session) } }
+      {
+        headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      },
     );
   }
 };
@@ -84,7 +94,7 @@ const UserSettings = () => {
     e.preventDefault();
     if (
       confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
+        "Are you sure you want to delete your account? This action cannot be undone.",
       )
     ) {
       authClient.deleteUser().then(() => {

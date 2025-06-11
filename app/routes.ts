@@ -41,7 +41,7 @@ export const routes = (
           route("plugins", `${corePrefix}/agent.$agentId.plugins._index.tsx`),
           route("prompts", `${corePrefix}/agent.$agentId.prompts._index.tsx`),
           route("settings", `${corePrefix}/agent.$agentId.settings.tsx`),
-          route("users", `${corePrefix}/agent.$agentId.users.tsx`),
+          // route("users", `${corePrefix}/agent.$agentId.users.tsx`),
           route(
             "conversations",
             `${corePrefix}/agent.$agentId.conversations._index.tsx`,

@@ -5,7 +5,8 @@ import { AVAILABLE_PERMISSIONS } from "./permissions";
 function getPermissionGrants(permission: string): string[] {
   // The permission parameter is the full permission key (e.g., "global.super_admin")
   // The AVAILABLE_PERMISSIONS is flat, not nested by scope
-  const permissionConfig = AVAILABLE_PERMISSIONS[permission];
+  const permissionConfig =
+    AVAILABLE_PERMISSIONS[permission as keyof typeof AVAILABLE_PERMISSIONS];
 
   if (!permissionConfig) return [];
 

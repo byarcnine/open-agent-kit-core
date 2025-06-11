@@ -15,8 +15,9 @@ import { Badge } from "~/components/ui/badge";
 import { sessionStorage } from "~/lib/sessions.server";
 import ColorPicker from "~/components/ui/colorPicker";
 import { toast, Toaster } from "sonner";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
-import { PERMISSIONS } from "~/types/auth";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
+
 enum Intent {
   CREATE_TAG = "createTag",
   UPDATE_TAG = "updateTag",
@@ -33,7 +34,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie"),
   );
-  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
+  await hasAccessHierarchical(request, PERMISSION["agent.edit_agent"], agentId);
   try {
     if (intent === Intent.CREATE_TAG) {
       await prisma.knowledgeDocumentTag.create({

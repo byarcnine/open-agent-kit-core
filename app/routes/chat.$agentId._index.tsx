@@ -8,12 +8,12 @@ import {
 } from "react-router";
 import Chat from "~/components/chat/chat.client";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { getChatSettings } from "~/lib/llm/chat.server";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import { prisma } from "@db/db.server";
-import { PERMISSIONS } from "~/types/auth";
 import type { Message } from "ai";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 export enum Intent {
   UPDATE_TAGLINE = "updateTagline",
@@ -22,7 +22,11 @@ export enum Intent {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { agentId } = params;
-  const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.chat"],
+    agentId,
+  );
   if (!user) {
     return data({ success: false, error: "Unauthorized" }, { status: 401 });
   }

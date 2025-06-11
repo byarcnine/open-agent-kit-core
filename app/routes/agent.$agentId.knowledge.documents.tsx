@@ -38,9 +38,9 @@ import * as Popover from "@radix-ui/react-popover";
 import { Button } from "~/components/ui/button";
 import JsonEditorDialog from "~/components/jsonEditorDialog/jsonEditorDialog";
 import React from "react";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
-import { PERMISSIONS } from "~/types/auth";
 import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 dayjs.extend(relativeTime);
 
@@ -56,7 +56,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie"),
   );
-  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
+  await hasAccessHierarchical(request, PERMISSION["agent.edit_agent"], agentId);
   try {
     const clonedRequest = request.clone();
 

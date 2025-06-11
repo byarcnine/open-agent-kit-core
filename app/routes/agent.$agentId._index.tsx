@@ -6,8 +6,6 @@ import { getChatSettings } from "~/lib/llm/chat.server";
 
 // Loader function to fetch environment variable
 export const loader: LoaderFunction = async ({ params }) => {
-  // fetch agent
-
   const settingsPromise = getChatSettings(params.agentId as string);
   const toolNamesPromise = toolNameIdentifierList();
   const [settings, toolNames] = await Promise.all([

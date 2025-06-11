@@ -1,15 +1,19 @@
 import { Outlet, useLoaderData, useParams } from "react-router";
 import Layout from "~/components/layout/layout";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { prisma } from "@db/db.server";
 import { AdminNav } from "~/components/adminNav/adminNav";
 import { getAgentPluginMenuItems } from "~/lib/plugins/availability.server";
-import { PERMISSIONS } from "~/types/auth";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
-  const user = await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.view_agent_settings"],
+    params.agentId,
+  );
   const [agent, pluginMenuItems] = await Promise.all([
     prisma.agent.findUnique({
       where: { id: agentId },

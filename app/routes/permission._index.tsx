@@ -14,8 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import { prisma } from "@db/db.server";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
@@ -32,6 +30,8 @@ import { toast, Toaster } from "sonner";
 import { sendInvitationEmail } from "~/lib/email/sendInvitationEmail.server";
 import { InvitationType } from "@prisma/client";
 import { APP_URL } from "~/lib/config/config";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 dayjs.extend(relativeTime);
 
@@ -65,7 +65,7 @@ type ActionData = {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  await hasAccessHierarchical(request, PERMISSION["global.edit_global_users"]);
   const intent = formData.get("intent");
 
   switch (intent) {
@@ -235,7 +235,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.edit_global_users"],
+  );
 
   const usersPromise = prisma.user.findMany({
     include: {
@@ -303,7 +306,7 @@ const PermissionManagement = () => {
 
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
-      <div className="py-8 px-4 md:p-8 w-full max-w-7xl mx-auto">
+      <div className="py-8 px-4 md:p-8 w-full mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-medium">Permission Management</h1>
         </div>

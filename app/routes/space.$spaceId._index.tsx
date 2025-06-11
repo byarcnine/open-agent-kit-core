@@ -11,14 +11,12 @@ import {
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { hasAccess, hasPermission } from "~/lib/auth/hasAccess.server";
 import { MessageCircle, Search, Sliders, Users } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
 import { useEffect, useState, useRef } from "react";
@@ -31,6 +29,12 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import {
+  allowedAgentsInSpaceForUser,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
+import type { SessionUser } from "~/types/auth";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -46,15 +50,11 @@ const CreateAgentSchema = z.object({
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { spaceId } = params;
-  const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT);
-  const canCreateAgent = user.role === "SUPER_ADMIN";
-  if (!canCreateAgent) {
-    return {
-      errors: {
-        slug: ["You are not authorized to create agents"],
-      },
-    };
-  }
+  await hasAccessHierarchical(
+    request,
+    PERMISSION["space.create_agent"],
+    spaceId,
+  );
   const formData = await request.formData();
 
   const validation = CreateAgentSchema.safeParse({
@@ -95,10 +95,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
   const { spaceId } = params;
-  const canEditAllAgents = await hasPermission(user, PERMISSIONS.EDIT_AGENT);
-  const canViewAllAgents = await hasPermission(user, PERMISSIONS.VIEW_AGENT);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["space.view_agents"],
+    spaceId,
+  );
+  const allowedAgentsInSpace = await allowedAgentsInSpaceForUser(
+    user,
+    spaceId as string,
+  );
   const globalUserCount = await prisma.user.count({
     where: {
       role: {
@@ -115,6 +121,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     await prisma.agent.findMany({
       where: {
         spaceId,
+        id: {
+          in: allowedAgentsInSpace,
+        },
       },
       include: {
         agentUsers: {

@@ -12,7 +12,6 @@ import {
 } from "react-router";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import {
   getPluginsWithAvailability,
   setPluginAvailability,
@@ -31,7 +30,7 @@ import AgentAvailabilitySelector from "~/components/agentAvailabilitySelector/ag
 import { toast, Toaster } from "sonner";
 import type { PluginWithAvailability } from "~/types/plugins";
 import { Badge } from "~/components/ui/badge";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
+import { type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import { Button } from "~/components/ui/button";
 import {
@@ -46,6 +45,8 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 // Define the return type for the add NPM plugin action
 type AddNpmPluginResponse =
@@ -96,7 +97,10 @@ type ActionResponse =
   | NpmPlugin;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.view_plugins"],
+  );
   const agentsPromise = prisma.agent.findMany({ orderBy: { name: "asc" } });
   const pluginsWithAvailabilityPromise = getPluginsWithAvailability();
 
@@ -134,7 +138,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return {
         ...plugin,
         isInstalled: plugins.some((p) => p.name === plugin.name),
-        isFailed: installed && installed.status === "failed",
+        isFailed: installed && plugin.status === "failed",
       };
     },
   );
@@ -176,7 +180,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  await hasAccessHierarchical(request, PERMISSION["global.edit_plugins"]);
 
   const formData = await request.formData();
   const formAction = formData.get("_action") as string;

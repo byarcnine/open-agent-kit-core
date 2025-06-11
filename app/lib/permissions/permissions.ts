@@ -121,4 +121,11 @@ export const AVAILABLE_PERMISSIONS = {
     description: "Can interact with this agent",
     grants: [],
   },
-} as Record<string, { name: string; description: string; grants: string[] }>;
+};
+
+export const PERMISSION = Object.fromEntries(
+  Object.keys(AVAILABLE_PERMISSIONS).map((key) => [key, key]),
+) as Record<
+  keyof typeof AVAILABLE_PERMISSIONS,
+  keyof typeof AVAILABLE_PERMISSIONS
+>;

@@ -7,8 +7,6 @@ import {
   Link,
   Form,
 } from "react-router";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
-import { PERMISSIONS } from "~/types/auth";
 import { prisma } from "@db/db.server";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
@@ -29,8 +27,12 @@ import {
   type PermissionContext,
 } from "~/lib/permissions/hierarchical";
 import { Badge } from "~/components/ui/badge";
-import { Check, ArrowDown, Info } from "react-feather";
-import { AVAILABLE_PERMISSIONS } from "~/lib/permissions/permissions";
+import { Check, ArrowDown } from "react-feather";
+import {
+  AVAILABLE_PERMISSIONS,
+  PERMISSION,
+} from "~/lib/permissions/permissions";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 
 type ActionData = {
   success: boolean;
@@ -42,7 +44,8 @@ type ActionData = {
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const groupId = params.groupId as string;
   const formData = await request.formData();
-  await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  await hasAccessHierarchical(request, PERMISSION["global.edit_global_users"]);
+
   const intent = formData.get("intent");
 
   switch (intent) {
@@ -112,7 +115,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const groupId = params.groupId as string;
-  const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.edit_global_users"],
+  );
 
   const permissionGroupPromise = prisma.permissionGroup.findUnique({
     where: { id: groupId },
@@ -532,7 +538,7 @@ const PermissionGroupDetail = () => {
 
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
-      <div className="py-8 px-4 md:p-8 w-full max-w-7xl mx-auto">
+      <div className="py-8 px-4 md:p-8 w-full mx-auto">
         <div className="mb-8">
           <Link className="mb-4 block" to="/permissions">
             <Button variant="outline" size="sm">

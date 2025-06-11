@@ -10,7 +10,6 @@ import {
 } from "react-router";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { prisma } from "@db/db.server";
 import {
   Table,
@@ -34,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
+import { type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import {
   getLicenseFromSettings,
@@ -51,9 +50,14 @@ import { APP_URL, getVersion } from "~/lib/config/config";
 import { cn } from "~/lib/utils";
 import CopyToClipboardLink from "~/components/copyToClipboardLink/copyToClipboardLink";
 import { GLOBAL_ROLES } from "~/lib/auth/roles";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.super_admin"],
+  );
   const globalUsersPromise = prisma.user.findMany({
     where: {
       role: {
@@ -148,7 +152,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 
   const formData = await request.formData();
-  await hasAccess(request, PERMISSIONS.EDIT_GLOBAL_SETTINGS);
+  await hasAccessHierarchical(request, PERMISSION["global.super_admin"]);
   const intent = formData.get("intent");
 
   switch (intent) {

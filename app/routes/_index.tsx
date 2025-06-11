@@ -10,17 +10,21 @@ import {
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import {
+  allowedSpacesToViewForUser,
+  checkPermissionHierarchical,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
 import { Package, Search } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
+import { type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateSpaceDialog from "~/components/createSpaceDialog/createSpaceDialog";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Table,
@@ -30,6 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 const CreateSpaceSchema = z.object({
   name: z.string().min(1, "Space name is required"),
@@ -44,9 +49,12 @@ const CreateSpaceSchema = z.object({
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await hasAccessHierarchical(request, PERMISSIONS.VIEW_AGENT);
-  const canCreateAgent = user.role === "SUPER_ADMIN";
-  if (!canCreateAgent) {
+  await hasAccessHierarchical(request);
+  const canCreateSpace = await checkPermissionHierarchical(
+    request,
+    PERMISSION["global.edit_spaces"],
+  );
+  if (!canCreateSpace) {
     return {
       errors: {
         slug: ["You are not authorized to create spaces"],
@@ -88,13 +96,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
+  const user = await hasAccessHierarchical(request);
+  const allowedSpaces = await allowedSpacesToViewForUser(user);
   const spaces = await prisma.space.findMany({
     include: {
       _count: {
         select: {
           agents: true,
         },
+      },
+    },
+    where: {
+      id: {
+        in: allowedSpaces,
       },
     },
     orderBy: {

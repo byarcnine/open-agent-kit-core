@@ -16,7 +16,7 @@ import { z } from "zod";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Toaster } from "~/components/ui/sonner";
-import { hasAccess, hasPermission } from "~/lib/auth/hasAccess.server";
+import { hasPermission } from "~/lib/auth/hasAccess.server";
 import { Switch } from "~/components/ui/switch";
 import { Slider } from "~/components/ui/slider";
 import {
@@ -46,6 +46,8 @@ import { PERMISSIONS } from "~/types/auth";
 import CustomCodeEditor from "~/components/codeEditor/codeEditor";
 import css from "css";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 
 const AgentUpdateSchema = z.object({
   name: z
@@ -111,7 +113,11 @@ enum Intent {
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
-  const user = await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.edit_agent"],
+    agentId,
+  );
   const agent = (await prisma.agent.findUnique({
     where: {
       id: agentId,
@@ -120,7 +126,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const availableModels = await getConfiguredModelIds(getConfig());
 
-  const canDeleteAgent = await hasPermission(user, PERMISSIONS.DELETE_AGENT);
+  const canDeleteAgent = true; // TODO: add specific permission to delete agent
 
   const appUrl = APP_URL() as string;
 
@@ -148,7 +154,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const agentId = params.agentId as string;
   const intent = formData.get("intent");
-  await hasAccess(request, PERMISSIONS.EDIT_AGENT, agentId);
+  await hasAccessHierarchical(request, PERMISSION["agent.edit_agent"], agentId);
 
   // Fetch current agent data to access modelSettings
   const currentAgent = await prisma.agent.findUnique({
@@ -159,7 +165,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // Handle delete action
   if (intent === Intent.DELETE_AGENT) {
     // required extra permission to delete the agent
-    await hasAccess(request, PERMISSIONS.DELETE_AGENT, agentId);
+    await hasAccessHierarchical(
+      request,
+      PERMISSION["agent.edit_agent"],
+      agentId,
+    );
     await prisma.agent.delete({
       where: { id: agentId },
     });
