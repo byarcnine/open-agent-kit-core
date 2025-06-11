@@ -10,8 +10,8 @@ import {
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
-import { MessageCircle, Package, Search, Sliders, Users } from "react-feather";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { Package, Search } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
@@ -44,7 +44,7 @@ const CreateSpaceSchema = z.object({
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.VIEW_AGENT);
+  const user = await hasAccessHierarchical(request, PERMISSIONS.VIEW_AGENT);
   const canCreateAgent = user.role === "SUPER_ADMIN";
   if (!canCreateAgent) {
     return {

@@ -8,7 +8,7 @@ import {
   Form,
 } from "react-router";
 import { hasAccess } from "~/lib/auth/hasAccess.server";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
+import { PERMISSIONS } from "~/types/auth";
 import { prisma } from "@db/db.server";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
@@ -187,35 +187,35 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   let inheritedPermissionsCount = 0;
 
-  // Check global permissions
-  Object.keys(AVAILABLE_PERMISSIONS.global).forEach((permission) => {
-    const directPermissions = getPermissionsForContext("global", "global");
-    const hasDirect = directPermissions.includes(permission);
-    const hasInherited =
-      !hasDirect && checker.hasPermission(permission, "global");
-    if (hasInherited) inheritedPermissionsCount++;
-  });
+  // Calculate inherited permissions count for all contexts
+  Object.entries(AVAILABLE_PERMISSIONS).forEach(([permission]) => {
+    const [scope] = permission.split(".");
 
-  // Check space permissions
-  spaces.forEach((space) => {
-    Object.keys(AVAILABLE_PERMISSIONS.space).forEach((permission) => {
-      const directPermissions = getPermissionsForContext("space", space.id);
+    if (scope === "global") {
+      const directPermissions = getPermissionsForContext("global", "global");
       const hasDirect = directPermissions.includes(permission);
       const hasInherited =
-        !hasDirect && checker.hasPermission(permission, space.id);
+        !hasDirect && checker.hasPermission(permission, "global");
       if (hasInherited) inheritedPermissionsCount++;
-    });
-
-    // Check agent permissions
-    space.agents.forEach((agent) => {
-      Object.keys(AVAILABLE_PERMISSIONS.agent).forEach((permission) => {
-        const directPermissions = getPermissionsForContext("agent", agent.id);
+    } else if (scope === "space") {
+      spaces.forEach((space) => {
+        const directPermissions = getPermissionsForContext("space", space.id);
         const hasDirect = directPermissions.includes(permission);
         const hasInherited =
-          !hasDirect && checker.hasPermission(permission, agent.id);
+          !hasDirect && checker.hasPermission(permission, space.id);
         if (hasInherited) inheritedPermissionsCount++;
       });
-    });
+    } else if (scope === "agent") {
+      spaces.forEach((space) => {
+        space.agents.forEach((agent) => {
+          const directPermissions = getPermissionsForContext("agent", agent.id);
+          const hasDirect = directPermissions.includes(permission);
+          const hasInherited =
+            !hasDirect && checker.hasPermission(permission, agent.id);
+          if (hasInherited) inheritedPermissionsCount++;
+        });
+      });
+    }
   });
 
   return {
@@ -487,14 +487,20 @@ const PermissionGroupDetail = () => {
     setOpenAgents((prev) => ({ ...prev, [agentId]: !prev[agentId] }));
   };
 
+  // Helper function to get available permissions by scope
+  const getAvailablePermissionsByScope = (
+    scope: string,
+  ): [string, PermissionEntry][] => {
+    return Object.entries(AVAILABLE_PERMISSIONS)
+      .filter(([key]) => key.startsWith(`${scope}.`))
+      .map(([key, value]) => [key, value as PermissionEntry]);
+  };
+
   // Helper function to calculate permission counts for a context
   const getPermissionCounts = (context: string, referenceId: string) => {
-    const availablePerms =
-      context === "global"
-        ? Object.keys(AVAILABLE_PERMISSIONS.global)
-        : context === "space"
-          ? Object.keys(AVAILABLE_PERMISSIONS.space)
-          : Object.keys(AVAILABLE_PERMISSIONS.agent);
+    const availablePerms = getAvailablePermissionsByScope(context).map(
+      ([key]) => key,
+    );
 
     const directPermissions = getPermissionsForContext(context, referenceId);
     const directCount = directPermissions.length;
@@ -652,8 +658,8 @@ const PermissionGroupDetail = () => {
                   <HierarchicalPermissionSection
                     title="Global System Permissions"
                     permissions={getPermissionsForContext("global", "global")}
-                    availablePermissions={Object.entries(
-                      AVAILABLE_PERMISSIONS.global,
+                    availablePermissions={getAvailablePermissionsByScope(
+                      "global",
                     )}
                     context="global"
                     referenceId="global"
@@ -712,8 +718,8 @@ const PermissionGroupDetail = () => {
                                   "space",
                                   space.id,
                                 )}
-                                availablePermissions={Object.entries(
-                                  AVAILABLE_PERMISSIONS.space,
+                                availablePermissions={getAvailablePermissionsByScope(
+                                  "space",
                                 )}
                                 context="space"
                                 referenceId={space.id}
@@ -773,8 +779,8 @@ const PermissionGroupDetail = () => {
                                                 "agent",
                                                 agent.id,
                                               )}
-                                              availablePermissions={Object.entries(
-                                                AVAILABLE_PERMISSIONS.agent,
+                                              availablePermissions={getAvailablePermissionsByScope(
+                                                "agent",
                                               )}
                                               context="agent"
                                               referenceId={agent.id}

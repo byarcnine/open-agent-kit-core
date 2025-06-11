@@ -2,26 +2,14 @@
 import { AVAILABLE_PERMISSIONS } from "./permissions";
 
 // Helper function to get grants for a permission
-function getPermissionGrants(scope: string, permission: string): string[] {
-  const scopePermissions =
-    AVAILABLE_PERMISSIONS[scope as keyof typeof AVAILABLE_PERMISSIONS];
-  if (!scopePermissions) return [];
+function getPermissionGrants(permission: string): string[] {
+  // The permission parameter is the full permission key (e.g., "global.super_admin")
+  // The AVAILABLE_PERMISSIONS is flat, not nested by scope
+  const permissionConfig = AVAILABLE_PERMISSIONS[permission];
 
-  // Find the permission in the scope using Object.entries for type safety
-  const permissionEntry = Object.entries(scopePermissions).find(
-    ([key]) => key === permission,
-  );
+  if (!permissionConfig) return [];
 
-  if (!permissionEntry) return [];
-
-  const [, permissionConfig] = permissionEntry;
-
-  // Check if this permission has grants
-  if (!("grants" in permissionConfig) || !permissionConfig.grants) {
-    return [];
-  }
-
-  return permissionConfig.grants;
+  return permissionConfig.grants || [];
 }
 
 export interface PermissionContext {
@@ -54,19 +42,15 @@ export class HierarchicalPermissionChecker {
 
   inheritedFrom(scope: string, userPermissions: string[]) {
     return Object.entries(AVAILABLE_PERMISSIONS)
-      .flatMap(([_, value]) => {
-        return Object.entries(value)
-          .map(([key, permission]) => {
-            if (!userPermissions.includes(key)) {
-              return undefined;
-            }
-            if (this.matchesPermissionPattern(scope, permission.grants)) {
-              return permission;
-            }
-          })
-          .filter((p) => p !== undefined);
+      .map(([key, permission]) => {
+        if (!userPermissions.includes(key)) {
+          return undefined;
+        }
+        if (this.matchesPermissionPattern(scope, permission.grants)) {
+          return permission;
+        }
       })
-      .filter((key) => key !== undefined);
+      .filter((p) => p !== undefined);
   }
 
   private hasDirectPermission(scope: string, referenceId: string): boolean {
@@ -104,8 +88,7 @@ export class HierarchicalPermissionChecker {
     targetReferenceId: string,
     context: string,
   ): boolean {
-    const [userContext] = userPerm.scope.split(".");
-    const inheritedPerms = getPermissionGrants(userContext, userPerm.scope);
+    const inheritedPerms = getPermissionGrants(userPerm.scope);
 
     if (!this.matchesPermissionPattern(requiredScope, inheritedPerms)) {
       return false;
@@ -177,7 +160,7 @@ export class HierarchicalPermissionChecker {
     for (const userPerm of this.userPermissions) {
       if (userPerm.scope.startsWith("global.")) {
         // Global permissions apply everywhere
-        const inheritedPerms = getPermissionGrants("global", userPerm.scope);
+        const inheritedPerms = getPermissionGrants(userPerm.scope);
 
         // Add to all spaces and agents
         // This would need to be expanded based on actual spaces/agents
@@ -185,7 +168,7 @@ export class HierarchicalPermissionChecker {
 
       if (userPerm.scope.startsWith("space.")) {
         // Space permissions apply to agents in that space
-        const inheritedPerms = getPermissionGrants("space", userPerm.scope);
+        const inheritedPerms = getPermissionGrants(userPerm.scope);
         const agentIds = this.spaceAgentMap.get(userPerm.referenceId) || [];
 
         for (const agentId of agentIds) {
