@@ -221,9 +221,7 @@ const Index = () => {
 
   return (
     <Layout
-      navComponent={
-        <SpaceDetailNav spaceId={space.id} userScopes={userScopes} />
-      }
+      navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
       user={user}
     >
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">

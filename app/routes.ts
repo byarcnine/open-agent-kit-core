@@ -37,6 +37,10 @@ export const routes = (
         "space/:spaceId/permissions",
         `${corePrefix}/space.$spaceId.permissions.tsx`,
       ),
+      route(
+        "space/:spaceId/permissions/group/:groupId",
+        `${corePrefix}/space.$spaceId.permissions.group.$groupId.tsx`,
+      ),
       // Agent-specific routes
       layout(`${corePrefix}/space.$spaceId.agent.$agentId.tsx`, [
         ...prefix("/space/:spaceId/agent/:agentId/", [

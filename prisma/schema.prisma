@@ -41,6 +41,12 @@ enum InvitationType {
   GLOBAL
 }
 
+enum PermissionGroupLevel {
+  GLOBAL
+  SPACE
+  AGENT
+}
+
 model Message {
   id             String        @id @default(cuid())
   content        Json?
@@ -90,6 +96,7 @@ model Agent {
   KnowledgeDocumentTag KnowledgeDocumentTag[]
   space                Space                  @relation(fields: [spaceId], references: [id])
   spaceId              String
+  permissionGroup      PermissionGroup[]
 
   @@map("agent")
 }
@@ -235,11 +242,17 @@ model PermissionGroup {
   id                   String                @id @default(cuid())
   name                 String
   description          String
+  level                PermissionGroupLevel  @default(GLOBAL)
+  spaceId              String? // null for GLOBAL, required for SPACE and AGENT levels
+  agentId              String? // null for GLOBAL and SPACE, required for AGENT level
+  space                Space?                @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  agent                Agent?                @relation(fields: [agentId], references: [id], onDelete: Cascade)
   userPermissionGroups UserPermissionGroup[]
   permissions          Permission[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
+  @@unique([name, level, spaceId, agentId])
   @@map("permission_group")
 }
 
@@ -344,12 +357,13 @@ model User {
 }
 
 model Space {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  agents      Agent[]
+  id              String            @id @default(cuid())
+  name            String
+  description     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  agents          Agent[]
+  permissionGroup PermissionGroup[]
 
   @@map("space")
 }
