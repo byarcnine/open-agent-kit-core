@@ -15,7 +15,7 @@ import { Link, useLocation, useParams } from "react-router";
 import type { MenuItem } from "../../types/plugins";
 import FeatherIcon from "../featherIcon/featherIcon";
 
-export const AdminNav = ({
+export const AgentAdminNav = ({
   pluginMenuItems = [],
   spaceId,
 }: {

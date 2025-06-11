@@ -43,6 +43,7 @@ import {
   AgentCardTitle,
 } from "~/components/ui/agent-card";
 import { cn } from "~/lib/utils";
+import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -203,11 +204,6 @@ const Index = () => {
   };
 
   const filteredAgents = agents.filter((agent) => {
-    if (true) {
-      return search
-        ? agent.name.toLowerCase().includes(search.toLowerCase())
-        : true;
-    }
     return (
       agent.isActive &&
       (search ? agent.name.toLowerCase().includes(search.toLowerCase()) : true)
@@ -224,7 +220,12 @@ const Index = () => {
   }, []);
 
   return (
-    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
+    <Layout
+      navComponent={
+        <SpaceDetailNav spaceId={space.id} userScopes={userScopes} />
+      }
+      user={user}
+    >
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
@@ -252,8 +253,12 @@ const Index = () => {
                 className="w-full max-w-md"
               >
                 <TabsList>
-                  <TabsTrigger reduced value="grid">Grid</TabsTrigger>
-                  <TabsTrigger reduced value="list">List</TabsTrigger>
+                  <TabsTrigger reduced value="grid">
+                    Grid
+                  </TabsTrigger>
+                  <TabsTrigger reduced value="list">
+                    List
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -285,7 +290,9 @@ const Index = () => {
                       >
                         <AgentCardHeader className="flex flex-col">
                           <div className="flex-1 flex justify-between items-center gap-2">
-                            <AgentCardTitle className="truncate">{agent.name}</AgentCardTitle>
+                            <AgentCardTitle className="truncate">
+                              {agent.name}
+                            </AgentCardTitle>
                             <div
                               className={cn(
                                 "w-3 h-3 rounded-full overflow-hidden",
