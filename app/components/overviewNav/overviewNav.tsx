@@ -31,7 +31,7 @@ export const OverviewNav = ({ userScopes }: { userScopes: string[] }) => {
           )}
         >
           <User className="h-4 w-4" />
-          My Agents
+          My Spaces
         </Link>
         {userScopes.includes(PERMISSION["global.edit_plugins"]) && (
           <Link
