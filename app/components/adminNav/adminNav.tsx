@@ -1,7 +1,5 @@
 import {
-  Book,
   BookOpen,
-  Clipboard,
   CornerDownRight,
   Database,
   Inbox,
@@ -10,7 +8,6 @@ import {
   Settings,
   Star,
   Tool,
-  Type,
   Users,
 } from "react-feather";
 import { cn } from "../../lib/utils";
@@ -20,29 +17,34 @@ import FeatherIcon from "../featherIcon/featherIcon";
 
 export const AdminNav = ({
   pluginMenuItems = [],
+  spaceId,
 }: {
   pluginMenuItems: MenuItem[];
+  spaceId: string;
 }) => {
   const { agentId } = useParams();
   const location = useLocation();
   return (
     <nav className="flex flex-col gap-0.5 md:px-2 text-sm h-full w-full">
       <Link
-        to={`/agent/${agentId}`}
+        to={`/space/${spaceId}/agent/${agentId}`}
         prefetch="intent"
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2 transition-all",
           {
-            "bg-white text-primary": location.pathname === `/agent/${agentId}`,
+            "bg-white text-primary":
+              location.pathname === `space/${spaceId}/agent/${agentId}`,
           },
           {
-            "hover:bg-white/50": location.pathname !== `/agent/${agentId}`,
+            "hover:bg-white/50":
+              location.pathname !== `space/${spaceId}/agent/${agentId}`,
           },
         )}
       >
         <Play
           className={cn("h-4 w-4", {
-            "text-primary": location.pathname === `/agent/${agentId}`,
+            "text-primary":
+              location.pathname === `space/${spaceId}/agent/${agentId}`,
           })}
         />
         <div className="flex flex-col">
@@ -52,18 +54,18 @@ export const AdminNav = ({
       </Link>
 
       <Link
-        to={`/agent/${agentId}/prompts`}
+        to={`space/${spaceId}/agent/${agentId}/prompts`}
         prefetch="intent"
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
             "bg-white text-primary": location.pathname.includes(
-              `/agent/${agentId}/prompts`,
+              `space/${spaceId}/agent/${agentId}/prompts`,
             ),
           },
           {
             "hover:bg-white/50": !location.pathname.includes(
-              `/agent/${agentId}/prompts`,
+              `space/${spaceId}/agent/${agentId}/prompts`,
             ),
           },
         )}
@@ -71,7 +73,7 @@ export const AdminNav = ({
         <Star
           className={cn("h-4 w-4", {
             "text-primary": location.pathname.includes(
-              `/agent/${agentId}/prompts`,
+              `space/${spaceId}/agent/${agentId}/prompts`,
             ),
           })}
         />
@@ -81,18 +83,18 @@ export const AdminNav = ({
         </div>
       </Link>
       <Link
-        to={`/agent/${agentId}/knowledge`}
+        to={`space/${spaceId}/agent/${agentId}/knowledge`}
         prefetch="intent"
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
             "bg-white text-primary": location.pathname.includes(
-              `/agent/${agentId}/knowledge`,
+              `space/${spaceId}/agent/${agentId}/knowledge`,
             ),
           },
           {
             "hover:bg-white/50": !location.pathname.includes(
-              `/agent/${agentId}/knowledge`,
+              `space/${spaceId}/agent/${agentId}/knowledge`,
             ),
           },
         )}
@@ -100,7 +102,7 @@ export const AdminNav = ({
         <Database
           className={cn("h-4 w-4", {
             "text-primary": location.pathname.includes(
-              `/agent/${agentId}/knowledge`,
+              `space/${spaceId}/agent/${agentId}/knowledge`,
             ),
           })}
         />
@@ -111,18 +113,18 @@ export const AdminNav = ({
       </Link>
 
       <Link
-        to={`/agent/${agentId}/feedback`}
+        to={`space/${spaceId}/agent/${agentId}/feedback`}
         prefetch="intent"
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
             "bg-white text-primary": location.pathname.includes(
-              `/agent/${agentId}/feedback`,
+              `space/${spaceId}/agent/${agentId}/feedback`,
             ),
           },
           {
             "hover:bg-white/50": !location.pathname.includes(
-              `/agent/${agentId}/feedback`,
+              `space/${spaceId}/agent/${agentId}/feedback`,
             ),
           },
         )}
@@ -130,7 +132,7 @@ export const AdminNav = ({
         <Inbox
           className={cn("h-4 w-4", {
             "text-primary": location.pathname.includes(
-              `/agent/${agentId}/feedback`,
+              `space/${spaceId}/agent/${agentId}/feedback`,
             ),
           })}
         />
@@ -140,26 +142,30 @@ export const AdminNav = ({
         </div>
       </Link>
       <Link
-        to={`/agent/${agentId}/plugins`}
+        to={`space/${spaceId}/agent/${agentId}/plugins`}
         prefetch="intent"
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
             "bg-white text-primary":
-              location.pathname.includes(`/agent/${agentId}/plugins`) &&
+              location.pathname.includes(
+                `space/${spaceId}/agent/${agentId}/plugins`,
+              ) &&
               // If the current path includes any of the plugin menu items, don't highlight the plugins link
               !pluginMenuItems.some((item) =>
                 location.pathname.includes(
-                  `/agent/${agentId}/plugins/${item.href}`,
+                  `space/${spaceId}/agent/${agentId}/plugins/${item.href}`,
                 ),
               ),
           },
           {
             "hover:bg-white/50":
-              !location.pathname.includes(`/agent/${agentId}/plugins`) ||
+              !location.pathname.includes(
+                `space/${spaceId}/agent/${agentId}/plugins`,
+              ) ||
               pluginMenuItems.some((item) =>
                 location.pathname.includes(
-                  `/agent/${agentId}/plugins/${item.href}`,
+                  `space/${spaceId}/agent/${agentId}/plugins/${item.href}`,
                 ),
               ),
           },
@@ -168,10 +174,12 @@ export const AdminNav = ({
         <Tool
           className={cn("h-4 w-4", {
             "text-primary":
-              location.pathname.includes(`/agent/${agentId}/plugins`) &&
+              location.pathname.includes(
+                `space/${spaceId}/agent/${agentId}/plugins`,
+              ) &&
               !pluginMenuItems.some((item) =>
                 location.pathname.includes(
-                  `/agent/${agentId}/plugins/${item.href}`,
+                  `space/${spaceId}/agent/${agentId}/plugins/${item.href}`,
                 ),
               ),
           })}
@@ -184,7 +192,7 @@ export const AdminNav = ({
       {pluginMenuItems.length > 0 && (
         <div className="mt-1 gap-1 flex flex-col">
           {pluginMenuItems.map((item) => {
-            const href = `/agent/${agentId}/plugins/${item.href}`;
+            const href = `space/${spaceId}/agent/${agentId}/plugins/${item.href}`;
             return (
               <Link
                 to={href}
@@ -210,18 +218,18 @@ export const AdminNav = ({
       )}
 
       <Link
-        to={`/agent/${agentId}/conversations`}
+        to={`space/${spaceId}/agent/${agentId}/conversations`}
         prefetch="intent"
         className={cn(
           "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
             "bg-white text-primary": location.pathname.includes(
-              `/agent/${agentId}/conversations`,
+              `space/${spaceId}/agent/${agentId}/conversations`,
             ),
           },
           {
             "hover:bg-white/50": !location.pathname.includes(
-              `/agent/${agentId}/conversations`,
+              `space/${spaceId}/agent/${agentId}/conversations`,
             ),
           },
         )}
@@ -229,7 +237,7 @@ export const AdminNav = ({
         <BookOpen
           className={cn("h-4 w-4", {
             "text-primary": location.pathname.includes(
-              `/agent/${agentId}/conversations`,
+              `space/${spaceId}/agent/${agentId}/conversations`,
             ),
           })}
         />
@@ -269,47 +277,18 @@ export const AdminNav = ({
 
       <div className="mt-auto mb-4 border-t border-white pt-4 flex flex-col gap-0.5">
         <Link
-          to={`/agent/${agentId}/users`}
+          to={`space/${spaceId}/agent/${agentId}/settings`}
           prefetch="intent"
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
             {
               "bg-white text-primary": location.pathname.includes(
-                `/agent/${agentId}/users`,
+                `space/${spaceId}/agent/${agentId}/settings`,
               ),
             },
             {
               "hover:bg-white/50": !location.pathname.includes(
-                `/agent/${agentId}/users`,
-              ),
-            },
-          )}
-        >
-          <Users
-            className={cn("h-4 w-4", {
-              "text-primary": location.pathname.includes(
-                `/agent/${agentId}/users`,
-              ),
-            })}
-          />
-          <div className="flex flex-col">
-            <span className="">Users</span>
-            <span className="text-xs">Manage agent access and roles</span>
-          </div>
-        </Link>
-        <Link
-          to={`/agent/${agentId}/settings`}
-          prefetch="intent"
-          className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
-            {
-              "bg-white text-primary": location.pathname.includes(
-                `/agent/${agentId}/settings`,
-              ),
-            },
-            {
-              "hover:bg-white/50": !location.pathname.includes(
-                `/agent/${agentId}/settings`,
+                `space/${spaceId}/agent/${agentId}/settings`,
               ),
             },
           )}
@@ -317,7 +296,7 @@ export const AdminNav = ({
           <Settings
             className={cn("h-4 w-4", {
               "text-primary": location.pathname.includes(
-                `/agent/${agentId}/settings`,
+                `space/${spaceId}/agent/${agentId}/settings`,
               ),
             })}
           />

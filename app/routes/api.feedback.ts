@@ -23,8 +23,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const agentId = ""; // Replace with the appropriate agentId value
   const corsHeaders = await getCorsHeaderForAgent(origin, agentId);
 
-  console.log("CORS Headers:", corsHeaders);
-
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ message: "Method not allowed" }), {
       status: 405,

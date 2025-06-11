@@ -32,10 +32,14 @@ const Agent = () => {
   const { spaceId } = useParams();
   return (
     <Layout
-      navComponent={<AdminNav pluginMenuItems={pluginMenuItems} />}
+      navComponent={
+        <AdminNav
+          spaceId={spaceId as string}
+          pluginMenuItems={pluginMenuItems}
+        />
+      }
       user={user}
       agentName={agent.name}
-      spaceId={spaceId}
     >
       <Outlet />
     </Layout>

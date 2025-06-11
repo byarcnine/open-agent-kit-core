@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { PERMISSION } from "~/lib/permissions/permissions";
+import { AgentCard, AgentCardContent } from "~/components/ui/agent-card";
 
 const CreateSpaceSchema = z.object({
   name: z.string().min(1, "Space name is required"),
@@ -224,7 +225,7 @@ const Index = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                   {filteredSpaces &&
                     filteredSpaces.map((space) => (
-                      <Card
+                      <AgentCard
                         key={space.id}
                         className="justify-between flex flex-col"
                       >
@@ -242,7 +243,7 @@ const Index = () => {
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent>
+                        <AgentCardContent>
                           <div className="flex flex-wrap gap-2">
                             <Link
                               className="block flex-1"
