@@ -7,6 +7,7 @@ import { sessionStorage } from "../sessions.server";
 import { handleInvite } from "./handleInvite.server";
 import type { SessionUser } from "~/types/auth";
 import { APP_URL } from "../config/config";
+import { scaffoldInitialGroup } from "../permissions/scaffoldInitialGroup";
 
 export const oakDefaultAuthPlugin = () =>
   ({
@@ -56,12 +57,10 @@ export const auth = betterAuth({
 
       const userCount = await prisma.user.count();
       if (userCount === 1) {
-        const userId = ctx.context.newSession?.user.id;
-        if (userId) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: { role: GlobalUserRole.SUPER_ADMIN },
-          });
+        const user = ctx.context.newSession?.user;
+        if (user) {
+          // scaffold the initial group for the user and make them a super admin
+          await scaffoldInitialGroup(user);
         }
       }
 

@@ -118,7 +118,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   });
   const userScopes = await getUserScopes(user);
-  console.log("userScopes", userScopes);
   return {
     spaces,
     user: user as SessionUser,

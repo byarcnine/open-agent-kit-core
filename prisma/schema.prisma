@@ -73,7 +73,7 @@ model Agent {
   updatedAt            DateTime               @updatedAt
   isActive             Boolean                @default(true)
   isPublic             Boolean                @default(false)
-  agentSettings        Json?  
+  agentSettings        Json?
   allowedUrls          String[]               @default([])
   chatSettings         Json?
   modelSettings        Json?
@@ -222,13 +222,12 @@ model Permission {
   referenceId       String
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  // a permission either belongs to a user or a permission group
-  userId            String?
-  user              User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   permissionGroupId String?
   permissionGroup   PermissionGroup? @relation(fields: [permissionGroupId], references: [id])
+  user              User?            @relation(fields: [userId], references: [id])
+  userId            String?
 
-  @@unique([scope, referenceId, userId])
+  @@unique([scope, referenceId])
   @@map("permission")
 }
 
