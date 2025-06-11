@@ -33,6 +33,7 @@ import {
 import {
   AgentCard,
   AgentCardContent,
+  AgentCardDescription,
   AgentCardHeader,
   AgentCardTitle,
 } from "~/components/ui/agent-card";
@@ -280,13 +281,13 @@ const Index = () => {
                         <AgentCardHeader className="flex flex-row justify-between">
                           <div className="flex-1">
                             <AgentCardTitle>{agent.name}</AgentCardTitle>
-                            <p className="text-sm text-muted-foreground mt-2">
+                            <AgentCardDescription>
                               {agent.description || "No description"}
-                            </p>
+                            </AgentCardDescription>
                           </div>
                           {agent.activeUserCount && (
                             <div className="ml-auto">
-                              <div className="ml-2 text-sm text-muted-foreground flex items-center rounded-md  bg-blue-100/50 p-1.5">
+                              <div className="ml-2 text-sm text-primary flex items-center rounded-md  bg-neutral-200 p-1.5">
                                 <Users className="h-4 w-4 inline mr-1" />
                                 {agent.activeUserCount}
                               </div>
@@ -327,7 +328,7 @@ const Index = () => {
               filteredAgents.length > 0 ? (
                 <div className="">
                   <div className="border shadow-xs rounded-xl overflow-hidden">
-                    <Table className="w-full bg-sky-100/30">
+                    <Table className="w-full bg-white">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Agent Name</TableHead>
@@ -345,7 +346,7 @@ const Index = () => {
                             key={agent.id}
                           >
                             <TableCell>{agent.name}</TableCell>
-                            <TableCell className="max-md:hidden">
+                            <TableCell className="max-md:hidden truncate">
                               {agent.description || "No description"}
                             </TableCell>
 
