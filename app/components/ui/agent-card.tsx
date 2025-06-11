@@ -21,11 +21,7 @@ const AgentCardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex flex-col gap-2 p-4", className)}
-    {...props}
-  />
+  <div ref={ref} className={cn("flex flex-col p-4", className)} {...props} />
 ));
 AgentCardHeader.displayName = "CardHeader";
 

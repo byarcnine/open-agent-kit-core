@@ -267,7 +267,7 @@ export const AdminNav = ({
         </div>
       </a>
 
-      <div className="mt-auto mb-4 border-t border-white pt-4">
+      <div className="mt-auto mb-4 border-t border-white pt-4 flex flex-col gap-0.5">
         <Link
           to={`/agent/${agentId}/users`}
           prefetch="intent"

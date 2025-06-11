@@ -37,6 +37,7 @@ import {
   AgentCardHeader,
   AgentCardTitle,
 } from "~/components/ui/agent-card";
+import { cn } from "~/lib/utils";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -195,11 +196,16 @@ const Index = () => {
   };
 
   // Filter agents based on search input
-  const filteredAgents = search
-    ? agents.filter((agent) =>
-        agent.name.toLowerCase().includes(search.toLowerCase()),
-      )
-    : agents;
+  const filteredAgents = agents.filter((agent) => {
+    if (canEditAllAgents) {
+      return search
+        ? agent.name.toLowerCase().includes(search.toLowerCase())
+        : true;
+    }
+    return agent.isActive && (search
+      ? agent.name.toLowerCase().includes(search.toLowerCase())
+      : true);
+  });
 
   useEffect(() => {
     const savedTab = sessionStorage.getItem("agentViewType");
@@ -278,21 +284,29 @@ const Index = () => {
                         key={agent.id}
                         className="justify-between flex flex-col"
                       >
-                        <AgentCardHeader className="flex flex-row justify-between">
-                          <div className="flex-1">
+                        <AgentCardHeader className="flex flex-col">
+                          <div className="flex-1 flex justify-between items-center">
                             <AgentCardTitle>{agent.name}</AgentCardTitle>
-                            <AgentCardDescription>
-                              {agent.description || "No description"}
-                            </AgentCardDescription>
+                            <div
+                              className={cn(
+                                "w-3 h-3 rounded-full overflow-hidden",
+                                {
+                                  "bg-green-400": agent.isActive,
+                                  "bg-red-400": !agent.isActive,
+                                },
+                              )}
+                            />
                           </div>
-                          {agent.activeUserCount && (
-                            <div className="ml-auto">
-                              <div className="ml-2 text-sm text-primary flex items-center rounded-md  bg-neutral-200 p-1.5">
-                                <Users className="h-4 w-4 inline mr-1" />
+
+                          <AgentCardDescription className="flex gap-1 items-center">
+                            {agent.description || "No description"}
+                            {agent.activeUserCount && (
+                              <div className="ml-auto text-xs text-primary flex items-center rounded-lg  bg-neutral-200 py-1 px-2">
+                                <Users className="h-3 w-3 inline mr-1" />
                                 {agent.activeUserCount}
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </AgentCardDescription>
                         </AgentCardHeader>
                         <AgentCardContent>
                           <div className="flex flex-wrap gap-2">
