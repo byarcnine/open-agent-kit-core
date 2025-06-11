@@ -1,3 +1,5 @@
 export interface AgentSettings {
- hasKnowledgeBase?: boolean;
+  hasKnowledgeBase: boolean;
+  captureFeedback: boolean;
+  trackingEnabled: boolean;
 }

@@ -25,7 +25,14 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Activity, AlertTriangle, Lock } from "react-feather";
+import {
+  Activity,
+  AlertTriangle,
+  Book,
+  Lock,
+  MessageCircle,
+  Power,
+} from "react-feather";
 import { type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
 import {
@@ -67,7 +74,9 @@ const AgentSettingsUpdateSchema = z.object({
   isActive: z.boolean().optional(),
   allowedUrls: z.array(z.string()).optional(),
   agentSettings: z.object({
-    hasKnowledgeBase: z.boolean().optional(),
+    hasKnowledgeBase: z.boolean(),
+    captureFeedback: z.boolean(),
+    trackingEnabled: z.boolean(),
   }),
 });
 
@@ -242,6 +251,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       allowedUrls,
       agentSettings: {
         hasKnowledgeBase: !!formData.get("hasKnowledgeBase"),
+        captureFeedback: !!formData.get("captureFeedback"),
+        trackingEnabled: !!formData.get("trackingEnabled"),
       },
     };
 
@@ -254,9 +265,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           isPublic: validatedData.isPublic,
           isActive: validatedData.isActive,
           allowedUrls: validatedData.allowedUrls,
-          agentSettings: {
+          agentSettings: JSON.stringify({
             hasKnowledgeBase: validatedData.agentSettings.hasKnowledgeBase,
-          },
+            captureFeedback: validatedData.agentSettings.captureFeedback,
+            trackingEnabled: validatedData.agentSettings.trackingEnabled,
+          }),
         },
       });
       return { success: true, errors: null };
@@ -549,7 +562,7 @@ const AgentSettings = () => {
                       "bg-gray-200": !isActive,
                     })}
                   >
-                    <Activity size={20} />
+                    <Power size={20} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <Label htmlFor="isActive">Active Agent</Label>
@@ -602,6 +615,69 @@ const AgentSettings = () => {
                     </p>
                   </div>
                 )}
+                <div className="my-8 flex flex-col gap-2">
+                  <div className="font-medium text-sm">Agent Capabilities</div>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Book size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="hasKnowledgeBase">Knowledge Base</Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent can access the knowledge base to
+                        answer questions. This is useful for agents that need to
+                        provide information from a specific domain or context.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="hasKnowledgeBase"
+                      name="hasKnowledgeBase"
+                      defaultChecked={agentSettings.hasKnowledgeBase}
+                    />
+                  </div>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <MessageCircle size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="captureFeedback">Capture Feedback</Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent will capture feedback from users
+                        and store it in the database. This is useful for
+                        improving the agent's performance and understanding user
+                        needs.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="captureFeedback"
+                      name="captureFeedback"
+                      defaultChecked={agentSettings.captureFeedback}
+                    />
+                  </div>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Activity size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="trackingEnabled">
+                        Conversation Tracking
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent will track conversations and store
+                        them in the database. This is useful for analyzing user
+                        interactions and improving the agent's performance.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="trackingEnabled"
+                      name="trackingEnabled"
+                      defaultChecked={agentSettings.trackingEnabled}
+                    />
+                  </div>
+                </div>
                 <Button className="mt-4" type="submit">
                   Save Changes
                 </Button>

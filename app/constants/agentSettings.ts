@@ -2,4 +2,6 @@ import type { AgentSettings } from "~/types/agentSetting";
 
 export const initialAgentSettings: AgentSettings = {
   hasKnowledgeBase: false,
+  captureFeedback: false,
+  trackingEnabled: false,
 };
