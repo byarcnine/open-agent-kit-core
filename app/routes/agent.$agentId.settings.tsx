@@ -47,6 +47,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import { cn } from "~/lib/utils";
+import type { AgentSettings } from "~/types/agentSetting";
+import { initialAgentSettings } from "~/constants/agentSettings";
 
 const AgentUpdateSchema = z.object({
   name: z
@@ -64,6 +66,9 @@ const AgentSettingsUpdateSchema = z.object({
   isPublic: z.boolean(),
   isActive: z.boolean().optional(),
   allowedUrls: z.array(z.string()).optional(),
+  agentSettings: z.object({
+    hasKnowledgeBase: z.boolean().optional(),
+  }),
 });
 
 const ChatSettingsUpdateSchema = z.object({
@@ -197,9 +202,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         data: {
           name: validatedData.name,
           description: validatedData.description,
-          isPublic: validatedData.isPublic,
-          isActive: validatedData.isActive,
-          allowedUrls: validatedData.allowedUrls,
+          modelSettings: {
+            update: {
+              temperature: validatedData.temperature ?? 0.7,
+              model: formData.get("model")?.toString() || null,
+            },
+          },
         },
       });
       if (formData.get("model")) {
@@ -232,6 +240,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       isPublic: !!formData.get("isPublic"),
       isActive: !!formData.get("isActive"),
       allowedUrls,
+      agentSettings: {
+        hasKnowledgeBase: !!formData.get("hasKnowledgeBase"),
+      },
     };
 
     try {
@@ -243,6 +254,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           isPublic: validatedData.isPublic,
           isActive: validatedData.isActive,
           allowedUrls: validatedData.allowedUrls,
+          agentSettings: {
+            hasKnowledgeBase: validatedData.agentSettings.hasKnowledgeBase,
+          },
         },
       });
       return { success: true, errors: null };
@@ -343,6 +357,13 @@ const AgentSettings = () => {
   const chatSettings: ChatSettings = agent.chatSettings
     ? { ...initialChatSettings, ...JSON.parse(agent.chatSettings as string) }
     : initialChatSettings;
+
+  const agentSettings: AgentSettings = agent.agentSettings
+    ? {
+        ...initialAgentSettings,
+        ...JSON.parse(agent.agentSettings as string),
+      }
+    : initialAgentSettings;
 
   const [customCSS, setCustomCSS] = useState(chatSettings?.customCSS || "");
   const [temperature, setTemperature] = useState(

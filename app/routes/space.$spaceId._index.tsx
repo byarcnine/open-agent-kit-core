@@ -10,7 +10,6 @@ import {
   data,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { MessageCircle, Search, Sliders, Users } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -36,6 +35,14 @@ import {
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
+import {
+  AgentCard,
+  AgentCardContent,
+  AgentCardDescription,
+  AgentCardHeader,
+  AgentCardTitle,
+} from "~/components/ui/agent-card";
+import { cn } from "~/lib/utils";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -195,12 +202,17 @@ const Index = () => {
     }
   };
 
-  // Filter agents based on search input
-  const filteredAgents = search
-    ? agents.filter((agent) =>
-        agent.name.toLowerCase().includes(search.toLowerCase()),
-      )
-    : agents;
+  const filteredAgents = agents.filter((agent) => {
+    if (true) {
+      return search
+        ? agent.name.toLowerCase().includes(search.toLowerCase())
+        : true;
+    }
+    return (
+      agent.isActive &&
+      (search ? agent.name.toLowerCase().includes(search.toLowerCase()) : true)
+    );
+  });
 
   useEffect(() => {
     const savedTab = sessionStorage.getItem("agentViewType");
@@ -240,8 +252,8 @@ const Index = () => {
                 className="w-full max-w-md"
               >
                 <TabsList>
-                  <TabsTrigger value="grid">Grid</TabsTrigger>
-                  <TabsTrigger value="list">List</TabsTrigger>
+                  <TabsTrigger reduced value="grid">Grid</TabsTrigger>
+                  <TabsTrigger reduced value="list">List</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -267,27 +279,34 @@ const Index = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                   {filteredAgents &&
                     filteredAgents.map((agent) => (
-                      <Card
+                      <AgentCard
                         key={agent.id}
                         className="justify-between flex flex-col"
                       >
-                        <CardHeader className="flex flex-row justify-between">
-                          <div className="flex-1">
-                            <CardTitle>{agent.name}</CardTitle>
-                            <p className="text-sm text-muted-foreground mt-2">
-                              {agent.description || "No description"}
-                            </p>
+                        <AgentCardHeader className="flex flex-col">
+                          <div className="flex-1 flex justify-between items-center gap-2">
+                            <AgentCardTitle className="truncate">{agent.name}</AgentCardTitle>
+                            <div
+                              className={cn(
+                                "w-3 h-3 rounded-full overflow-hidden",
+                                {
+                                  "bg-green-400": agent.isActive,
+                                  "bg-red-400": !agent.isActive,
+                                },
+                              )}
+                            />
                           </div>
-                          {agent.activeUserCount && (
-                            <div className="ml-auto">
-                              <div className="ml-2 text-sm text-muted-foreground flex items-center">
-                                <Users className="h-4 w-4 inline mr-1" />
+                          <AgentCardDescription className="flex gap-1 items-center">
+                            {agent.description || "No description"}
+                            {agent.activeUserCount && (
+                              <div className="ml-auto text-xs text-primary flex items-center rounded-lg  bg-neutral-200 py-1 px-2">
+                                <Users className="h-3 w-3 inline mr-1" />
                                 {agent.activeUserCount}
                               </div>
-                            </div>
-                          )}
-                        </CardHeader>
-                        <CardContent>
+                            )}
+                          </AgentCardDescription>
+                        </AgentCardHeader>
+                        <AgentCardContent>
                           <div className="flex flex-wrap gap-2">
                             <Link
                               className="block flex-1"
@@ -312,8 +331,8 @@ const Index = () => {
                               </Link>
                             )}
                           </div>
-                        </CardContent>
-                      </Card>
+                        </AgentCardContent>
+                      </AgentCard>
                     ))}
                 </div>
               )}
@@ -321,15 +340,15 @@ const Index = () => {
               filteredAgents &&
               filteredAgents.length > 0 ? (
                 <div className="">
-                  <div className="border shadow-xs rounded-md overflow-hidden">
-                    <Table className="w-full bg-sky-100/30">
+                  <div className="border shadow-xs rounded-2xl overflow-hidden">
+                    <Table className="w-full bg-white">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Agent Name</TableHead>
                           <TableHead className="max-md:hidden">
                             Description
                           </TableHead>
-                          <TableHead className="w-40">Actions</TableHead>
+                          <TableHead className="w-20">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
