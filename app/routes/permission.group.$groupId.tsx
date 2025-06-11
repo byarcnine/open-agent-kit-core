@@ -32,7 +32,10 @@ import {
   AVAILABLE_PERMISSIONS,
   PERMISSION,
 } from "~/lib/permissions/permissions";
-import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import {
+  getUserScopes,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
 
 type ActionData = {
   success: boolean;
@@ -176,6 +179,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     livePermissions,
     spaceAgentMap,
   );
+  const userScopes = await getUserScopes(user);
 
   const getPermissionsForContext = (context: string, referenceId: string) => {
     let contextPermissions = livePermissions.filter((p) => {
@@ -229,6 +233,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     permissionGroup,
     spaces,
     inheritedPermissionsCount,
+    userScopes,
   };
 };
 
@@ -408,8 +413,13 @@ const HierarchicalPermissionSection = ({
 };
 
 const PermissionGroupDetail = () => {
-  const { user, permissionGroup, spaces, inheritedPermissionsCount } =
-    useLoaderData<typeof loader>();
+  const {
+    user,
+    permissionGroup,
+    spaces,
+    inheritedPermissionsCount,
+    userScopes,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const [openSpaces, setOpenSpaces] = useState<{ [key: string]: boolean }>({});
   const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
@@ -537,7 +547,7 @@ const PermissionGroupDetail = () => {
   };
 
   return (
-    <Layout navComponent={<OverviewNav user={user} />} user={user}>
+    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         <div className="mb-8">
           <Link className="mb-4 block" to="/permissions">

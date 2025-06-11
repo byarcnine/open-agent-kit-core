@@ -214,3 +214,76 @@ export const allowedAgentsInSpaceForUser = async (
 
   return allowedAgents.map((agent) => agent.id);
 };
+
+export const getUserScopes = async (user: SessionUser) => {
+  // Load user's permissions and spaces in parallel
+  const [userPermissionGroups, spaces] = await Promise.all([
+    prisma.userPermissionGroup.findMany({
+      where: { userId: user.id },
+      include: {
+        permissionGroup: {
+          include: {
+            permissions: true,
+          },
+        },
+      },
+    }),
+    prisma.space.findMany({
+      include: { agents: true },
+    }),
+  ]);
+
+  // Flatten permissions
+  const userPermissions: PermissionContext[] = [];
+  for (const upg of userPermissionGroups) {
+    for (const permission of upg.permissionGroup.permissions) {
+      userPermissions.push({
+        scope: permission.scope,
+        referenceId: permission.referenceId,
+      });
+    }
+  }
+
+  // Build space-agent mapping
+  const spaceAgentMap = new Map<string, string[]>();
+  for (const space of spaces) {
+    spaceAgentMap.set(
+      space.id,
+      space.agents.map((agent) => agent.id),
+    );
+  }
+
+  // Create hierarchical permission checker
+  const checker = new HierarchicalPermissionChecker(
+    userPermissions,
+    spaceAgentMap,
+  );
+
+  // Get all effective permissions (direct + inherited)
+  const allEffectivePermissions = checker.getAllEffectivePermissions();
+  // Extract direct scopes (what the user explicitly has)
+  const directScopes = userPermissions.map((permission) => ({
+    scope: permission.scope,
+    referenceId: permission.referenceId,
+    inherited: false,
+  }));
+
+  // Extract inherited scopes (what the user gets through grants)
+  const inheritedScopes = allEffectivePermissions
+    .filter((effectivePerm) => {
+      // Filter out permissions that are already direct permissions
+      return !userPermissions.some(
+        (directPerm) =>
+          directPerm.scope === effectivePerm.scope &&
+          directPerm.referenceId === effectivePerm.referenceId,
+      );
+    })
+    .map((permission) => ({
+      scope: permission.scope,
+      referenceId: permission.referenceId,
+      inherited: true,
+      spaceId: permission.spaceId,
+    }));
+
+  return [...directScopes, ...inheritedScopes].map((scope) => scope.scope);
+};

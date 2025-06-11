@@ -23,7 +23,7 @@ export const oakDefaultAuthPlugin = () =>
         },
       },
     },
-  } satisfies BetterAuthPlugin);
+  }) satisfies BetterAuthPlugin;
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -51,12 +51,6 @@ export const auth = betterAuth({
   trustedOrigins: [APP_URL()],
   plugins: [oakDefaultAuthPlugin()],
   hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      // Remove role from any user data being sent from client
-      if (ctx.body?.role) {
-        throw new Error("Role is not allowed to be set");
-      }
-    }),
     after: createAuthMiddleware(async (ctx) => {
       if (!ctx.request) return;
 
@@ -73,7 +67,7 @@ export const auth = betterAuth({
 
       // 1. Check if the invite is in the session
       const session = await sessionStorage.getSession(
-        ctx.request.headers.get("Cookie")
+        ctx.request.headers.get("Cookie"),
       );
       const user = ctx.context.newSession?.user;
       const invite = session.get("invite");

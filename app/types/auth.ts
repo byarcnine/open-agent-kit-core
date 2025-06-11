@@ -1,7 +1,6 @@
-import type { GlobalUserRole } from "@prisma/client";
 import type { User } from "better-auth";
 
-export type SessionUser = User & { role: GlobalUserRole };
+export type SessionUser = User;
 
 export enum PERMISSIONS {
   EDIT_AGENT = "EDIT_AGENT",

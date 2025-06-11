@@ -45,7 +45,10 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import {
+  getUserScopes,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 
 // Define the return type for the add NPM plugin action
@@ -164,6 +167,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const pendingPluginsList = npmPlugins.filter(
     (plugin) => plugin.status === "pending",
   );
+  const userScopes = await getUserScopes(user);
 
   return {
     agents,
@@ -176,6 +180,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     firstFailedPlugin,
     pendingPluginsCount,
     pendingPluginsList,
+    userScopes,
   };
 };
 
@@ -342,6 +347,7 @@ export default function Plugins() {
     storePluginsPromise,
     hasPendingPlugins,
     firstFailedPlugin,
+    userScopes,
   } = useLoaderData<typeof loader>();
   const [selectedPluginIdentifier, setSelectedPluginIdentifier] = useState<
     string | null
@@ -449,7 +455,7 @@ export default function Plugins() {
   };
 
   return (
-    <Layout navComponent={<OverviewNav user={user} />} user={user}>
+    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">
         {hasPendingPlugins && (
           <div className="mb-6 relative overflow-hidden rounded-lg border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 dark:border-orange-800 dark:from-orange-950 dark:to-amber-950">

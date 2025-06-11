@@ -23,7 +23,10 @@ import { sessionStorage } from "~/lib/sessions.server";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import Layout from "~/components/layout/layout";
 import { authClient } from "~/lib/auth/auth.client";
-import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import {
+  getUserScopes,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
 
@@ -32,7 +35,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     request,
     PERMISSION["global.edit_global_users"],
   );
-  return data({ user: user as SessionUser });
+  const userScopes = await getUserScopes(user);
+  return data({ user: user as SessionUser, userScopes });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -68,7 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 const UserSettings = () => {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, userScopes } = useLoaderData<typeof loader>();
   const actionData = useActionData<{
     success: boolean;
     intent: string;
@@ -125,7 +129,7 @@ const UserSettings = () => {
   };
 
   return (
-    <Layout user={user} navComponent={<OverviewNav user={user} />}>
+    <Layout user={user} navComponent={<OverviewNav userScopes={userScopes} />}>
       <div className="space-y-6 w-full py-8 px-4 md:p-8 overflow-auto">
         <h1 className="text-3xl font-medium">Personal Settings</h1>
         <Card>

@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   allowedSpacesToViewForUser,
   checkPermissionHierarchical,
+  getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { Package, Search } from "react-feather";
@@ -115,14 +116,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       name: "asc",
     },
   });
+  const userScopes = await getUserScopes(user);
+  console.log("userScopes", userScopes);
   return {
     spaces,
     user: user as SessionUser,
+    userScopes,
   };
 };
 
 const Index = () => {
-  const { spaces, user } = useLoaderData<typeof loader>();
+  const { spaces, user, userScopes } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const [search, setSearch] = useState("");
@@ -161,7 +165,7 @@ const Index = () => {
   }, []);
 
   return (
-    <Layout navComponent={<OverviewNav user={user} />} user={user}>
+    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">

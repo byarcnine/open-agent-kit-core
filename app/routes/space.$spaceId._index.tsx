@@ -19,7 +19,7 @@ import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Table,
@@ -31,6 +31,7 @@ import {
 } from "~/components/ui/table";
 import {
   allowedAgentsInSpaceForUser,
+  getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
@@ -117,6 +118,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       id: spaceId,
     },
   });
+  const userScopes = await getUserScopes(user);
+
   const agentsPromise = (
     await prisma.agent.findMany({
       where: {
@@ -165,11 +168,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     agents,
     space: space ?? null,
     user: user as SessionUser,
+    userScopes,
   };
 };
 
 const Index = () => {
-  const { agents, user, space } = useLoaderData<typeof loader>();
+  const { agents, user, space, userScopes } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const [search, setSearch] = useState("");
@@ -208,7 +212,7 @@ const Index = () => {
   }, []);
 
   return (
-    <Layout navComponent={<OverviewNav user={user} />} user={user}>
+    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">

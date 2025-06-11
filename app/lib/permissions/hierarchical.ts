@@ -156,34 +156,133 @@ export class HierarchicalPermissionChecker {
   // Get all effective permissions for debugging/display
   getAllEffectivePermissions(): PermissionContext[] {
     const effective: PermissionContext[] = [...this.userPermissions];
+    const addedPermissions = new Set<string>(); // Track what we've added to avoid duplicates
 
-    // Add inherited permissions
-    for (const userPerm of this.userPermissions) {
-      if (userPerm.scope.startsWith("global.")) {
-        // Global permissions apply everywhere
-        const inheritedPerms = getPermissionGrants(userPerm.scope);
+    // Track initial permissions to avoid duplicates
+    for (const perm of this.userPermissions) {
+      addedPermissions.add(`${perm.scope}:${perm.referenceId}`);
+    }
 
-        // Add to all spaces and agents
-        // This would need to be expanded based on actual spaces/agents
+    // Helper function to expand wildcard grants to actual permissions
+    const expandWildcardGrants = (grants: string[]): string[] => {
+      const expanded: string[] = [];
+      for (const grant of grants) {
+        if (grant.endsWith("*")) {
+          // Expand wildcard to all matching permissions
+          const prefix = grant.slice(0, -1);
+          const matchingPermissions = Object.keys(AVAILABLE_PERMISSIONS).filter(
+            (perm) => perm.startsWith(prefix),
+          );
+          expanded.push(...matchingPermissions);
+        } else {
+          expanded.push(grant);
+        }
       }
+      return expanded;
+    };
 
-      if (userPerm.scope.startsWith("space.")) {
-        // Space permissions apply to agents in that space
-        const inheritedPerms = getPermissionGrants(userPerm.scope);
-        const agentIds = this.spaceAgentMap.get(userPerm.referenceId) || [];
+    // For each direct permission, expand its grants to all applicable targets
+    for (const userPerm of this.userPermissions) {
+      const rawGrants = getPermissionGrants(userPerm.scope);
+      const inheritedPerms = expandWildcardGrants(rawGrants);
+      const [userContext] = userPerm.scope.split(".");
 
-        for (const agentId of agentIds) {
-          for (const inheritedPerm of inheritedPerms) {
-            if (
-              !effective.some(
-                (p) => p.scope === inheritedPerm && p.referenceId === agentId,
-              )
-            ) {
+      for (const inheritedPerm of inheritedPerms) {
+        const [inheritedContext] = inheritedPerm.split(".");
+
+        // Handle global permissions - they apply to all contexts
+        if (userContext === "global") {
+          if (inheritedContext === "global") {
+            // Global to global
+            const key = `${inheritedPerm}:global`;
+            if (!addedPermissions.has(key)) {
               effective.push({
                 scope: inheritedPerm,
-                referenceId: agentId,
-                spaceId: userPerm.referenceId,
+                referenceId: "global",
               });
+              addedPermissions.add(key);
+            }
+          } else if (inheritedContext === "space") {
+            // Global to all spaces
+            for (const [spaceId] of this.spaceAgentMap.entries()) {
+              const key = `${inheritedPerm}:${spaceId}`;
+              if (!addedPermissions.has(key)) {
+                effective.push({
+                  scope: inheritedPerm,
+                  referenceId: spaceId,
+                });
+                addedPermissions.add(key);
+              }
+            }
+          } else if (inheritedContext === "agent") {
+            // Global to all agents
+            for (const [spaceId, agentIds] of this.spaceAgentMap.entries()) {
+              for (const agentId of agentIds) {
+                const key = `${inheritedPerm}:${agentId}`;
+                if (!addedPermissions.has(key)) {
+                  effective.push({
+                    scope: inheritedPerm,
+                    referenceId: agentId,
+                    spaceId: spaceId,
+                  });
+                  addedPermissions.add(key);
+                }
+              }
+            }
+          }
+        } else if (userContext === "space") {
+          // Space permissions apply to that space and its agents
+          if (inheritedContext === "space") {
+            // Space to same space
+            const key = `${inheritedPerm}:${userPerm.referenceId}`;
+            if (!addedPermissions.has(key)) {
+              effective.push({
+                scope: inheritedPerm,
+                referenceId: userPerm.referenceId,
+              });
+              addedPermissions.add(key);
+            }
+          } else if (inheritedContext === "agent") {
+            // Space to all agents in that space
+            const agentIds = this.spaceAgentMap.get(userPerm.referenceId) || [];
+            for (const agentId of agentIds) {
+              const key = `${inheritedPerm}:${agentId}`;
+              if (!addedPermissions.has(key)) {
+                effective.push({
+                  scope: inheritedPerm,
+                  referenceId: agentId,
+                  spaceId: userPerm.referenceId,
+                });
+                addedPermissions.add(key);
+              }
+            }
+          }
+        } else if (userContext === "agent") {
+          // Agent permissions apply to that agent and potentially its space
+          if (inheritedContext === "agent") {
+            // Agent to same agent
+            const key = `${inheritedPerm}:${userPerm.referenceId}`;
+            if (!addedPermissions.has(key)) {
+              const spaceId = this.getSpaceForAgent(userPerm.referenceId);
+              effective.push({
+                scope: inheritedPerm,
+                referenceId: userPerm.referenceId,
+                spaceId: spaceId || undefined,
+              });
+              addedPermissions.add(key);
+            }
+          } else if (inheritedContext === "space") {
+            // Agent permissions that grant space permissions to their parent space
+            const spaceId = this.getSpaceForAgent(userPerm.referenceId);
+            if (spaceId) {
+              const key = `${inheritedPerm}:${spaceId}`;
+              if (!addedPermissions.has(key)) {
+                effective.push({
+                  scope: inheritedPerm,
+                  referenceId: spaceId,
+                });
+                addedPermissions.add(key);
+              }
             }
           }
         }

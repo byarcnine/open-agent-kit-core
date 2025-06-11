@@ -30,7 +30,10 @@ import { toast, Toaster } from "sonner";
 import { sendInvitationEmail } from "~/lib/email/sendInvitationEmail.server";
 import { InvitationType } from "@prisma/client";
 import { APP_URL } from "~/lib/config/config";
-import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import {
+  getUserScopes,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 
 dayjs.extend(relativeTime);
@@ -277,16 +280,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     usersPromise,
     permissionGroupsPromise,
   ]);
+  const userScopes = await getUserScopes(user);
 
   return {
     user,
     users,
     permissionGroups,
+    userScopes,
   };
 };
 
 const PermissionManagement = () => {
-  const { user, users, permissionGroups } = useLoaderData<typeof loader>();
+  const { user, users, permissionGroups, userScopes } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   useEffect(() => {
@@ -305,7 +311,7 @@ const PermissionManagement = () => {
   }, [actionData]);
 
   return (
-    <Layout navComponent={<OverviewNav user={user} />} user={user}>
+    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-medium">Permission Management</h1>
@@ -342,11 +348,6 @@ const PermissionManagement = () => {
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
-                      {/* <TableCell>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {user.role.replace(/_/g, " ")}
-                        </span>
-                      </TableCell> */}
                       <TableCell>
                         {user.userPermissionGroups.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
