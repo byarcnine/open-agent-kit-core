@@ -16,7 +16,7 @@ export async function hasAccessHierarchical(
   const user = session?.user;
 
   if (!user) {
-    throw redirect("/login");
+    throw redirect("/auth/login");
   }
 
   if (!requiredPermission) {
