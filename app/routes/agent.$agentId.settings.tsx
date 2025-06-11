@@ -29,9 +29,11 @@ import {
   Activity,
   AlertTriangle,
   Book,
+  Code,
   Lock,
   MessageCircle,
   Power,
+  Settings,
 } from "react-feather";
 import { type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
@@ -152,18 +154,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 const CardContentSection = ({
-  title,
+  className,
   children,
 }: {
-  title: string;
+  className?: string;
   children: React.ReactNode;
 }) => {
   return (
-    <div className="flex flex-col space-y-3 mb-6">
-      <div className="font-medium text-md leading-none tracking-tight mb-3">
-        {title}
-      </div>
-      {children}
+    <div className={className}>
+      <div className="flex flex-col space-y-6 mb-6">{children}</div>
     </div>
   );
 };
@@ -377,6 +376,8 @@ const AgentSettings = () => {
         ...JSON.parse(agent.agentSettings as string),
       }
     : initialAgentSettings;
+
+  const [chatSettingsTab, setChatSettingsTab] = useState<string>("intro");
 
   const [customCSS, setCustomCSS] = useState(chatSettings?.customCSS || "");
   const [temperature, setTemperature] = useState(
@@ -689,6 +690,19 @@ const AgentSettings = () => {
           <Card>
             <CardHeader>
               <CardTitle>Chat Settings</CardTitle>
+              <Tabs
+                defaultValue={chatSettingsTab}
+                value={chatSettingsTab}
+                onValueChange={setChatSettingsTab}
+                className="w-full max-w-md"
+              >
+                <TabsList>
+                  <TabsTrigger value="intro">Introduction</TabsTrigger>
+                  <TabsTrigger value="chat_input">Chat Input</TabsTrigger>
+                  <TabsTrigger value="formatting">Formatting</TabsTrigger>
+                  <TabsTrigger value="custom_css">Custom CSS</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
             <CardContent>
               <Form method="post" className="space-y-4">
@@ -697,9 +711,13 @@ const AgentSettings = () => {
                   name="intent"
                   value={Intent.UPDATE_CHAT_SETTINGS}
                 />
-                <CardContentSection title="Intro Screen">
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "intro",
+                  })}
+                >
                   <div className="flex flex-col space-y-2">
-                    <Label htmlFor="introTitle">Intro Title</Label>
+                    <Label htmlFor="introTitle">Title</Label>
                     <Input
                       id="introTitle"
                       name="introTitle"
@@ -712,7 +730,7 @@ const AgentSettings = () => {
                     </p>
                   </div>
                   <div className="flex flex-col space-y-2">
-                    <Label htmlFor="introSubTitle">Intro SubTitle</Label>
+                    <Label htmlFor="introSubTitle">Subtitle</Label>
                     <Input
                       id="introSubTitle"
                       name="introSubTitle"
@@ -764,21 +782,35 @@ const AgentSettings = () => {
                     </p>
                   </div>
                 </CardContentSection>
-                <CardContentSection title="Chat Input">
-                  <div className="flex gap-2 flex-col">
-                    <Label htmlFor="isPublic">Enable File Upload</Label>
-                    <p className="text-sm text-muted-foreground">
-                      If enabled the agent can accept file uploads from the
-                      user. Supported file types are images and PDFs. PDFs are
-                      currently not supported when choosing an OpenAI model.
-                    </p>
+
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "chat_input",
+                  })}
+                >
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Book size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="enableFileUpload">
+                        Enable File Upload
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent can accept file uploads from the
+                        user. Supported file types are images and PDFs. PDFs are
+                        currently not supported when choosing an OpenAI model.
+                      </p>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="enableFileUpload"
                       name="enableFileUpload"
                       defaultChecked={enableFileUpload}
                       onCheckedChange={setEnableFileUpload}
                     />
                   </div>
+
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="textAreaInitialRows">Text Area Rows</Label>
                     <Input
@@ -807,27 +839,44 @@ const AgentSettings = () => {
                       Enter a note that will be displayed below the chat input.
                     </p>
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="showMessageToolBar">
-                      Show Message Tool Bar
-                    </Label>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Settings size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="showMessageToolBar">
+                        Show Message Tool Bar
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled, actions like copy will be shown below the
+                        response messages.
+                      </p>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="showMessageToolBar"
                       name="showMessageToolBar"
                       defaultChecked={chatSettings?.showMessageToolBar}
                     />
-                    <p className="text-sm text-muted-foreground">
-                      If enabled, actions like copy will be shown below the
-                      response messages.
-                    </p>
                   </div>
                 </CardContentSection>
-                <CardContentSection title="Message Formatting">
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="showDefaultToolsDebugMessages">
-                      Show Default Tools Debug Messages
-                    </Label>
+
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "formatting",
+                  })}
+                >
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Code size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="showDefaultToolsDebugMessages">
+                        Show Default Tools Debug Messages
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="showDefaultToolsDebugMessages"
                       name="showDefaultToolsDebugMessages"
                       defaultChecked={
@@ -835,38 +884,64 @@ const AgentSettings = () => {
                       }
                     />
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="openExternalLinksInNewTab">
-                      Open External Links in New Tab
-                    </Label>
+
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Code size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="openExternalLinksInNewTab">
+                        Open External Links in New Tab
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="openExternalLinksInNewTab"
                       name="openExternalLinksInNewTab"
                       defaultChecked={chatSettings?.openExternalLinksInNewTab}
                     />
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="openInternalLinksInNewTab">
-                      Open Internal Links in New Tab
-                    </Label>
+
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Code size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="openInternalLinksInNewTab">
+                        Open Internal Links in New Tab
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="openInternalLinksInNewTab"
                       name="openInternalLinksInNewTab"
                       defaultChecked={chatSettings?.openInternalLinksInNewTab}
                     />
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="openYoutubeVideosInIframe ">
-                      Open Youtube Videos in Iframe
-                    </Label>
+
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Code size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="openYoutubeVideosInIframe ">
+                        Open Youtube Videos in Iframe
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="openYoutubeVideosInIframe"
                       name="openYoutubeVideosInIframe"
                       defaultChecked={chatSettings?.openYoutubeVideosInIframe}
                     />
                   </div>
                 </CardContentSection>
-                <CardContentSection title="Custom CSS">
+
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "custom_css",
+                  })}
+                >
                   <div className="flex flex-col space-y-2">
                     <CustomCodeEditor
                       value={customCSS}
@@ -886,6 +961,7 @@ const AgentSettings = () => {
                     />
                   </div>
                 </CardContentSection>
+
                 <Button type="submit">Save Changes</Button>
               </Form>
             </CardContent>
