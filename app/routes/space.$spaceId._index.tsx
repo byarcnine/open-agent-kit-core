@@ -284,8 +284,8 @@ const Index = () => {
                         className="justify-between flex flex-col"
                       >
                         <AgentCardHeader className="flex flex-col">
-                          <div className="flex-1 flex justify-between items-center">
-                            <AgentCardTitle>{agent.name}</AgentCardTitle>
+                          <div className="flex-1 flex justify-between items-center gap-2">
+                            <AgentCardTitle className="truncate">{agent.name}</AgentCardTitle>
                             <div
                               className={cn(
                                 "w-3 h-3 rounded-full overflow-hidden",
