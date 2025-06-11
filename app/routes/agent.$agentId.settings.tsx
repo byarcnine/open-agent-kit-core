@@ -16,7 +16,6 @@ import { z } from "zod";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Toaster } from "~/components/ui/sonner";
-import { hasPermission } from "~/lib/auth/hasAccess.server";
 import { Switch } from "~/components/ui/switch";
 import { Slider } from "~/components/ui/slider";
 import {
@@ -26,7 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { AlertTriangle } from "react-feather";
+import { Activity, AlertTriangle, Lock } from "react-feather";
 import { type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
 import {
@@ -42,12 +41,12 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import type { ModelSettings } from "~/types/llm";
-import { PERMISSIONS } from "~/types/auth";
 import CustomCodeEditor from "~/components/codeEditor/codeEditor";
 import css from "css";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
+import { cn } from "~/lib/utils";
 
 const AgentUpdateSchema = z.object({
   name: z
@@ -58,8 +57,12 @@ const AgentUpdateSchema = z.object({
     .string()
     .max(500, "Description must be less than 500 characters")
     .nullable(),
-  isPublic: z.boolean(),
   temperature: z.number().min(0).max(1).optional(),
+});
+
+const AgentSettingsUpdateSchema = z.object({
+  isPublic: z.boolean(),
+  isActive: z.boolean().optional(),
   allowedUrls: z.array(z.string()).optional(),
 });
 
@@ -106,6 +109,7 @@ const EmbedSettingsUpdateSchema = z.object({
 
 enum Intent {
   UPDATE_GENERAL_SETTINGS = "updateGeneralSettings",
+  UPDATE_AGENT_SETTINGS = "updateAgentSettings",
   UPDATE_CHAT_SETTINGS = "updateChatSettings",
   UPDATE_EMBED_SETTINGS = "updateEmbedSettings",
   DELETE_AGENT = "deleteAgent",
@@ -175,23 +179,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
     return redirect("/");
   }
+
   if (intent === Intent.UPDATE_GENERAL_SETTINGS) {
-    const allowedUrls =
-      formData
-        .get("allowedUrls")
-        ?.toString()
-        .split(",")
-        .map((url) => url.trim())
-        .filter((url) => url) || [];
     const rawInput = {
       name: formData.get("name")?.toString().trim(),
       description: formData.get("description")?.toString()?.trim() || null,
-      isPublic: !!formData.get("isPublic"),
-      allowedUrls,
       temperature: formData.get("temperature")
         ? parseFloat(formData.get("temperature") as string)
         : undefined,
     };
+
     try {
       const validatedData = AgentUpdateSchema.parse(rawInput);
 
@@ -201,6 +198,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           name: validatedData.name,
           description: validatedData.description,
           isPublic: validatedData.isPublic,
+          isActive: validatedData.isActive,
           allowedUrls: validatedData.allowedUrls,
         },
       });
@@ -221,6 +219,42 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       throw error;
     }
   }
+
+  if (intent == Intent.UPDATE_AGENT_SETTINGS) {
+    const allowedUrls =
+      formData
+        .get("allowedUrls")
+        ?.toString()
+        .split(",")
+        .map((url) => url.trim())
+        .filter((url) => url) || [];
+    const rawInput = {
+      isPublic: !!formData.get("isPublic"),
+      isActive: !!formData.get("isActive"),
+      allowedUrls,
+    };
+
+    try {
+      const validatedData = AgentSettingsUpdateSchema.parse(rawInput);
+
+      await prisma.agent.update({
+        where: { id: agentId },
+        data: {
+          isPublic: validatedData.isPublic,
+          isActive: validatedData.isActive,
+          allowedUrls: validatedData.allowedUrls,
+        },
+      });
+      return { success: true, errors: null };
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.log("update general error", error);
+        return data({ errors: error.flatten().fieldErrors }, { status: 400 });
+      }
+      throw error;
+    }
+  }
+
   if (intent === Intent.UPDATE_CHAT_SETTINGS) {
     const parsedSuggestedQuestions = formData
       .get("suggestedQuestions")
@@ -318,6 +352,7 @@ const AgentSettings = () => {
   const actionData = useActionData<typeof action>();
 
   const [isPublic, setIsPublic] = useState(agent.isPublic);
+  const [isActive, setIsActive] = useState(agent.isActive || false);
 
   const [enableFileUpload, setEnableFileUpload] = useState(
     chatSettings?.enableFileUpload,
@@ -346,10 +381,11 @@ const AgentSettings = () => {
 
   return (
     <div className="w-full py-8 px-4 md:p-8 space-y-6">
-      <h1 className="text-3xl font-medium mb-6">Agent Settings</h1>
+      <h1 className="text-3xl mb-6">Agent Settings</h1>
       <Tabs defaultValue="general" className="w-auto">
-        <TabsList className="grid w-full max-w-md grid-cols-4 mb-6">
+        <TabsList className="grid w-full max-w-xl grid-cols-5 mb-6">
           <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="embed">Embed</TabsTrigger>
           {canDeleteAgent && (
@@ -357,18 +393,22 @@ const AgentSettings = () => {
           )}
         </TabsList>
         <TabsContent value="general">
-          <Card>
+          <Card className="max-w-3xl">
             <CardHeader>
               <CardTitle>General Settings</CardTitle>
             </CardHeader>
             <CardContent>
-              <Form method="post" className="space-y-4">
+              <Form method="post" className="space-y-4 mt-4">
                 <input
                   type="hidden"
                   name="intent"
                   value={Intent.UPDATE_GENERAL_SETTINGS}
                 />
-                <div title="General Settings">
+                <div
+                  title="General Settings"
+                  className="flex flex-col gap-2 mb-8"
+                >
+                  <Label htmlFor="description">Agent Name</Label>
                   <Input
                     id="name"
                     name="name"
@@ -381,7 +421,7 @@ const AgentSettings = () => {
                     </p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col space-y-2 mb-8">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
@@ -397,12 +437,12 @@ const AgentSettings = () => {
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2 flex-col">
+                <div className="flex gap-2 flex-col mb-8">
                   <Label htmlFor="model">Model</Label>
                   <Select
                     name="model"
                     defaultValue={
-                      (agent.modelSettings as ModelSettings)?.model || ""
+                      (agent.modelSettings as ModelSettings)?.model || undefined
                     }
                   >
                     <SelectTrigger>
@@ -418,8 +458,19 @@ const AgentSettings = () => {
                   </Select>
                 </div>
                 <div className="flex flex-col space-y-2">
-                  <Label htmlFor="temperature">Temperature</Label>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="flex items-center" htmlFor="temperature">
+                      Model Temperature{" "}
+                      <span className="text-xs ml-2 bg-neutral-200 py-1 px-2 rounded-xl">
+                        0.7 recommended
+                      </span>
+                    </Label>
+
+                    <span className="text-xs h-[35px] aspect-square bg-blue-500/10 text-blue-600 rounded-xl flex items-center justify-center">
+                      {temperature.toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center space-x-2 my-4">
                     <Slider
                       id="temperature"
                       name="temperature"
@@ -430,30 +481,83 @@ const AgentSettings = () => {
                       onValueChange={(newVal: number[]) =>
                         setTemperature(newVal[0])
                       }
-                      className="w-[calc(100%-40px)] max-w-[250px]"
                     />
-                    <span className="text-sm w-[40px] text-right">
-                      {temperature.toFixed(2)}
-                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Controls randomness: Lowering results in less random
-                    completions. As the temperature approaches zero, the model
-                    will become deterministic and repetitive.
-                  </p>
+                  <div className="flex justify-between mb-4">
+                    <p className="text-xs text-muted-foreground">
+                      More focused and deterministic
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      More creative and random
+                    </p>
+                  </div>
                   {actionData?.errors?.temperature && (
                     <p className="text-sm text-red-500">
                       {actionData.errors.temperature[0]}
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2 flex-col">
-                  <Label htmlFor="isPublic">Public Agent</Label>
-                  <p className="text-sm text-muted-foreground">
-                    If enabled the agent is public and can be embed to websites
-                    and other tools.
-                  </p>
+
+                <Button className="mt-4" type="submit">
+                  Save Changes
+                </Button>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="settings">
+          <Card className="max-w-3xl">
+            <CardHeader>
+              <CardTitle>Settings</CardTitle>
+              <CardDescription>
+                Configure agent settings such as public access, activity, and
+                allowed URLs.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form method="post" className="">
+                <input
+                  type="hidden"
+                  name="intent"
+                  value={Intent.UPDATE_AGENT_SETTINGS}
+                />
+                <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl mb-4">
+                  <div
+                    className={cn(" rounded-xl aspect-square p-3", {
+                      "bg-green-500 text-white": isActive,
+                      "bg-gray-200": !isActive,
+                    })}
+                  >
+                    <Activity size={20} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="isActive">Active Agent</Label>
+                    <p className="text-sm text-muted-foreground">
+                      If enabled the agent is active and can be used in chats.
+                      If disabled, the agent will not be available for use.
+                    </p>
+                  </div>
                   <Switch
+                    className="ml-auto"
+                    id="isActive"
+                    name="isActive"
+                    defaultChecked={isActive}
+                    onCheckedChange={setIsActive}
+                  />
+                </div>
+                <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                  <div className="bg-white rounded-xl aspect-square p-3">
+                    <Lock size={20} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="isPublic">Public Agent</Label>
+                    <p className="text-sm text-muted-foreground">
+                      If enabled the agent is public and can be embed to
+                      websites and other tools.
+                    </p>
+                  </div>
+                  <Switch
+                    className="ml-auto"
                     id="isPublic"
                     name="isPublic"
                     defaultChecked={isPublic}
@@ -461,7 +565,7 @@ const AgentSettings = () => {
                   />
                 </div>
                 {isPublic && (
-                  <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col space-y-2 pt-4">
                     <Label htmlFor="allowedUrls">Add Allowed URLs</Label>
                     <Input
                       id="allowedUrls"
@@ -470,14 +574,16 @@ const AgentSettings = () => {
                       defaultValue={agent.allowedUrls.join(",")}
                       placeholder="Enter allowed URLs separated by commas"
                     />
-                    <p className="text-sm text-muted-foreground">
-                      Enter allowed URLs separated by commas where the agent can
-                      be embedded.
+                    <p className="text-xs text-muted-foreground max-w-lg">
+                      URLs where the agent can be embedded. Seperate multiple
+                      URLs with commas. If you want to allow all URLs, leave
+                      this field empty.
                     </p>
                   </div>
                 )}
-
-                <Button type="submit">Save Changes</Button>
+                <Button className="mt-4" type="submit">
+                  Save Changes
+                </Button>
               </Form>
             </CardContent>
           </Card>
@@ -709,7 +815,7 @@ const AgentSettings = () => {
 
                 <span className="mb-2 block font-medium text-sm">JS Embed</span>
                 <div className="flex flex-row gap-2 mb-4">
-                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-md">
+                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-xl">
                     {`
 <!-- Add the container where you want to render the agent. -->
 <div id="chat-container"></div>
@@ -732,7 +838,7 @@ const AgentSettings = () => {
                   iFrame Embed
                 </span>
                 <div className="flex flex-row gap-2 mb-4">
-                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-md">
+                  <code className="text-xs whitespace-pre-wrap break-all bg-zinc-200 p-4 rounded-xl">
                     {`
 <iframe src="${appUrl}/embed/${agent.id}" width="100%" height="100%"></iframe>
                 `}

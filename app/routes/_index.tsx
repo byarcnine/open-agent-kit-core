@@ -193,8 +193,12 @@ const Index = () => {
                 className="w-full max-w-md"
               >
                 <TabsList>
-                  <TabsTrigger value="grid">Grid</TabsTrigger>
-                  <TabsTrigger value="list">List</TabsTrigger>
+                  <TabsTrigger reduced value="grid">
+                    Grid
+                  </TabsTrigger>
+                  <TabsTrigger reduced value="list">
+                    List
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -262,8 +266,8 @@ const Index = () => {
                               </Link>
                             )} */}
                           </div>
-                        </CardContent>
-                      </Card>
+                        </AgentCardContent>
+                      </AgentCard>
                     ))}
                 </div>
               )}
@@ -271,8 +275,8 @@ const Index = () => {
               filteredSpaces &&
               filteredSpaces.length > 0 ? (
                 <div className="">
-                  <div className="border shadow-xs rounded-md overflow-hidden">
-                    <Table className="w-full bg-sky-100/30">
+                  <div className="border shadow-xs rounded-xl overflow-hidden">
+                    <Table className="w-full bg-white">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Agent Name</TableHead>

@@ -9,7 +9,7 @@ const Textarea = React.forwardRef<
       rows={2}
       className={[
         "appearance-none outline-none shadow-none",
-        "flex w-full rounded-md border border-input bg-transparent p-4 text-base md:text-sm transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 resize-none",
+        "flex w-full rounded-xl border border-input bg-transparent p-4 text-base md:text-sm transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 resize-none",
         className
       ].join(" ")}
       ref={ref}

@@ -16,7 +16,7 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
         <Popover.Trigger asChild>
           <Button
             variant="outline"
-            className="flex items-center px-2 py-1 rounded-md border"
+            className="flex items-center px-2 py-1 rounded-xl border"
             style={{ backgroundColor: value }}
           >
             <span className="mr-2 text-black">Color</span>
@@ -25,7 +25,7 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
         </Popover.Trigger>
 
         <Popover.Portal>
-          <Popover.Content className="p-2 bg-white rounded-md border w-40">
+          <Popover.Content className="p-2 bg-white rounded-xl border w-40">
             <div className="grid grid-cols-3 gap-2 mb-2">
               {colorPalette.map((color) => (
                 <button
@@ -46,7 +46,7 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full p-1 border rounded-md text-sm"
+                className="w-full p-1 border rounded-xl text-sm"
                 placeholder="#FFFFFF"
               />
             </div>

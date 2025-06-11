@@ -142,6 +142,7 @@ export const routes = (
           ),
         );
     }) || []),
+    route("api/feedback", `${corePrefix}/api.feedback.ts`),
   ] satisfies RouteConfig;
 };
 

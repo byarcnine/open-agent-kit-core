@@ -10,11 +10,15 @@ import { initialChatSettings } from "../../constants/chat";
 
 interface ChatContextType {
   isEmbed: boolean;
+  conversationId?: string;
+  apiUrl?: string;
   chatSettings: ChatSettings;
 }
 
 export const ChatContext = React.createContext<ChatContextType>({
   isEmbed: false,
+  conversationId: undefined,
+  apiUrl: undefined,
   chatSettings: initialChatSettings,
 });
 
@@ -37,6 +41,7 @@ const Chat = (props: {
   const {
     avatar,
     conversationId,
+    apiUrl,
     chatSettings,
     toolNames,
     chatInitialized,
@@ -61,8 +66,8 @@ const Chat = (props: {
   } = useOakChat(props);
 
   const chatContext = useMemo(
-    () => ({ isEmbed: !!props.isEmbed, chatSettings }),
-    [props.isEmbed, chatSettings],
+    () => ({ isEmbed: !!props.isEmbed, chatSettings, conversationId, apiUrl }),
+    [props.isEmbed, chatSettings, conversationId, apiUrl],
   );
   useEffect(() => {
     if (props.onMessage) {

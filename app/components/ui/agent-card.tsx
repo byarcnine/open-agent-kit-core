@@ -1,66 +1,63 @@
 import * as React from "react";
-import { cn } from "../../lib/utils";
 
-const Card = React.forwardRef<
+import { cn } from "~/lib/utils";
+
+const AgentCard = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, onClick, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      "bg-white-80 backdrop-blur-xl rounded-2xl shadow-sm border p-4",
+      "bg-white backdrop-blur-xl rounded-2xl shadow-sm border p-1",
       className,
     )}
     {...props}
   />
 ));
-Card.displayName = "Card";
+AgentCard.displayName = "Card";
 
-const CardHeader = React.forwardRef<
+const AgentCardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("flex flex-col p-4", className)} {...props} />
+));
+AgentCardHeader.displayName = "CardHeader";
+
+const AgentCardTitle = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col gap-2 p-4", className)}
+    className={cn("leading-none tracking-tight text-md", className)}
     {...props}
   />
 ));
-CardHeader.displayName = "CardHeader";
+AgentCardTitle.displayName = "CardTitle";
 
-const CardTitle = React.forwardRef<
+const AgentCardDescription = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("leading-none tracking-tight text-lg", className)}
+    className={cn("text-xs mt-2 text-muted-foreground", className)}
     {...props}
   />
 ));
-CardTitle.displayName = "CardTitle";
+AgentCardDescription.displayName = "CardDescription";
 
-const CardDescription = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
-    {...props}
-  />
-));
-CardDescription.displayName = "CardDescription";
-
-const CardContent = React.forwardRef<
+const AgentCardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("px-4 py-4 pt-0", className)} {...props} />
 ));
-CardContent.displayName = "CardContent";
+AgentCardContent.displayName = "CardContent";
 
-const CardFooter = React.forwardRef<
+const AgentCardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -70,13 +67,13 @@ const CardFooter = React.forwardRef<
     {...props}
   />
 ));
-CardFooter.displayName = "CardFooter";
+AgentCardFooter.displayName = "CardFooter";
 
 export {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
-  CardContent,
+  AgentCard,
+  AgentCardHeader,
+  AgentCardFooter,
+  AgentCardTitle,
+  AgentCardDescription,
+  AgentCardContent,
 };

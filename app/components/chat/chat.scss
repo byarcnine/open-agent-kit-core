@@ -1,6 +1,6 @@
 :root {
   --oak-color-primary: rgba(23, 23, 23, 1);
-  --oak-color-bg: rgb(244, 244, 245);
+  --oak-color-bg: #f5f5f5;
   --oak-border-color: #e2e8f0;
   --oak-color-secondary: white;
   --oak-color-muted-foreground: #737373;
@@ -477,8 +477,51 @@
           margin-top: 3.2px;
         }
 
-        &--copy-button {
+        &--feedback-submitted {
+          position: absolute;
+          pointer-events: none;
+          top: 0;
+          white-space: nowrap;
+          left: 8px;
+          opacity: 0;
+          padding: 0;
+          line-height: 1.2;
+          color: var(--oak-color-muted-foreground);
+
+          &.active {
+            opacity: 1;
+            animation: fadeInUp 0.3s ease-out;
+            animation-fill-mode: both;
+            animation-delay: 0.3s;
+          }
+          transition: opacity 0.3s ease;
+        }
+
+        &-actions-container {
           margin-top: 16px;
+        }
+
+        &--reaction-buttons {
+          position: relative;
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          padding-left: 8px;
+          margin-left: 8px;
+
+          &::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 1px;
+            background-color: var(--oak-border-color);
+          }
+        }
+
+        &--copy-button {
           opacity: 0.3;
           transition: opacity 0.3s ease;
           cursor: pointer;
@@ -486,6 +529,10 @@
           background-color: transparent;
           &:hover {
             opacity: 1;
+          }
+
+          &:disabled {
+            opacity: 0;
           }
         }
       }

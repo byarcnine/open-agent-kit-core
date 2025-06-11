@@ -59,7 +59,7 @@ export default function Screen() {
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
           <div className="absolute inset-0 bg-zinc-800" />
           <div className="relative z-20 flex items-center text-lg font-medium">
-            <div className="rounded-md overflow-hidden fade-in delay-75">
+            <div className="rounded-xl overflow-hidden fade-in delay-75">
               <img
                 src="/assets/logo.svg"
                 alt="OAK - Open Agent Kit"
@@ -74,7 +74,7 @@ export default function Screen() {
             </div>
         </div>
 
-        <div className="w-full max-w-md mx-auto p-8 space-y-6 border rounded-md bg-sky-100/30 fade-in delay-150">
+        <div className="w-full max-w-md mx-auto p-8 space-y-6 border rounded-xl bg-sky-100/30 fade-in delay-150">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-medium">
               {mode === "reset" ? "Reset Password" : "Request Password Reset"}

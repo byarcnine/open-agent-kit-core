@@ -88,7 +88,7 @@ const AgentAvailabilitySelector = ({
                   <div
                     key={agent.id}
                     className={cn(
-                      "py-2 rounded-md flex items-center justify-between",
+                      "py-2 rounded-xl flex items-center justify-between",
                       {
                         "border-b": index !== agents.length - 1,
                       },

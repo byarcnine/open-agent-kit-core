@@ -124,7 +124,7 @@ const Conversations = () => {
       )}
       {conversations && conversations.length > 0 && (
         <>
-          <div className="rounded-md border">
+          <div className="rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>

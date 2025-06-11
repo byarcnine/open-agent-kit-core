@@ -44,7 +44,7 @@ const CustomCodeEditor: React.FC<CustomCodeEditorProps> = ({
     <div
       ref={parentDivRef}
       style={{ minHeight: "100px", maxHeight: "500px", overflowY: "auto" }}
-      className="border rounded-md"
+      className="border rounded-xl"
     >
       <ClientOnlyComponent>
         <CodeEditor

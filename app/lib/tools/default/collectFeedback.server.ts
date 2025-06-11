@@ -32,6 +32,7 @@ const collectFeedback = ({ conversationId }: ToolParams) =>
         "emotional_response",
         "hesitation",
         "implicit_feedback",
+        "user_feedback",
         "other",
       ]),
       sentiment: z

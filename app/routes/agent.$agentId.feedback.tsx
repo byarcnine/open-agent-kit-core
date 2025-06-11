@@ -52,7 +52,7 @@ const Conversations = () => {
         <NoDataCard description="No feedback found for this agent." />
       )}
       {feedback && feedback.length > 0 && (
-        <div className="rounded-md border">
+        <div className="rounded-xl border">
           <Table>
             <TableHeader>
               <TableRow>

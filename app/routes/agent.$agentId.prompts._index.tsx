@@ -236,22 +236,22 @@ const Prompt = () => {
       <h1 className="text-3xl mb-4">Manage Prompt</h1>
       <div className="mb-6 text-muted-foreground">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-4 text-primary">
-          <div className="bg-muted p-2 rounded-md">
+          <div className="bg-muted p-2 rounded-xl">
             Be clear and concise: Ensure your prompt is easy to understand.
           </div>
-          <div className="bg-muted p-2 rounded-md">
+          <div className="bg-muted p-2 rounded-xl">
             Provide context: Give enough background information to guide the
             agent.
           </div>
-          <div className="bg-muted p-2 rounded-md">
+          <div className="bg-muted p-2 rounded-xl">
             Specify the desired outcome: Clearly state what you expect from the
             agent.
           </div>
-          <div className="bg-muted p-2 rounded-md">
+          <div className="bg-muted p-2 rounded-xl">
             Use proper grammar and spelling: Avoid misunderstandings by using
             correct language.
           </div>
-          <div className="bg-muted p-2 rounded-md">
+          <div className="bg-muted p-2 rounded-xl">
             Test and iterate: Continuously refine your prompts based on agent
             performance.
           </div>

@@ -71,7 +71,9 @@ model Agent {
   description          String?
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  isActive             Boolean                @default(true)
   isPublic             Boolean                @default(false)
+  agentSettings        Json?  
   allowedUrls          String[]               @default([])
   chatSettings         Json?
   modelSettings        Json?
