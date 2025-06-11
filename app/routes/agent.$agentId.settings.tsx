@@ -485,7 +485,7 @@ const AgentSettings = () => {
                   </div>
                 )}
 
-                <Button className="mt-4" variant="blue" type="submit" size="lg">
+                <Button className="mt-4" type="submit">
                   Save Changes
                 </Button>
               </Form>

@@ -31,16 +31,18 @@ export const AdminNav = ({
         to={`/agent/${agentId}`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all",
           {
-            "bg-blue-500/10 text-blue-600":
-              location.pathname === `/agent/${agentId}`,
+            "bg-white text-primary": location.pathname === `/agent/${agentId}`,
+          },
+          {
+            "hover:bg-white/50": location.pathname !== `/agent/${agentId}`,
           },
         )}
       >
         <Play
           className={cn("h-4 w-4", {
-            "text-blue-500": location.pathname === `/agent/${agentId}`,
+            "text-primary": location.pathname === `/agent/${agentId}`,
           })}
         />
         <div className="flex flex-col">
@@ -53,9 +55,14 @@ export const AdminNav = ({
         to={`/agent/${agentId}/prompts`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
-            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+            "bg-white text-primary": location.pathname.includes(
+              `/agent/${agentId}/prompts`,
+            ),
+          },
+          {
+            "hover:bg-white/50": !location.pathname.includes(
               `/agent/${agentId}/prompts`,
             ),
           },
@@ -63,7 +70,7 @@ export const AdminNav = ({
       >
         <Star
           className={cn("h-4 w-4", {
-            "text-blue-500": location.pathname.includes(
+            "text-primary": location.pathname.includes(
               `/agent/${agentId}/prompts`,
             ),
           })}
@@ -77,9 +84,14 @@ export const AdminNav = ({
         to={`/agent/${agentId}/knowledge`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
-            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+            "bg-white text-primary": location.pathname.includes(
+              `/agent/${agentId}/knowledge`,
+            ),
+          },
+          {
+            "hover:bg-white/50": !location.pathname.includes(
               `/agent/${agentId}/knowledge`,
             ),
           },
@@ -87,7 +99,7 @@ export const AdminNav = ({
       >
         <Database
           className={cn("h-4 w-4", {
-            "text-blue-500": location.pathname.includes(
+            "text-primary": location.pathname.includes(
               `/agent/${agentId}/knowledge`,
             ),
           })}
@@ -102,9 +114,14 @@ export const AdminNav = ({
         to={`/agent/${agentId}/feedback`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
-            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+            "bg-white text-primary": location.pathname.includes(
+              `/agent/${agentId}/feedback`,
+            ),
+          },
+          {
+            "hover:bg-white/50": !location.pathname.includes(
               `/agent/${agentId}/feedback`,
             ),
           },
@@ -112,7 +129,7 @@ export const AdminNav = ({
       >
         <Inbox
           className={cn("h-4 w-4", {
-            "text-blue-500": location.pathname.includes(
+            "text-primary": location.pathname.includes(
               `/agent/${agentId}/feedback`,
             ),
           })}
@@ -126,12 +143,21 @@ export const AdminNav = ({
         to={`/agent/${agentId}/plugins`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
-            "bg-blue-500/10 text-blue-600":
+            "bg-white text-primary":
               location.pathname.includes(`/agent/${agentId}/plugins`) &&
               // If the current path includes any of the plugin menu items, don't highlight the plugins link
               !pluginMenuItems.some((item) =>
+                location.pathname.includes(
+                  `/agent/${agentId}/plugins/${item.href}`,
+                ),
+              ),
+          },
+          {
+            "hover:bg-white/50":
+              !location.pathname.includes(`/agent/${agentId}/plugins`) ||
+              pluginMenuItems.some((item) =>
                 location.pathname.includes(
                   `/agent/${agentId}/plugins/${item.href}`,
                 ),
@@ -141,7 +167,7 @@ export const AdminNav = ({
       >
         <Tool
           className={cn("h-4 w-4", {
-            "text-blue-500":
+            "text-primary":
               location.pathname.includes(`/agent/${agentId}/plugins`) &&
               !pluginMenuItems.some((item) =>
                 location.pathname.includes(
@@ -165,10 +191,12 @@ export const AdminNav = ({
                 prefetch="intent"
                 key={item.label}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+                  "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
                   {
-                    "bg-zinc-400/30 text-primary hover:bg-zinc-400/40":
-                      location.pathname.includes(href),
+                    "bg-white text-primary": location.pathname.includes(href),
+                  },
+                  {
+                    "hover:bg-white/50": !location.pathname.includes(href),
                   },
                 )}
               >
@@ -185,9 +213,14 @@ export const AdminNav = ({
         to={`/agent/${agentId}/conversations`}
         prefetch="intent"
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
-            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+            "bg-white text-primary": location.pathname.includes(
+              `/agent/${agentId}/conversations`,
+            ),
+          },
+          {
+            "hover:bg-white/50": !location.pathname.includes(
               `/agent/${agentId}/conversations`,
             ),
           },
@@ -195,7 +228,7 @@ export const AdminNav = ({
       >
         <BookOpen
           className={cn("h-4 w-4", {
-            "text-blue-500": location.pathname.includes(
+            "text-primary": location.pathname.includes(
               `/agent/${agentId}/conversations`,
             ),
           })}
@@ -210,9 +243,14 @@ export const AdminNav = ({
         target="_blank"
         rel="noreferrer"
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+          "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
           {
-            "bg-blue-500/10 text-blue-600": location.pathname.includes(
+            "bg-white text-primary": location.pathname.includes(
+              `/chat/${agentId}`,
+            ),
+          },
+          {
+            "hover:bg-white/50": !location.pathname.includes(
               `/chat/${agentId}`,
             ),
           },
@@ -220,7 +258,7 @@ export const AdminNav = ({
       >
         <MessageSquare
           className={cn("h-4 w-4", {
-            "text-blue-500": location.pathname.includes(`/chat/${agentId}`),
+            "text-primary": location.pathname.includes(`/chat/${agentId}`),
           })}
         />
         <div className="flex flex-col">
@@ -229,14 +267,19 @@ export const AdminNav = ({
         </div>
       </a>
 
-      <div className="mt-auto mb-4 border-t pt-4">
+      <div className="mt-auto mb-4 border-t border-white pt-4">
         <Link
           to={`/agent/${agentId}/users`}
           prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
             {
-              "bg-blue-500/10 text-blue-600": location.pathname.includes(
+              "bg-white text-primary": location.pathname.includes(
+                `/agent/${agentId}/users`,
+              ),
+            },
+            {
+              "hover:bg-white/50": !location.pathname.includes(
                 `/agent/${agentId}/users`,
               ),
             },
@@ -244,7 +287,7 @@ export const AdminNav = ({
         >
           <Users
             className={cn("h-4 w-4", {
-              "text-blue-500": location.pathname.includes(
+              "text-primary": location.pathname.includes(
                 `/agent/${agentId}/users`,
               ),
             })}
@@ -258,9 +301,14 @@ export const AdminNav = ({
           to={`/agent/${agentId}/settings`}
           prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  hover:text-primary hover:bg-blue-500/10",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
             {
-              "bg-blue-500/10 text-blue-600": location.pathname.includes(
+              "bg-white text-primary": location.pathname.includes(
+                `/agent/${agentId}/settings`,
+              ),
+            },
+            {
+              "hover:bg-white/50": !location.pathname.includes(
                 `/agent/${agentId}/settings`,
               ),
             },
@@ -268,7 +316,7 @@ export const AdminNav = ({
         >
           <Settings
             className={cn("h-4 w-4", {
-              "text-blue-500": location.pathname.includes(
+              "text-primary": location.pathname.includes(
                 `/agent/${agentId}/settings`,
               ),
             })}

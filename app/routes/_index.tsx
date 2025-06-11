@@ -211,7 +211,7 @@ const Index = () => {
 
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
-      <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
+      <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8 bg-neutral-50">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
             <h1 className="text-3xl font-medium">My Agents</h1>
@@ -226,7 +226,7 @@ const Index = () => {
                 autoFocus
                 type="text"
                 placeholder="Search Agents ..."
-                className="w-full max-w-md pl-8"
+                className="w-full max-w-md pl-8 bg-white"
                 value={search}
                 onChange={handleSearch}
                 name="search"
