@@ -5,6 +5,7 @@ import {
   type ActionFunctionArgs,
   data,
   Link,
+  type MetaFunction,
 } from "react-router";
 import {
   Table,
@@ -483,3 +484,10 @@ const PermissionManagement = () => {
 };
 
 export default PermissionManagement;
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Permission Management" },
+    { name: "description", content: "Manage permissions for users and groups" },
+  ];
+};

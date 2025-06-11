@@ -6,6 +6,7 @@ import {
   data,
   Link,
   Form,
+  type MetaFunction,
 } from "react-router";
 import { prisma } from "@db/db.server";
 import Layout from "~/components/layout/layout";
@@ -832,3 +833,23 @@ const PermissionGroupDetail = () => {
 };
 
 export default PermissionGroupDetail;
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data) {
+    return [
+      { title: "Permission Management" },
+      {
+        name: "description",
+        content: "Manage permissions for users and groups",
+      },
+    ];
+  }
+  const { permissionGroup } = data;
+  return [
+    { title: `${permissionGroup.name} - Permission Group` },
+    {
+      name: "description",
+      content: `Manage permissions for ${permissionGroup.name} group`,
+    },
+  ];
+};
