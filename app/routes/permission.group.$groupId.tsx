@@ -487,11 +487,48 @@ const PermissionGroupDetail = () => {
     setOpenAgents((prev) => ({ ...prev, [agentId]: !prev[agentId] }));
   };
 
+  // Helper function to calculate permission counts for a context
+  const getPermissionCounts = (context: string, referenceId: string) => {
+    const availablePerms =
+      context === "global"
+        ? Object.keys(AVAILABLE_PERMISSIONS.global)
+        : context === "space"
+          ? Object.keys(AVAILABLE_PERMISSIONS.space)
+          : Object.keys(AVAILABLE_PERMISSIONS.agent);
+
+    const directPermissions = getPermissionsForContext(context, referenceId);
+    const directCount = directPermissions.length;
+
+    let inheritedCount = 0;
+    availablePerms.forEach((permission) => {
+      const hasDirect = directPermissions.includes(permission);
+      const hasInherited =
+        !hasDirect && checker.hasPermission(permission, referenceId);
+      if (hasInherited) inheritedCount++;
+    });
+
+    return { direct: directCount, inherited: inheritedCount };
+  };
+
+  // Helper function to calculate total agent permissions in a space
+  const getSpaceAgentPermissionCounts = (space: any) => {
+    let totalDirect = 0;
+    let totalInherited = 0;
+
+    space.agents.forEach((agent: any) => {
+      const counts = getPermissionCounts("agent", agent.id);
+      totalDirect += counts.direct;
+      totalInherited += counts.inherited;
+    });
+
+    return { direct: totalDirect, inherited: totalInherited };
+  };
+
   return (
     <Layout navComponent={<OverviewNav user={user} />} user={user}>
       <div className="py-8 px-4 md:p-8 w-full max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/permission">
+        <div className="mb-8">
+          <Link className="mb-4 block" to="/permissions">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Permissions
@@ -632,98 +669,135 @@ const PermissionGroupDetail = () => {
                   <CardTitle>Space & Agent Permissions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {spaces.map((space) => (
-                    <div key={space.id}>
-                      <button
-                        onClick={() => toggleSpace(space.id)}
-                        className="flex items-center justify-between w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100"
-                      >
-                        <div className="flex items-center gap-2">
-                          {openSpaces[space.id] ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                          <span className="font-medium">{space.name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            ({space.agents.length} agents)
-                          </span>
-                        </div>
-                      </button>
-                      {openSpaces[space.id] && (
-                        <div className="pt-4">
-                          <div className="space-y-4">
-                            {/* Space Permissions */}
-                            <HierarchicalPermissionSection
-                              title={`${space.name} Space Permissions`}
-                              permissions={getPermissionsForContext(
-                                "space",
-                                space.id,
-                              )}
-                              availablePermissions={Object.entries(
-                                AVAILABLE_PERMISSIONS.space,
-                              )}
-                              context="space"
-                              referenceId={space.id}
-                              checker={checker}
-                              spaceName={space.name}
-                              onPermissionChange={handlePermissionToggle}
-                            />
+                  {spaces.map((space) => {
+                    const spaceCounts = getPermissionCounts("space", space.id);
+                    const agentCounts = getSpaceAgentPermissionCounts(space);
+                    const totalDirect = spaceCounts.direct + agentCounts.direct;
+                    const totalInherited =
+                      spaceCounts.inherited + agentCounts.inherited;
 
-                            {/* Agent Permissions */}
-                            {space.agents.length > 0 && (
-                              <div className="ml-4 space-y-3">
-                                <h5 className="font-medium text-muted-foreground">
-                                  Agents in {space.name}
-                                </h5>
-                                {space.agents.map((agent) => (
-                                  <div key={agent.id}>
-                                    <button
-                                      onClick={() => toggleAgent(agent.id)}
-                                      className="flex items-center justify-between w-full p-2 text-left bg-blue-50 rounded hover:bg-blue-100"
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        {openAgents[agent.id] ? (
-                                          <ChevronDown className="h-3 w-3" />
-                                        ) : (
-                                          <ChevronRight className="h-3 w-3" />
-                                        )}
-                                        <span className="text-sm font-medium">
-                                          {agent.name}
-                                        </span>
-                                      </div>
-                                    </button>
-                                    {openAgents[agent.id] && (
-                                      <div className="pt-3">
-                                        <HierarchicalPermissionSection
-                                          title={`${agent.name} Agent Permissions`}
-                                          permissions={getPermissionsForContext(
-                                            "agent",
-                                            agent.id,
-                                          )}
-                                          availablePermissions={Object.entries(
-                                            AVAILABLE_PERMISSIONS.agent,
-                                          )}
-                                          context="agent"
-                                          referenceId={agent.id}
-                                          checker={checker}
-                                          spaceName={space.name}
-                                          agentName={agent.name}
-                                          onPermissionChange={
-                                            handlePermissionToggle
-                                          }
-                                        />
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
+                    return (
+                      <div key={space.id}>
+                        <button
+                          onClick={() => toggleSpace(space.id)}
+                          className="flex items-center justify-between w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100"
+                        >
+                          <div className="flex items-center gap-2">
+                            {openSpaces[space.id] ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
                             )}
+                            <span className="font-medium">{space.name}</span>
+                            <span className="text-sm text-muted-foreground">
+                              ({space.agents.length} agents)
+                            </span>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {totalDirect} direct
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {totalInherited} inherited
+                            </Badge>
+                          </div>
+                        </button>
+                        {openSpaces[space.id] && (
+                          <div className="pt-4">
+                            <div className="space-y-4">
+                              {/* Space Permissions */}
+                              <HierarchicalPermissionSection
+                                title={`${space.name} Space Permissions`}
+                                permissions={getPermissionsForContext(
+                                  "space",
+                                  space.id,
+                                )}
+                                availablePermissions={Object.entries(
+                                  AVAILABLE_PERMISSIONS.space,
+                                )}
+                                context="space"
+                                referenceId={space.id}
+                                checker={checker}
+                                spaceName={space.name}
+                                onPermissionChange={handlePermissionToggle}
+                              />
+
+                              {/* Agent Permissions */}
+                              {space.agents.length > 0 && (
+                                <div className="ml-4 space-y-3">
+                                  <h5 className="font-medium text-muted-foreground">
+                                    Agents in {space.name}
+                                  </h5>
+                                  {space.agents.map((agent) => {
+                                    const agentCounts = getPermissionCounts(
+                                      "agent",
+                                      agent.id,
+                                    );
+
+                                    return (
+                                      <div key={agent.id}>
+                                        <button
+                                          onClick={() => toggleAgent(agent.id)}
+                                          className="flex items-center justify-between w-full p-2 text-left bg-blue-50 rounded hover:bg-blue-100"
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            {openAgents[agent.id] ? (
+                                              <ChevronDown className="h-3 w-3" />
+                                            ) : (
+                                              <ChevronRight className="h-3 w-3" />
+                                            )}
+                                            <span className="text-sm font-medium">
+                                              {agent.name}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Badge
+                                              variant="secondary"
+                                              className="text-xs"
+                                            >
+                                              {agentCounts.direct} direct
+                                            </Badge>
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs"
+                                            >
+                                              {agentCounts.inherited} inherited
+                                            </Badge>
+                                          </div>
+                                        </button>
+                                        {openAgents[agent.id] && (
+                                          <div className="pt-3">
+                                            <HierarchicalPermissionSection
+                                              title={`${agent.name} Agent Permissions`}
+                                              permissions={getPermissionsForContext(
+                                                "agent",
+                                                agent.id,
+                                              )}
+                                              availablePermissions={Object.entries(
+                                                AVAILABLE_PERMISSIONS.agent,
+                                              )}
+                                              context="agent"
+                                              referenceId={agent.id}
+                                              checker={checker}
+                                              spaceName={space.name}
+                                              agentName={agent.name}
+                                              onPermissionChange={
+                                                handlePermissionToggle
+                                              }
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
             </div>

@@ -244,7 +244,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           permissionGroup: true,
         },
       },
-      permission: true,
     },
     orderBy: {
       email: "asc",
@@ -315,11 +314,6 @@ const PermissionManagement = () => {
             <h2 className="text-2xl font-medium">Users</h2>
             <InviteUserModal roles={GLOBAL_ROLES} error={actionData?.error} />
           </div>
-          <p className="text-muted-foreground text-sm mb-6 max-w-lg">
-            Manage all users in the system and view their permission groups and
-            individual permissions.
-          </p>
-
           {!users || users.length === 0 ? (
             <NoDataCard
               headline="No Users Found"
@@ -336,7 +330,6 @@ const PermissionManagement = () => {
                     <TableHead>Email</TableHead>
                     {/* <TableHead>Role</TableHead> */}
                     <TableHead>Permission Groups</TableHead>
-                    <TableHead>Individual Permissions</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -363,18 +356,6 @@ const PermissionManagement = () => {
                               </span>
                             ))}
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">
-                            None
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {user.permission.length > 0 ? (
-                          <span className="text-sm font-medium">
-                            {user.permission.length} permission
-                            {user.permission.length !== 1 ? "s" : ""}
-                          </span>
                         ) : (
                           <span className="text-muted-foreground text-sm">
                             None
