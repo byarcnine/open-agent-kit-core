@@ -2,7 +2,7 @@ import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
-import { getCorsHeaderForAgent } from "./utils";
+import { getCorsHeaderForAgent, CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, CORS_EXPOSE_HEADERS } from "./utils";
 import jwt from "jsonwebtoken";
 import { createChallenge, verifySolution } from "altcha-lib";
 
@@ -16,9 +16,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       status: 204,
       headers: {
         "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, x-oak-session-token",
+        "Access-Control-Allow-Methods": CORS_ALLOW_METHODS,
+        "Access-Control-Allow-Headers": CORS_ALLOW_HEADERS,
+        "Access-Control-Expose-Headers": CORS_EXPOSE_HEADERS,
       },
     });
   }
@@ -36,8 +36,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Headers":
-        "Content-Type, Authorization, x-oak-session-token",
+      "Access-Control-Allow-Headers": CORS_ALLOW_HEADERS,
+      "Access-Control-Expose-Headers": CORS_EXPOSE_HEADERS,
     },
   });
 };
