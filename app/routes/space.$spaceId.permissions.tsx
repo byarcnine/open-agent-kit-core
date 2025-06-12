@@ -15,8 +15,7 @@ import { Input } from "~/components/ui/input";
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
 import NoDataCard from "~/components/ui/no-data-card";
-import { useEffect, useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -34,7 +33,6 @@ import {
   AVAILABLE_PERMISSIONS,
 } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
-import { cn } from "~/lib/utils";
 import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 import {
   Card,

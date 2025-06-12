@@ -246,7 +246,7 @@ const resolvePermissionReferences = async (permissions: Permission[]) => {
         if (!userGrantedPermissions[inheritedScope]) {
           userGrantedPermissions[inheritedScope] = {
             allAllowed: true,
-            referenceIds: [],
+            referenceIds: ["global"],
             direct: inheritedPermission === scope,
           };
         } else {
@@ -319,8 +319,11 @@ const resolvePermissionReferences = async (permissions: Permission[]) => {
             direct: inheritedPermission === scope,
           };
         } else {
-          userGrantedPermissions[inheritedScope].referenceIds.push(
-            permission.referenceId,
+          userGrantedPermissions[inheritedScope].referenceIds = Array.from(
+            new Set([
+              ...userGrantedPermissions[inheritedScope].referenceIds,
+              permission.referenceId,
+            ]),
           );
           if (inheritedPermission === scope) {
             userGrantedPermissions[inheritedScope].direct = true;

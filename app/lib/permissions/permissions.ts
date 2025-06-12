@@ -63,7 +63,12 @@ export const AVAILABLE_PERMISSIONS = {
   "global.view_spaces": {
     name: "View Spaces",
     description: "Can view all spaces in the system",
-    grants: ["space.view_space_settings", "space.view_agents"],
+    grants: [
+      "space.view_space_settings",
+      "space.view_agents",
+      "agent.chat",
+      "agent.view_agent_settings",
+    ],
   },
   // ------------------------------------------------
   // Space Permissions
