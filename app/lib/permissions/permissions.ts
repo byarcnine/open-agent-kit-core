@@ -58,6 +58,7 @@ export const AVAILABLE_PERMISSIONS = {
       "space.view_agents",
       "global.delete_space_after_all_agents_deleted",
       "global.view_spaces",
+      "agent.*",
     ],
   },
   "global.view_spaces": {

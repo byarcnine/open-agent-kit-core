@@ -88,10 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await hasAccessHierarchical(request);
-  const allowedSpaces = await allowedAgentsToViewForUser(
-    user,
-    params.spaceId as string,
-  );
+  const allowedSpaces = await allowedAgentsToViewForUser(user);
   const spaces = await prisma.space.findMany({
     include: {
       _count: {
@@ -101,8 +98,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       },
     },
     where: {
-      id: {
-        in: allowedSpaces,
+      agents: {
+        some: {
+          id: {
+            in: allowedSpaces,
+          },
+        },
       },
     },
     orderBy: {

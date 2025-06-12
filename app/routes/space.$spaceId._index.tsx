@@ -110,10 +110,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     PERMISSION["space.view_agents"],
     spaceId,
   );
-  const allowedAgentsInSpace = await allowedAgentsToViewForUser(
-    user,
-    spaceId as string,
-  );
+  const allowedAgents = await allowedAgentsToViewForUser(user);
   const globalUserCount = await prisma.user.count({
     where: {
       role: {
@@ -133,7 +130,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       where: {
         spaceId,
         id: {
-          in: allowedAgentsInSpace,
+          in: allowedAgents,
         },
       },
       include: {

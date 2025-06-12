@@ -1,11 +1,9 @@
 import {
   useLoaderData,
-  useActionData,
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
   data,
   Link,
-  Form,
   type MetaFunction,
   useFetcher,
 } from "react-router";
@@ -29,6 +27,7 @@ import {
   getGroupGrantedPermissions,
   hasAccessHierarchical,
   resolvePermissionReferences,
+  type UserGrantedPermissions,
 } from "~/lib/permissions/enhancedHasAccess.server";
 
 type ActionData = {
@@ -48,57 +47,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   switch (intent) {
     case "recalculatePermissions": {
-      const permissions = JSON.parse(formData.get("permissions") as string) as {
-        scope: string;
-        direct: boolean;
-        referenceIds: string[];
-        allAllowed: boolean;
-      }[];
-      const flatPermissions = permissions
-        .filter((p) => p.direct)
-        .flatMap((p) => {
-          return p.referenceIds.map((id) => ({
-            scope: p.scope,
-            referenceId: id,
-            permissionGroupId: groupId,
-          }));
-        });
-      const updatedPermissions =
-        await resolvePermissionReferences(flatPermissions);
+      const permissions = JSON.parse(
+        formData.get("permissions") as string,
+      ) as UserGrantedPermissions;
+      const updatedPermissions = await resolvePermissionReferences(
+        permissions.filter((p) => p.direct),
+      );
       return data<ActionData>(
         {
           success: true,
           intent: intent as string,
-          updatedPermissions: Object.entries(updatedPermissions).map(
-            ([key, value]) => ({
-              scope: key,
-              direct: value.direct,
-              referenceIds: value.referenceIds,
-              allAllowed: value.allAllowed,
-            }),
-          ),
+          updatedPermissions,
         },
         { status: 200 },
       );
     }
     case "updatePermissions": {
-      const permissions = JSON.parse(formData.get("permissions") as string) as {
-        scope: string;
-        direct: boolean;
-        referenceIds: string[];
-        allAllowed: boolean;
-      }[];
-
-      const flatPermissions = permissions
-        .filter((p) => p.direct)
-        .flatMap((p) => {
-          return p.referenceIds.map((id) => ({
-            scope: p.scope,
-            referenceId: id,
-            permissionGroupId: groupId,
-          }));
-        });
-
+      const permissions = JSON.parse(
+        formData.get("permissions") as string,
+      ) as UserGrantedPermissions;
       await prisma.$transaction(async (tx) => {
         await tx.permission.deleteMany({
           where: {
@@ -106,7 +73,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           },
         });
         await tx.permission.createMany({
-          data: flatPermissions,
+          data: permissions.map((p) => ({
+            scope: p.scope,
+            referenceId: p.referenceId,
+            permissionGroupId: groupId,
+          })),
         });
       });
       try {
@@ -173,14 +144,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   return {
     user,
-    allGroupPermissions: Object.entries(allGroupPermissions).map(
-      ([key, value]) => ({
-        scope: key,
-        direct: value.direct,
-        referenceIds: value.referenceIds,
-        allAllowed: value.allAllowed,
-      }),
-    ),
+    allGroupPermissions,
     spaces,
     permissionGroup,
   };
@@ -213,22 +177,6 @@ const HierarchicalPermissionSection = ({
   agentName?: string;
   toggleScope: (scope: string) => void;
 }) => {
-  // const getPermissionStatus = (permission: string) => {
-  //   const hasDirect = permissions.includes(permission);
-  //   const hasInherited =
-  //     !hasDirect && checker.hasPermission(permission, referenceId);
-  //   const inheritedFrom = checker
-  //     .inheritedFrom(permission, permissions)
-  //     .map((p) => p.name);
-  //   return {
-  //     hasDirect,
-  //     hasInherited,
-  //     inheritedFrom,
-  //     hasAny: hasDirect || hasInherited,
-  //   };
-  // };
-
-  // Since all permissions are now objects, the key is the permission scope
   const getPermissionScope = (key: string): string => key;
   const getPermissionName = (permissionEntry: PermissionEntry): string =>
     permissionEntry.name;
@@ -245,15 +193,6 @@ const HierarchicalPermissionSection = ({
         return "📋";
     }
   };
-
-  // const directPermissions = availablePermissions.filter(([key]) =>
-  //   permissions.includes(getPermissionScope(key)),
-  // );
-
-  // const inheritedPermissions = availablePermissions.filter(([key]) => {
-  //   const status = getPermissionStatus(getPermissionScope(key));
-  //   return status.hasInherited;
-  // });
 
   return (
     <div className="border rounded-lg p-4 bg-white">
@@ -357,38 +296,24 @@ const PermissionGroupDetail = () => {
   const [currentPermissions, setCurrentPermissions] =
     useState(allGroupPermissions);
 
-  const toggleScope = (scope: string, referenceId: string) => {
+  const toggleScope = (
+    scope: keyof typeof AVAILABLE_PERMISSIONS,
+    referenceId: string,
+  ) => {
     setHasUnsavedChanges(true);
     let permissionCopy = structuredClone(currentPermissions);
     const hasPermissionIndex = permissionCopy.findIndex(
-      (p) => p.scope === scope,
+      (p) => p.scope === scope && p.referenceId === referenceId,
     );
     if (hasPermissionIndex !== -1) {
-      if (
-        permissionCopy[hasPermissionIndex].referenceIds.includes(referenceId)
-      ) {
-        if (referenceId === "global") {
-          permissionCopy = currentPermissions.filter(
-            (_, index) => index !== hasPermissionIndex,
-          );
-        } else {
-          // delete the referenceId from the referenceIds array
-          permissionCopy[hasPermissionIndex].referenceIds = permissionCopy[
-            hasPermissionIndex
-          ].referenceIds.filter((id) => id !== referenceId);
-        }
-      } else {
-        // add the referenceId to the referenceIds array
-        permissionCopy[hasPermissionIndex].referenceIds.push(referenceId);
-        permissionCopy[hasPermissionIndex].direct = true;
-      }
+      // delete that index from the array
+      permissionCopy.splice(hasPermissionIndex, 1);
       setCurrentPermissions([...permissionCopy]);
     } else {
       permissionCopy.push({
         scope,
         direct: true,
-        referenceIds: [referenceId],
-        allAllowed: false,
+        referenceId: referenceId,
       });
       setCurrentPermissions([...permissionCopy]);
     }
@@ -397,7 +322,7 @@ const PermissionGroupDetail = () => {
     formData.append("permissions", JSON.stringify(permissionCopy));
     updateFetcher.submit(formData, { method: "post" });
   };
-
+  console.log(currentPermissions);
   // Helper function to get available permissions by scope
   const getAvailablePermissionsByScope = (
     scope: string,
@@ -577,7 +502,7 @@ const PermissionGroupDetail = () => {
                     )}
                     context="global"
                     referenceId="global"
-                    toggleScope={(scope) => toggleScope(scope, "global")}
+                    toggleScope={(scope) => toggleScope(scope as any, "global")}
                   />
                 </CardContent>
               </Card>
@@ -594,13 +519,13 @@ const PermissionGroupDetail = () => {
                     const totalDirect = currentPermissions.filter(
                       (p) =>
                         p.scope.startsWith("space.") &&
-                        (p.allAllowed || p.referenceIds.includes(space.id)) &&
+                        p.referenceId === space.id &&
                         p.direct,
                     ).length;
                     const totalInherited = currentPermissions.filter(
                       (p) =>
                         p.scope.startsWith("space.") &&
-                        (p.allAllowed || p.referenceIds.includes(space.id)) &&
+                        p.referenceId === space.id &&
                         !p.direct,
                     ).length;
 
@@ -644,8 +569,7 @@ const PermissionGroupDetail = () => {
                                 permissions={currentPermissions.filter(
                                   (p) =>
                                     p.scope.startsWith("space.") &&
-                                    (p.allAllowed ||
-                                      p.referenceIds.includes(space.id)),
+                                    p.referenceId === space.id,
                                 )}
                                 availablePermissions={getAvailablePermissionsByScope(
                                   "space",
@@ -654,7 +578,7 @@ const PermissionGroupDetail = () => {
                                 referenceId={space.id}
                                 spaceName={space.name}
                                 toggleScope={(scope) =>
-                                  toggleScope(scope, space.id)
+                                  toggleScope(scope as any, space.id)
                                 }
                               />
 
@@ -669,20 +593,14 @@ const PermissionGroupDetail = () => {
                                       currentPermissions.filter(
                                         (p) =>
                                           p.scope.startsWith("agent.") &&
-                                          (p.allAllowed ||
-                                            p.referenceIds.includes(
-                                              agent.id,
-                                            )) &&
+                                          p.referenceId === agent.id &&
                                           p.direct,
                                       ).length;
                                     const totalInherited =
                                       currentPermissions.filter(
                                         (p) =>
                                           p.scope.startsWith("agent.") &&
-                                          (p.allAllowed ||
-                                            p.referenceIds.includes(
-                                              agent.id,
-                                            )) &&
+                                          p.referenceId === agent.id &&
                                           !p.direct,
                                       ).length;
 
@@ -731,10 +649,7 @@ const PermissionGroupDetail = () => {
                                                   p.scope.startsWith(
                                                     "agent.",
                                                   ) &&
-                                                  (p.allAllowed ||
-                                                    p.referenceIds.includes(
-                                                      agent.id,
-                                                    )),
+                                                  p.referenceId === agent.id,
                                               )}
                                               availablePermissions={getAvailablePermissionsByScope(
                                                 "agent",
@@ -744,7 +659,10 @@ const PermissionGroupDetail = () => {
                                               spaceName={space.name}
                                               agentName={agent.name}
                                               toggleScope={(scope) =>
-                                                toggleScope(scope, agent.id)
+                                                toggleScope(
+                                                  scope as any,
+                                                  agent.id,
+                                                )
                                               }
                                             />
                                           </div>
