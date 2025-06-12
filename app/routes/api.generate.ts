@@ -5,8 +5,11 @@ import { streamConversation } from "~/lib/llm/streamConversation.server";
 import { getCorsHeaderForAgent } from "./utils";
 import jwt from "jsonwebtoken";
 import { getChatSettings } from "~/lib/llm/chat.server";
-import { checkPermissionHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+// import { checkPermissionHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+// import { PERMISSION } from "~/lib/permissions/permissions";
+import { prisma } from "@db/db.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -41,19 +44,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // the meta object can be access by the tool
   const meta = body.meta || {};
   // make sure the agent is public or the user has access to the agent
-  const canAccess = await checkPermissionHierarchical(
-    request,
-    PERMISSION["agent.chat"],
-    agentId,
-  );
-  const chatSessionAllowed =
-    canAccess || (await verifyChatSessionTokenForPublicAgent(request, agentId));
-
-  if (!chatSessionAllowed) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 403,
+  const agent = await prisma.agent.findUnique({
+    where: {
+      id: agentId,
+    },
+  });
+  if (!agent) {
+    return new Response(JSON.stringify({ error: "Agent not found" }), {
+      status: 404,
       headers: corsHeaders,
     });
+  }
+  if (agent.isPublic) {
+    const chatSessionAllowed = await verifyChatSessionTokenForPublicAgent(
+      request,
+      agentId,
+    );
+    if (!chatSessionAllowed) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 403,
+        headers: corsHeaders,
+      });
+    }
+  } else {
+    await hasAccessHierarchical(request, PERMISSION["agent.chat"], agentId);
   }
 
   try {

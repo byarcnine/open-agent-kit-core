@@ -1,17 +1,339 @@
 import { prisma } from "@db/db.server";
 import {
-  HierarchicalPermissionChecker,
-  type PermissionContext,
+  getAllPermissionsWithInheritance,
+  // HierarchicalPermissionChecker,
+  // type PermissionContext,
 } from "./hierarchical";
 import { redirect } from "react-router";
 import { getSession } from "~/lib/auth/auth.server";
 import type { SessionUser } from "~/types/auth";
+import { AVAILABLE_PERMISSIONS } from "./permissions";
 
-export async function hasAccessHierarchical(
+// export async function hasAccessHierarchical(
+//   request: Request,
+//   requiredPermission?: string,
+//   targetReferenceId?: string,
+// ): Promise<SessionUser> {
+//   const session = await getSession(request);
+//   const user = session?.user;
+
+//   if (!user) {
+//     throw redirect("/auth/login");
+//   }
+
+//   if (!requiredPermission) {
+//     // no permission required for this route, just a valid user, return user
+//     return user;
+//   }
+
+//   // Load user's permissions and spaces in parallel
+//   const [userPermissionGroups, spaces] = await Promise.all([
+//     prisma.userPermissionGroup.findMany({
+//       where: { userId: user.id },
+//       include: {
+//         permissionGroup: {
+//           include: {
+//             permissions: true,
+//           },
+//         },
+//       },
+//     }),
+//     prisma.space.findMany({
+//       include: { agents: true },
+//     }),
+//   ]);
+
+//   // Flatten permissions
+//   const userPermissions: PermissionContext[] = [];
+//   for (const upg of userPermissionGroups) {
+//     for (const permission of upg.permissionGroup.permissions) {
+//       userPermissions.push({
+//         scope: permission.scope,
+//         referenceId: permission.referenceId,
+//       });
+//     }
+//   }
+
+//   // Build space-agent mapping
+//   const spaceAgentMap = new Map<string, string[]>();
+
+//   for (const space of spaces) {
+//     spaceAgentMap.set(
+//       space.id,
+//       space.agents.map((agent) => agent.id),
+//     );
+//   }
+
+//   // Check permission using hierarchical system
+//   const checker = new HierarchicalPermissionChecker(
+//     userPermissions,
+//     spaceAgentMap,
+//   );
+
+//   const hasPermission = checker.hasPermission(
+//     requiredPermission,
+//     targetReferenceId || "global",
+//   );
+
+//   if (!hasPermission) {
+//     throw new Response("Forbidden", { status: 403 });
+//   }
+
+//   return user;
+// }
+
+// // Utility function to check permissions without throwing
+// export async function checkPermissionHierarchical(
+//   request: Request,
+//   requiredPermission: string,
+//   targetReferenceId?: string,
+// ): Promise<boolean> {
+//   try {
+//     await hasAccessHierarchical(request, requiredPermission, targetReferenceId);
+//     return true;
+//   } catch {
+//     return false;
+//   }
+// }
+
+// export const allowedSpacesToViewForUser = async (user: SessionUser) => {
+//   // Load user's permissions and spaces in parallel
+//   const [userPermissionGroups, spaces] = await Promise.all([
+//     prisma.userPermissionGroup.findMany({
+//       where: { userId: user.id },
+//       include: {
+//         permissionGroup: {
+//           include: {
+//             permissions: true,
+//           },
+//         },
+//       },
+//     }),
+//     prisma.space.findMany({
+//       include: { agents: true },
+//     }),
+//   ]);
+
+//   // Flatten permissions
+//   const userPermissions: PermissionContext[] = [];
+//   for (const upg of userPermissionGroups) {
+//     for (const permission of upg.permissionGroup.permissions) {
+//       userPermissions.push({
+//         scope: permission.scope,
+//         referenceId: permission.referenceId,
+//       });
+//     }
+//   }
+
+//   // Build space-agent mapping
+//   const spaceAgentMap = new Map<string, string[]>();
+//   for (const space of spaces) {
+//     spaceAgentMap.set(
+//       space.id,
+//       space.agents.map((agent) => agent.id),
+//     );
+//   }
+
+//   // Create hierarchical permission checker
+//   const checker = new HierarchicalPermissionChecker(
+//     userPermissions,
+//     spaceAgentMap,
+//   );
+
+//   // Filter spaces the user has permission to view
+//   const allowedSpaces = spaces.filter((space) => {
+//     // Check if user has permission to view this space
+//     // This covers space.view_space_settings, global.view_spaces, etc.
+//     return (
+//       checker.hasPermission("space.view_space_settings", space.id) ||
+//       checker.hasPermission("global.view_spaces", "global")
+//     );
+//   });
+
+//   return allowedSpaces.map((space) => space.id);
+// };
+
+// export const allowedAgentsInSpaceForUser = async (
+//   user: SessionUser,
+//   spaceId: string,
+// ) => {
+//   // Load user's permissions and the specific space with its agents in parallel
+//   const [userPermissionGroups, space] = await Promise.all([
+//     prisma.userPermissionGroup.findMany({
+//       where: { userId: user.id },
+//       include: {
+//         permissionGroup: {
+//           include: {
+//             permissions: true,
+//           },
+//         },
+//       },
+//     }),
+//     prisma.space.findUnique({
+//       where: { id: spaceId },
+//       include: { agents: true },
+//     }),
+//   ]);
+
+//   if (!space) {
+//     return [];
+//   }
+
+//   // Flatten permissions
+//   const userPermissions: PermissionContext[] = [];
+//   for (const upg of userPermissionGroups) {
+//     for (const permission of upg.permissionGroup.permissions) {
+//       userPermissions.push({
+//         scope: permission.scope,
+//         referenceId: permission.referenceId,
+//       });
+//     }
+//   }
+
+//   // Build space-agent mapping
+//   const spaceAgentMap = new Map<string, string[]>();
+//   spaceAgentMap.set(
+//     space.id,
+//     space.agents.map((agent) => agent.id),
+//   );
+
+//   // Create hierarchical permission checker
+//   const checker = new HierarchicalPermissionChecker(
+//     userPermissions,
+//     spaceAgentMap,
+//   );
+
+//   // Filter agents the user has permission to view
+//   const allowedAgents = space.agents.filter((agent) => {
+//     // Check if user has permission to view this agent
+//     // This covers agent.view_agent_settings, space.view_agents, global.view_spaces, etc.
+//     return (
+//       checker.hasPermission("agent.view_agent_settings", agent.id) ||
+//       checker.hasPermission("space.view_agents", spaceId) ||
+//       checker.hasPermission("global.view_spaces", "global")
+//     );
+//   });
+
+//   return allowedAgents.map((agent) => agent.id);
+// };
+
+export const getUserScopes = async (user: SessionUser) => {
+  return Object.keys(await getUserGrantedPermissions(user));
+};
+
+type UserGrantedPermissions = Partial<{
+  [K in keyof typeof AVAILABLE_PERMISSIONS]: {
+    allAllowed: boolean;
+    referenceIds: string[];
+  };
+}>;
+
+export const getUserGrantedPermissions = async (
+  user: SessionUser,
+): Promise<UserGrantedPermissions> => {
+  const userPermissions = await prisma.userPermissionGroup.findMany({
+    where: { userId: user.id },
+    include: {
+      permissionGroup: {
+        include: {
+          permissions: true,
+        },
+      },
+    },
+  });
+
+  const permissions = userPermissions.flatMap(
+    (upg) => upg.permissionGroup.permissions,
+  );
+
+  const allAgents = await prisma.agent.findMany({
+    select: { id: true, spaceId: true },
+  });
+
+  const userGrantedPermissions: UserGrantedPermissions = {};
+  for (const permission of permissions) {
+    const scope = permission.scope as keyof UserGrantedPermissions;
+    if (scope.startsWith("global.")) {
+      // get all inherited permissions for this scope and add an allAllowed true
+      const inherited = getAllPermissionsWithInheritance([scope]);
+      for (const inheritedPermission of inherited) {
+        const inheritedScope =
+          inheritedPermission as keyof UserGrantedPermissions;
+        if (!userGrantedPermissions[inheritedScope]) {
+          userGrantedPermissions[inheritedScope] = {
+            allAllowed: true,
+            referenceIds: [],
+          };
+        } else {
+          userGrantedPermissions[inheritedScope].allAllowed = true;
+        }
+      }
+    } else if (scope.startsWith("space.")) {
+      // get all inherited permissions for this scope and add an allAllowed true
+      const inherited = getAllPermissionsWithInheritance([scope]);
+      const agentIdsInSpace = allAgents
+        .filter((agent) => agent.spaceId === permission.referenceId)
+        .map((agent) => agent.id);
+      for (const inheritedPermission of inherited) {
+        if (inheritedPermission.startsWith("agent.")) {
+          const inheritedScope =
+            inheritedPermission as keyof UserGrantedPermissions;
+          if (!userGrantedPermissions[inheritedScope]) {
+            userGrantedPermissions[inheritedScope] = {
+              allAllowed: false,
+              referenceIds: agentIdsInSpace,
+            };
+          } else {
+            userGrantedPermissions[inheritedScope].referenceIds = Array.from(
+              new Set(
+                ...userGrantedPermissions[inheritedScope].referenceIds,
+                ...agentIdsInSpace,
+              ),
+            );
+          }
+        }
+        if (inheritedPermission.startsWith("space.")) {
+          const inheritedScope =
+            inheritedPermission as keyof UserGrantedPermissions;
+          if (!userGrantedPermissions[inheritedScope]) {
+            userGrantedPermissions[inheritedScope] = {
+              allAllowed: false,
+              referenceIds: [permission.referenceId],
+            };
+          } else {
+            userGrantedPermissions[inheritedScope].referenceIds.push(
+              permission.referenceId,
+            );
+          }
+        }
+      }
+    } else if (scope.startsWith("agent.")) {
+      // get all inherited permissions for this scope and add an allAllowed true
+      const inherited = getAllPermissionsWithInheritance([scope]);
+      for (const inheritedPermission of inherited) {
+        const inheritedScope =
+          inheritedPermission as keyof UserGrantedPermissions;
+        if (!userGrantedPermissions[inheritedScope]) {
+          userGrantedPermissions[inheritedScope] = {
+            allAllowed: false,
+            referenceIds: [permission.referenceId],
+          };
+        } else {
+          userGrantedPermissions[inheritedScope].referenceIds.push(
+            permission.referenceId,
+          );
+        }
+      }
+    }
+  }
+  return userGrantedPermissions;
+};
+
+export const hasAccessHierarchical = async (
   request: Request,
   requiredPermission?: string,
   targetReferenceId?: string,
-): Promise<SessionUser> {
+) => {
   const session = await getSession(request);
   const user = session?.user;
 
@@ -19,271 +341,78 @@ export async function hasAccessHierarchical(
     throw redirect("/auth/login");
   }
 
+  // no permission required for this route, just a valid user, return user
   if (!requiredPermission) {
-    // no permission required for this route, just a valid user, return user
     return user;
   }
 
-  // Load user's permissions and spaces in parallel
-  const [userPermissionGroups, spaces] = await Promise.all([
-    prisma.userPermissionGroup.findMany({
-      where: { userId: user.id },
-      include: {
-        permissionGroup: {
-          include: {
-            permissions: true,
-          },
-        },
-      },
-    }),
-    prisma.space.findMany({
-      include: { agents: true },
-    }),
-  ]);
-
-  // Flatten permissions
-  const userPermissions: PermissionContext[] = [];
-  for (const upg of userPermissionGroups) {
-    for (const permission of upg.permissionGroup.permissions) {
-      userPermissions.push({
-        scope: permission.scope,
-        referenceId: permission.referenceId,
-      });
-    }
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  if (
+    userGrantedPermissions[requiredPermission as keyof UserGrantedPermissions]
+      ?.allAllowed
+  ) {
+    return user;
   }
-
-  // Build space-agent mapping
-  const spaceAgentMap = new Map<string, string[]>();
-
-  for (const space of spaces) {
-    spaceAgentMap.set(
-      space.id,
-      space.agents.map((agent) => agent.id),
-    );
+  if (
+    targetReferenceId &&
+    userGrantedPermissions[
+      requiredPermission as keyof UserGrantedPermissions
+    ]?.referenceIds.includes(targetReferenceId)
+  ) {
+    return user;
   }
-
-  // Check permission using hierarchical system
-  const checker = new HierarchicalPermissionChecker(
-    userPermissions,
-    spaceAgentMap,
-  );
-
-  const hasPermission = checker.hasPermission(
-    requiredPermission,
-    targetReferenceId || "global",
-  );
-
-  if (!hasPermission) {
-    throw new Response("Forbidden", { status: 403 });
-  }
-
-  return user;
-}
-
-// Utility function to check permissions without throwing
-export async function checkPermissionHierarchical(
-  request: Request,
-  requiredPermission: string,
-  targetReferenceId?: string,
-): Promise<boolean> {
-  try {
-    await hasAccessHierarchical(request, requiredPermission, targetReferenceId);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export const allowedSpacesToViewForUser = async (user: SessionUser) => {
-  // Load user's permissions and spaces in parallel
-  const [userPermissionGroups, spaces] = await Promise.all([
-    prisma.userPermissionGroup.findMany({
-      where: { userId: user.id },
-      include: {
-        permissionGroup: {
-          include: {
-            permissions: true,
-          },
-        },
-      },
-    }),
-    prisma.space.findMany({
-      include: { agents: true },
-    }),
-  ]);
-
-  // Flatten permissions
-  const userPermissions: PermissionContext[] = [];
-  for (const upg of userPermissionGroups) {
-    for (const permission of upg.permissionGroup.permissions) {
-      userPermissions.push({
-        scope: permission.scope,
-        referenceId: permission.referenceId,
-      });
-    }
-  }
-
-  // Build space-agent mapping
-  const spaceAgentMap = new Map<string, string[]>();
-  for (const space of spaces) {
-    spaceAgentMap.set(
-      space.id,
-      space.agents.map((agent) => agent.id),
-    );
-  }
-
-  // Create hierarchical permission checker
-  const checker = new HierarchicalPermissionChecker(
-    userPermissions,
-    spaceAgentMap,
-  );
-
-  // Filter spaces the user has permission to view
-  const allowedSpaces = spaces.filter((space) => {
-    // Check if user has permission to view this space
-    // This covers space.view_space_settings, global.view_spaces, etc.
-    return (
-      checker.hasPermission("space.view_space_settings", space.id) ||
-      checker.hasPermission("global.view_spaces", "global")
-    );
-  });
-
-  return allowedSpaces.map((space) => space.id);
+  throw new Response("Forbidden", { status: 403 });
 };
 
-export const allowedAgentsInSpaceForUser = async (
+export const allowedAgentsToViewForUser = async (
   user: SessionUser,
-  spaceId: string,
+  spaceId?: string,
 ) => {
-  // Load user's permissions and the specific space with its agents in parallel
-  const [userPermissionGroups, space] = await Promise.all([
-    prisma.userPermissionGroup.findMany({
-      where: { userId: user.id },
-      include: {
-        permissionGroup: {
-          include: {
-            permissions: true,
-          },
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  if (userGrantedPermissions["agent.chat"]) {
+    if (userGrantedPermissions["agent.chat"].allAllowed) {
+      const allAgentIds = await prisma.agent.findMany({
+        select: { id: true, spaceId: true },
+        where: {
+          spaceId: spaceId,
         },
-      },
-    }),
-    prisma.space.findUnique({
-      where: { id: spaceId },
-      include: { agents: true },
-    }),
-  ]);
-
-  if (!space) {
-    return [];
-  }
-
-  // Flatten permissions
-  const userPermissions: PermissionContext[] = [];
-  for (const upg of userPermissionGroups) {
-    for (const permission of upg.permissionGroup.permissions) {
-      userPermissions.push({
-        scope: permission.scope,
-        referenceId: permission.referenceId,
       });
+      return allAgentIds.map((agent) => agent.id);
     }
-  }
-
-  // Build space-agent mapping
-  const spaceAgentMap = new Map<string, string[]>();
-  spaceAgentMap.set(
-    space.id,
-    space.agents.map((agent) => agent.id),
-  );
-
-  // Create hierarchical permission checker
-  const checker = new HierarchicalPermissionChecker(
-    userPermissions,
-    spaceAgentMap,
-  );
-
-  // Filter agents the user has permission to view
-  const allowedAgents = space.agents.filter((agent) => {
-    // Check if user has permission to view this agent
-    // This covers agent.view_agent_settings, space.view_agents, global.view_spaces, etc.
-    return (
-      checker.hasPermission("agent.view_agent_settings", agent.id) ||
-      checker.hasPermission("space.view_agents", spaceId) ||
-      checker.hasPermission("global.view_spaces", "global")
-    );
-  });
-
-  return allowedAgents.map((agent) => agent.id);
-};
-
-export const getUserScopes = async (user: SessionUser) => {
-  // Load user's permissions and spaces in parallel
-  const [userPermissionGroups, spaces] = await Promise.all([
-    prisma.userPermissionGroup.findMany({
-      where: { userId: user.id },
-      include: {
-        permissionGroup: {
-          include: {
-            permissions: true,
-          },
+    if (spaceId) {
+      const agentIdsInSpace = await prisma.agent.findMany({
+        select: { id: true },
+        where: {
+          spaceId: spaceId,
         },
-      },
-    }),
-    prisma.space.findMany({
-      include: { agents: true },
-    }),
-  ]);
-
-  // Flatten permissions
-  const userPermissions: PermissionContext[] = [];
-  for (const upg of userPermissionGroups) {
-    for (const permission of upg.permissionGroup.permissions) {
-      userPermissions.push({
-        scope: permission.scope,
-        referenceId: permission.referenceId,
       });
-    }
-  }
-
-  // Build space-agent mapping
-  const spaceAgentMap = new Map<string, string[]>();
-  for (const space of spaces) {
-    spaceAgentMap.set(
-      space.id,
-      space.agents.map((agent) => agent.id),
-    );
-  }
-
-  // Create hierarchical permission checker
-  const checker = new HierarchicalPermissionChecker(
-    userPermissions,
-    spaceAgentMap,
-  );
-
-  // Get all effective permissions (direct + inherited)
-  const allEffectivePermissions = checker.getAllEffectivePermissions();
-  // Extract direct scopes (what the user explicitly has)
-  const directScopes = userPermissions.map((permission) => ({
-    scope: permission.scope,
-    referenceId: permission.referenceId,
-    inherited: false,
-  }));
-
-  // Extract inherited scopes (what the user gets through grants)
-  const inheritedScopes = allEffectivePermissions
-    .filter((effectivePerm) => {
-      // Filter out permissions that are already direct permissions
-      return !userPermissions.some(
-        (directPerm) =>
-          directPerm.scope === effectivePerm.scope &&
-          directPerm.referenceId === effectivePerm.referenceId,
+      const agentIdsInSpaceMap = agentIdsInSpace.map((agent) => agent.id);
+      return userGrantedPermissions["agent.chat"].referenceIds.filter((id) =>
+        agentIdsInSpaceMap.includes(id),
       );
-    })
-    .map((permission) => ({
-      scope: permission.scope,
-      referenceId: permission.referenceId,
-      inherited: true,
-      spaceId: permission.spaceId,
-    }));
-
-  return [...directScopes, ...inheritedScopes].map((scope) => scope.scope);
+    }
+    return userGrantedPermissions["agent.chat"].referenceIds;
+  }
+};
+export const allowedSpacesToViewForUser = async (user: SessionUser) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  if (userGrantedPermissions["agent.chat"]) {
+    if (userGrantedPermissions["agent.chat"].allAllowed) {
+      const allSpaces = await prisma.space.findMany({
+        select: { id: true },
+      });
+      return allSpaces.map((space) => space.id);
+    } else {
+      const allowedAgents = userGrantedPermissions["agent.chat"].referenceIds;
+      const allowedSpaces = await prisma.space.findMany({
+        select: { id: true },
+        where: {
+          agents: {
+            some: { id: { in: allowedAgents } },
+          },
+        },
+      });
+      return allowedSpaces.map((space) => space.id);
+    }
+  }
 };

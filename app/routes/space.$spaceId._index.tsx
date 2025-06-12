@@ -29,7 +29,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import {
-  allowedAgentsInSpaceForUser,
+  allowedAgentsToViewForUser,
   getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
@@ -110,7 +110,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     PERMISSION["space.view_agents"],
     spaceId,
   );
-  const allowedAgentsInSpace = await allowedAgentsInSpaceForUser(
+  const allowedAgentsInSpace = await allowedAgentsToViewForUser(
     user,
     spaceId as string,
   );
