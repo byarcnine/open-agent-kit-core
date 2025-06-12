@@ -31,40 +31,51 @@
 
   .oak-chat {
     &__empty-state {
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      padding-top: 20vh;
       align-items: center;
       flex: 1;
       z-index: 1;
       width: 100%;
       margin: 0 auto;
+      padding-top: 30px;
       padding-left: 30px;
       padding-right: 30px;
 
       @media (min-width: 768px) {
+        padding-top: 20vh;
         padding-left: 0;
         padding-right: 0;
       }
 
       &-heading {
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 500;
-        margin-bottom: 25.6px;
-        color: var(--oak-color-primary);
+        margin-bottom: 20px;
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.3s;
+
+        @media (min-width: 768px) {
+          font-size: 24px;
+          margin-bottom: 26px;
+        }
       }
 
       &-subheading {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 400;
-        margin-bottom: 48px;
+        margin-bottom: 30px;
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.4s;
         text-align: center;
+
+        @media (min-width: 768px) {
+          font-size: 18px;
+          margin-bottom: 48px;
+        }
       }
     }
 
@@ -368,9 +379,14 @@
 
     &__advice-badges {
       display: grid;
-      padding: 16px;
       grid-template-columns: repeat(1, 1fr);
       gap: 10px;
+      padding: 12px;
+
+      @media (min-width: 768px) {
+        padding: 16px;
+      }
+
       @media (min-width: 1024px) {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -379,7 +395,7 @@
         background-color: var(--oak-color-secondary);
         border: 1px solid var(--oak-border-color);
         border-radius: var(--oak-border-radius);
-        padding: 15px;
+        padding: 10px;
         cursor: pointer;
         transition: background-color 0.3s ease;
         animation: fadeInUp 0.3s ease-out;
@@ -393,6 +409,10 @@
           &:nth-child(#{$i}) {
             animation-delay: #{($i * 0.1) + 0.5}s;
           }
+        }
+
+        @media (min-width: 768px) {
+          padding: 15px;
         }
       }
 
