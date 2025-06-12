@@ -16,6 +16,8 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import NoDataCard from "~/components/ui/no-data-card";
+import type { AgentSettings } from "~/types/agentSetting";
+import Warning from "~/components/ui/warning";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -32,24 +34,44 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       createdAt: "desc",
     },
   });
-  return { feedback };
+
+  // get the agent settings
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : null;
+
+  return { feedback, agentSettings };
 };
 
 const Conversations = () => {
-  const { feedback } = useLoaderData<typeof loader>();
-  const { agentId } = useParams();
+  const { feedback, agentSettings } = useLoaderData<typeof loader>();
+  const { captureFeedback } = agentSettings;
+  const { agentId, spaceId } = useParams();
   return (
     <div className="py-8 px-4 md:p-8 w-full">
       <h1 className="text-3xl font-medium mb-4">Feedback</h1>
 
-      <div className="text-muted-foreground mb-6 max-w-lg">
-        Captures feedback from conversations with this agent.
-        <br />
-        Feedback can be used to improve the agent&apos;s performance.
-      </div>
+      {!captureFeedback && (
+        <Warning
+          className="mb-4"
+          headline="Note"
+          description="To capture more feedback, please enable the 'Capture Feedback' option in the agent settings."
+        />
+      )}
 
       {(!feedback || feedback.length === 0) && (
-        <NoDataCard description="No feedback found for this agent." />
+        <NoDataCard
+          headline="No feedback found"
+          description={
+            captureFeedback
+              ? "There is no feedback available for this agent yet."
+              : "Feedback capture is disabled for this agent. Please enable it in the agent settings to start collecting feedback."
+          }
+        />
       )}
       {feedback && feedback.length > 0 && (
         <div className="rounded-xl border">
@@ -74,7 +96,7 @@ const Conversations = () => {
                   <TableCell>{dayjs(fb.createdAt).fromNow()}</TableCell>
                   <TableCell className="font-medium">
                     <Link
-                      to={`/agent/${agentId}/conversations/${fb.conversationId}`}
+                      to={`/space/${spaceId}/agent/${agentId}/conversations/${fb.conversationId}`}
                     >
                       {fb.conversationId}
                     </Link>

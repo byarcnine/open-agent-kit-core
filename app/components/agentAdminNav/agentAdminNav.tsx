@@ -14,16 +14,29 @@ import { cn } from "../../lib/utils";
 import { Link, useLocation, useParams } from "react-router";
 import type { MenuItem } from "../../types/plugins";
 import FeatherIcon from "../featherIcon/featherIcon";
+import type { AgentSettings } from "~/types/agentSetting";
+import { initialAgentSettings } from "~/constants/agentSettings";
+import Bubble from "../ui/bubble";
 
 export const AgentAdminNav = ({
   pluginMenuItems = [],
   spaceId,
+  agentSettings,
 }: {
   pluginMenuItems: MenuItem[];
   spaceId: string;
+  agentSettings: string;
 }) => {
   const { agentId } = useParams();
   const location = useLocation();
+
+  const agentSettingsConfig: AgentSettings = agentSettings
+    ? {
+        ...initialAgentSettings,
+        ...JSON.parse(agentSettings as string),
+      }
+    : initialAgentSettings;
+
   return (
     <nav className="flex flex-col gap-0.5 md:px-2 text-sm h-full w-full">
       <Link
@@ -82,6 +95,7 @@ export const AgentAdminNav = ({
           <span className="text-xs">Create guidelines for your agent</span>
         </div>
       </Link>
+
       <Link
         to={`space/${spaceId}/agent/${agentId}/knowledge`}
         prefetch="intent"
@@ -110,6 +124,10 @@ export const AgentAdminNav = ({
           <span className="">Knowledge</span>
           <span className="text-xs">Add your documents and data</span>
         </div>
+        <Bubble
+          className="ml-auto"
+          isActive={agentSettingsConfig.hasKnowledgeBase}
+        />
       </Link>
 
       <Link
@@ -140,7 +158,12 @@ export const AgentAdminNav = ({
           <span className="">Feedback</span>
           <span className="text-xs">Review and manage agent feedback</span>
         </div>
+        <Bubble
+          className="ml-auto"
+          isActive={agentSettingsConfig.captureFeedback}
+        />
       </Link>
+
       <Link
         to={`space/${spaceId}/agent/${agentId}/plugins`}
         prefetch="intent"
@@ -245,7 +268,12 @@ export const AgentAdminNav = ({
           <span className="">History</span>
           <span className="text-xs">View recent agent conversations</span>
         </div>
+        <Bubble
+          className="ml-auto"
+          isActive={agentSettingsConfig.trackingEnabled}
+        />
       </Link>
+
       <a
         href={`/chat/${agentId}`}
         target="_blank"

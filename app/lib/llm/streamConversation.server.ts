@@ -16,6 +16,7 @@ import {
   calculateTokensString,
 } from "./tokenCounter.server";
 import { trackUsageForMessageResponse } from "./usage.server";
+import type { AgentSettings } from "~/types/agentSetting";
 
 const limitMessagesByTokens = (
   messages: Message[],
@@ -48,10 +49,23 @@ export const streamConversation = async (
   messages: Message[],
   meta: Record<string, any>,
 ) => {
+  // check if agent has conversation tracking enabled
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : null;
+  const { trackingEnabled = true } = agentSettings;
+
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({
-        data: { agentId, userId, customIdentifier },
+        data: {
+          agentId,
+          ...(trackingEnabled ? { userId } : {}),
+          customIdentifier,
+        },
       });
 
   if (!conversation) {
@@ -66,13 +80,17 @@ export const streamConversation = async (
   const TOKEN_LIMIT = getModelContextLimit(modelForAgent.model.modelId) * 0.8;
 
   // Add the user message to the conversation
-  const createMessagePromise = prisma.message.create({
-    data: {
-      content: JSON.parse(JSON.stringify([messages[messages.length - 1]][0])),
-      conversationId: conversation.id,
-      author: "USER",
-    },
-  });
+  const createMessagePromise = trackingEnabled
+    ? prisma.message.create({
+        data: {
+          content: JSON.parse(
+            JSON.stringify([messages[messages.length - 1]][0]),
+          ),
+          conversationId: conversation.id,
+          author: "USER",
+        },
+      })
+    : Promise.resolve();
 
   const messagesInScope = limitMessagesByTokens(
     messages,
@@ -92,7 +110,7 @@ export const streamConversation = async (
   });
 
   let tagLinePromise: Promise<void> | null = null;
-  if (!conversation.tagline) {
+  if (!conversation.tagline && trackingEnabled) {
     tagLinePromise = generateSingleMessage(config)(
       `Summarize in 3-4 words what this conversation is about. "${messages[0].content}"`,
       agentId,

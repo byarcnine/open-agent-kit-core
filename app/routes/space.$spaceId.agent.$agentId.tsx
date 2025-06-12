@@ -34,6 +34,7 @@ const Agent = () => {
     <Layout
       navComponent={
         <AgentAdminNav
+          agentSettings={agent.agentSettings as string}
           spaceId={spaceId as string}
           pluginMenuItems={pluginMenuItems}
         />

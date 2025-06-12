@@ -345,7 +345,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 const KnowledgeProvider = () => {
   const { plugins, mcp: initialMcpList } = useLoaderData<typeof loader>();
-  const { agentId } = useParams();
+  const { agentId, spaceId } = useParams();
   const [isAddMcpOpen, setIsAddMcpOpen] = useState(false);
   const [mcpType, setMcpType] = useState<"SSE" | "STDIO">("SSE");
   const actionData = useActionData<ActionResponse>();
@@ -515,7 +515,7 @@ const KnowledgeProvider = () => {
             <Link
               key={plugin.name}
               className="block"
-              to={`/agent/${agentId}/plugins/${plugin.slug}`}
+              to={`/space/${spaceId}/agent/${agentId}/plugins/${plugin.slug}`}
             >
               <Card className="flex flex-col">
                 <CardHeader className="flex flex-row items-center justify-between">

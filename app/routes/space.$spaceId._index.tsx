@@ -15,7 +15,6 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
-import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
 import { useEffect, useState } from "react";
@@ -42,8 +41,8 @@ import {
   AgentCardHeader,
   AgentCardTitle,
 } from "~/components/ui/agent-card";
-import { cn } from "~/lib/utils";
 import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
+import Bubble from "~/components/ui/bubble";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -288,15 +287,7 @@ const Index = () => {
                             <AgentCardTitle className="truncate">
                               {agent.name}
                             </AgentCardTitle>
-                            <div
-                              className={cn(
-                                "w-3 h-3 rounded-full overflow-hidden",
-                                {
-                                  "bg-green-400": agent.isActive,
-                                  "bg-red-400": !agent.isActive,
-                                },
-                              )}
-                            />
+                            <Bubble isActive={agent.isActive} />
                           </div>
                           <AgentCardDescription className="flex gap-1 items-center">
                             {agent.description || "No description"}

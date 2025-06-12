@@ -25,7 +25,18 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Activity, AlertTriangle, Lock } from "react-feather";
+import {
+  Activity,
+  AlertTriangle,
+  Book,
+  Code,
+  Link,
+  Lock,
+  MessageCircle,
+  Power,
+  Settings,
+  Video,
+} from "react-feather";
 import { type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
 import {
@@ -67,7 +78,9 @@ const AgentSettingsUpdateSchema = z.object({
   isActive: z.boolean().optional(),
   allowedUrls: z.array(z.string()).optional(),
   agentSettings: z.object({
-    hasKnowledgeBase: z.boolean().optional(),
+    hasKnowledgeBase: z.boolean(),
+    captureFeedback: z.boolean(),
+    trackingEnabled: z.boolean(),
   }),
 });
 
@@ -143,18 +156,15 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 const CardContentSection = ({
-  title,
+  className,
   children,
 }: {
-  title: string;
+  className?: string;
   children: React.ReactNode;
 }) => {
   return (
-    <div className="flex flex-col space-y-3 mb-6">
-      <div className="font-medium text-md leading-none tracking-tight mb-3">
-        {title}
-      </div>
-      {children}
+    <div className={className}>
+      <div className="flex flex-col space-y-6 mb-6">{children}</div>
     </div>
   );
 };
@@ -242,6 +252,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       allowedUrls,
       agentSettings: {
         hasKnowledgeBase: !!formData.get("hasKnowledgeBase"),
+        captureFeedback: !!formData.get("captureFeedback"),
+        trackingEnabled: !!formData.get("trackingEnabled"),
       },
     };
 
@@ -254,9 +266,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           isPublic: validatedData.isPublic,
           isActive: validatedData.isActive,
           allowedUrls: validatedData.allowedUrls,
-          agentSettings: {
+          agentSettings: JSON.stringify({
             hasKnowledgeBase: validatedData.agentSettings.hasKnowledgeBase,
-          },
+            captureFeedback: validatedData.agentSettings.captureFeedback,
+            trackingEnabled: validatedData.agentSettings.trackingEnabled,
+          }),
         },
       });
       return { success: true, errors: null };
@@ -365,6 +379,8 @@ const AgentSettings = () => {
       }
     : initialAgentSettings;
 
+  const [chatSettingsTab, setChatSettingsTab] = useState<string>("intro");
+
   const [customCSS, setCustomCSS] = useState(chatSettings?.customCSS || "");
   const [temperature, setTemperature] = useState(
     (agent.modelSettings as ModelSettings)?.temperature ?? 0.7,
@@ -401,7 +417,7 @@ const AgentSettings = () => {
   };
 
   return (
-    <div className="w-full py-8 px-4 md:p-8 space-y-6">
+    <div className="w-full py-8 px-4 md:p-8 space-y-6 max-w-6xl">
       <h1 className="text-3xl mb-6">Agent Settings</h1>
       <Tabs defaultValue="general" className="w-auto">
         <TabsList className="grid w-full max-w-xl grid-cols-5 mb-6">
@@ -549,7 +565,7 @@ const AgentSettings = () => {
                       "bg-gray-200": !isActive,
                     })}
                   >
-                    <Activity size={20} />
+                    <Power size={20} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <Label htmlFor="isActive">Active Agent</Label>
@@ -602,6 +618,69 @@ const AgentSettings = () => {
                     </p>
                   </div>
                 )}
+                <div className="my-8 flex flex-col gap-2">
+                  <div className="font-medium text-sm">Agent Capabilities</div>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Book size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="hasKnowledgeBase">Knowledge Base</Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent can access the knowledge base to
+                        answer questions. This is useful for agents that need to
+                        provide information from a specific domain or context.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="hasKnowledgeBase"
+                      name="hasKnowledgeBase"
+                      defaultChecked={agentSettings.hasKnowledgeBase}
+                    />
+                  </div>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <MessageCircle size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="captureFeedback">Capture Feedback</Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent will capture feedback from users
+                        and store it in the database. This is useful for
+                        improving the agent's performance and understanding user
+                        needs.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="captureFeedback"
+                      name="captureFeedback"
+                      defaultChecked={agentSettings.captureFeedback}
+                    />
+                  </div>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Activity size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="trackingEnabled">
+                        Conversation Tracking
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent will track conversations and store
+                        them in the database. This is useful for analyzing user
+                        interactions and improving the agent's performance.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="trackingEnabled"
+                      name="trackingEnabled"
+                      defaultChecked={agentSettings.trackingEnabled}
+                    />
+                  </div>
+                </div>
                 <Button className="mt-4" type="submit">
                   Save Changes
                 </Button>
@@ -613,6 +692,19 @@ const AgentSettings = () => {
           <Card>
             <CardHeader>
               <CardTitle>Chat Settings</CardTitle>
+              <Tabs
+                defaultValue={chatSettingsTab}
+                value={chatSettingsTab}
+                onValueChange={setChatSettingsTab}
+                className="w-full max-w-md"
+              >
+                <TabsList>
+                  <TabsTrigger value="intro">Introduction</TabsTrigger>
+                  <TabsTrigger value="chat_input">Chat Input</TabsTrigger>
+                  <TabsTrigger value="formatting">Formatting</TabsTrigger>
+                  <TabsTrigger value="custom_css">Custom CSS</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
             <CardContent>
               <Form method="post" className="space-y-4">
@@ -621,9 +713,13 @@ const AgentSettings = () => {
                   name="intent"
                   value={Intent.UPDATE_CHAT_SETTINGS}
                 />
-                <CardContentSection title="Intro Screen">
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "intro",
+                  })}
+                >
                   <div className="flex flex-col space-y-2">
-                    <Label htmlFor="introTitle">Intro Title</Label>
+                    <Label htmlFor="introTitle">Title</Label>
                     <Input
                       id="introTitle"
                       name="introTitle"
@@ -636,7 +732,7 @@ const AgentSettings = () => {
                     </p>
                   </div>
                   <div className="flex flex-col space-y-2">
-                    <Label htmlFor="introSubTitle">Intro SubTitle</Label>
+                    <Label htmlFor="introSubTitle">Subtitle</Label>
                     <Input
                       id="introSubTitle"
                       name="introSubTitle"
@@ -688,21 +784,35 @@ const AgentSettings = () => {
                     </p>
                   </div>
                 </CardContentSection>
-                <CardContentSection title="Chat Input">
-                  <div className="flex gap-2 flex-col">
-                    <Label htmlFor="isPublic">Enable File Upload</Label>
-                    <p className="text-sm text-muted-foreground">
-                      If enabled the agent can accept file uploads from the
-                      user. Supported file types are images and PDFs. PDFs are
-                      currently not supported when choosing an OpenAI model.
-                    </p>
+
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "chat_input",
+                  })}
+                >
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Book size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="enableFileUpload">
+                        Enable File Upload
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent can accept file uploads from the
+                        user. Supported file types are images and PDFs. PDFs are
+                        currently not supported when choosing an OpenAI model.
+                      </p>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="enableFileUpload"
                       name="enableFileUpload"
                       defaultChecked={enableFileUpload}
                       onCheckedChange={setEnableFileUpload}
                     />
                   </div>
+
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="textAreaInitialRows">Text Area Rows</Label>
                     <Input
@@ -731,27 +841,44 @@ const AgentSettings = () => {
                       Enter a note that will be displayed below the chat input.
                     </p>
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="showMessageToolBar">
-                      Show Message Tool Bar
-                    </Label>
+                </CardContentSection>
+
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "formatting",
+                  })}
+                >
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <MessageCircle size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="showMessageToolBar">
+                        Show Message Tool Bar
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled, actions like copy will be shown below the
+                        response messages.
+                      </p>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="showMessageToolBar"
                       name="showMessageToolBar"
                       defaultChecked={chatSettings?.showMessageToolBar}
                     />
-                    <p className="text-sm text-muted-foreground">
-                      If enabled, actions like copy will be shown below the
-                      response messages.
-                    </p>
                   </div>
-                </CardContentSection>
-                <CardContentSection title="Message Formatting">
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="showDefaultToolsDebugMessages">
-                      Show Default Tools Debug Messages
-                    </Label>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Code size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="showDefaultToolsDebugMessages">
+                        Show Default Tools Debug Messages
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="showDefaultToolsDebugMessages"
                       name="showDefaultToolsDebugMessages"
                       defaultChecked={
@@ -759,38 +886,64 @@ const AgentSettings = () => {
                       }
                     />
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="openExternalLinksInNewTab">
-                      Open External Links in New Tab
-                    </Label>
+
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Link size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="openExternalLinksInNewTab">
+                        Open External Links in New Tab
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="openExternalLinksInNewTab"
                       name="openExternalLinksInNewTab"
                       defaultChecked={chatSettings?.openExternalLinksInNewTab}
                     />
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="openInternalLinksInNewTab">
-                      Open Internal Links in New Tab
-                    </Label>
+
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Link size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="openInternalLinksInNewTab">
+                        Open Internal Links in New Tab
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="openInternalLinksInNewTab"
                       name="openInternalLinksInNewTab"
                       defaultChecked={chatSettings?.openInternalLinksInNewTab}
                     />
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <Label htmlFor="openYoutubeVideosInIframe ">
-                      Open Youtube Videos in Iframe
-                    </Label>
+
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Video size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="openYoutubeVideosInIframe ">
+                        Open Youtube Videos in Iframe
+                      </Label>
+                    </div>
                     <Switch
+                      className="ml-auto"
                       id="openYoutubeVideosInIframe"
                       name="openYoutubeVideosInIframe"
                       defaultChecked={chatSettings?.openYoutubeVideosInIframe}
                     />
                   </div>
                 </CardContentSection>
-                <CardContentSection title="Custom CSS">
+
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "custom_css",
+                  })}
+                >
                   <div className="flex flex-col space-y-2">
                     <CustomCodeEditor
                       value={customCSS}
@@ -810,6 +963,7 @@ const AgentSettings = () => {
                     />
                   </div>
                 </CardContentSection>
+
                 <Button type="submit">Save Changes</Button>
               </Form>
             </CardContent>

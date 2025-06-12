@@ -150,6 +150,10 @@ export const routes = (
       "api/agentChatSettings/:agentId",
       `${corePrefix}/api.agentChatSettings.$agentId.ts`,
     ),
+     route(
+      "api/agentSettings/:agentId",
+      `${corePrefix}/api.agentSettings.$agentId.ts`,
+    ),
     ...(plugins.flatMap((p) => {
       const combinedRoutes = [
         ...(p.userRoutes ?? []),

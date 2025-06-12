@@ -13,7 +13,6 @@ import {
 } from "react-feather";
 import { ChatContext } from "./chat.client";
 import MarkdownViewer from "./markdownViewer";
-import { useFetcher } from "react-router";
 import { getApiUrl } from "./utils";
 
 const formatValue = (value: any) => {
@@ -56,10 +55,10 @@ const Message: React.FC<MessageProps> = React.memo(
   ({ message, toolNames, avatarURL, requiresScrollPadding, scrollPadding }) => {
     const [copied, setCopied] = useState(false);
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-    const { chatSettings, conversationId, isEmbed, apiUrl } =
+    const { chatSettings, agentSettings, conversationId, isEmbed, apiUrl } =
       useContext(ChatContext);
 
-    const fetcher = useFetcher();
+    const { captureFeedback } = agentSettings;
 
     const handleCopy = (text: string) => {
       navigator.clipboard.writeText(text).then(() => {
@@ -68,8 +67,8 @@ const Message: React.FC<MessageProps> = React.memo(
       });
     };
 
-    const captureFeedback = (isNegative: boolean, feedback: string) => {
-      if (feedbackSubmitted || !conversationId) return;
+    const handleCaptureFeedback = (isNegative: boolean, feedback: string) => {
+      if (!captureFeedback || feedbackSubmitted || !conversationId) return;
       const body = {
         feedback,
         feedbackType: "user_feedback",
@@ -244,31 +243,37 @@ const Message: React.FC<MessageProps> = React.memo(
                         >
                           {copied ? <Check size={16} /> : <Copy size={16} />}
                         </button>
-                        <div className="oak-chat__message-content--reaction-buttons">
-                          <div
-                            className={`oak-chat__message-content--feedback-submitted ${
-                              feedbackSubmitted ? "active" : ""
-                            }`}
-                          >
-                            Thank you for your feedback!
+                        {captureFeedback && (
+                          <div className="oak-chat__message-content--reaction-buttons">
+                            <div
+                              className={`oak-chat__message-content--feedback-submitted ${
+                                feedbackSubmitted ? "active" : ""
+                              }`}
+                            >
+                              Thank you for your feedback!
+                            </div>
+
+                            <button
+                              disabled={feedbackSubmitted}
+                              onClick={() =>
+                                handleCaptureFeedback(false, part.text)
+                              }
+                              className="oak-chat__message-content--copy-button"
+                            >
+                              <ThumbsUp size={16} />
+                            </button>
+
+                            <button
+                              disabled={feedbackSubmitted}
+                              onClick={() =>
+                                handleCaptureFeedback(true, part.text)
+                              }
+                              className="oak-chat__message-content--copy-button"
+                            >
+                              <ThumbsDown size={16} />
+                            </button>
                           </div>
-
-                          <button
-                            disabled={feedbackSubmitted}
-                            onClick={() => captureFeedback(false, part.text)}
-                            className="oak-chat__message-content--copy-button"
-                          >
-                            <ThumbsUp size={16} />
-                          </button>
-
-                          <button
-                            disabled={feedbackSubmitted}
-                            onClick={() => captureFeedback(true, part.text)}
-                            className="oak-chat__message-content--copy-button"
-                          >
-                            <ThumbsDown size={16} />
-                          </button>
-                        </div>
+                        )}
                       </div>
                     )}
                 </div>
