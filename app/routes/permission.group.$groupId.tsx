@@ -1,32 +1,22 @@
 import {
   useLoaderData,
-  useActionData,
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
   data,
   Link,
-  Form,
   type MetaFunction,
+  useFetcher,
 } from "react-router";
-import { prisma } from "@db/db.server";
+import { prisma, type Permission } from "@db/db.server";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  ArrowLeft,
-  Users,
-  Shield,
-  ChevronDown,
-  ChevronRight,
-} from "react-feather";
-import { useEffect, useState } from "react";
-import { toast, Toaster } from "sonner";
+import { ArrowLeft, Shield, ChevronDown, ChevronRight } from "react-feather";
+import { useState, useEffect } from "react";
+import { Toaster } from "sonner";
 import { Label } from "~/components/ui/label";
-import {
-  HierarchicalPermissionChecker,
-  type PermissionContext,
-} from "~/lib/permissions/hierarchical";
+
 import { Badge } from "~/components/ui/badge";
 import { Check, ArrowDown } from "react-feather";
 import {
@@ -34,8 +24,10 @@ import {
   PERMISSION,
 } from "~/lib/permissions/permissions";
 import {
-  getUserScopes,
+  getGroupGrantedPermissions,
   hasAccessHierarchical,
+  resolvePermissionReferences,
+  type UserGrantedPermissions,
 } from "~/lib/permissions/enhancedHasAccess.server";
 
 type ActionData = {
@@ -43,6 +35,7 @@ type ActionData = {
   error?: string;
   message?: string;
   intent: string;
+  updatedPermissions?: Partial<Permission>[];
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -53,41 +46,41 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   switch (intent) {
+    case "recalculatePermissions": {
+      const permissions = JSON.parse(
+        formData.get("permissions") as string,
+      ) as UserGrantedPermissions;
+      const updatedPermissions = await resolvePermissionReferences(
+        permissions.filter((p) => p.direct),
+      );
+      return data<ActionData>(
+        {
+          success: true,
+          intent: intent as string,
+          updatedPermissions,
+        },
+        { status: 200 },
+      );
+    }
     case "updatePermissions": {
-      const permissions = formData.getAll("permissions") as string[];
-      const context = formData.get("context") as string;
-      const referenceId = formData.get("referenceId") as string;
-
-      try {
-        // Remove existing permissions for this context
-        let whereClause: any = { permissionGroupId: groupId };
-
-        if (context === "global") {
-          whereClause.scope = { startsWith: "global." };
-          whereClause.referenceId = "global";
-        } else if (context === "space") {
-          whereClause.referenceId = referenceId;
-          whereClause.scope = { startsWith: "space." };
-        } else if (context === "agent") {
-          whereClause.referenceId = referenceId;
-          whereClause.scope = { startsWith: "agent." };
-        }
-
-        await prisma.permission.deleteMany({ where: whereClause });
-
-        // Add new permissions (only the ones that are checked)
-        if (permissions.length > 0) {
-          const permissionData = permissions.map((permission) => ({
-            scope: permission,
-            referenceId: context === "global" ? "global" : referenceId,
+      const permissions = JSON.parse(
+        formData.get("permissions") as string,
+      ) as UserGrantedPermissions;
+      await prisma.$transaction(async (tx) => {
+        await tx.permission.deleteMany({
+          where: {
             permissionGroupId: groupId,
-          }));
-
-          await prisma.permission.createMany({
-            data: permissionData,
-          });
-        }
-
+          },
+        });
+        await tx.permission.createMany({
+          data: permissions.map((p) => ({
+            scope: p.scope,
+            referenceId: p.referenceId,
+            permissionGroupId: groupId,
+          })),
+        });
+      });
+      try {
         return data<ActionData>(
           {
             success: true,
@@ -124,117 +117,36 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     PERMISSION["global.edit_global_users"],
   );
 
-  const permissionGroupPromise = prisma.permissionGroup.findUnique({
-    where: { id: groupId },
-    include: {
-      userPermissionGroups: {
-        include: {
-          user: true,
+  const [allGroupPermissions, spaces, permissionGroup] = await Promise.all([
+    getGroupGrantedPermissions(groupId),
+    prisma.space.findMany({
+      include: {
+        agents: true,
+      },
+    }),
+    prisma.permissionGroup.findUnique({
+      where: {
+        id: groupId,
+      },
+      include: {
+        _count: {
+          select: {
+            userPermissionGroups: true,
+          },
         },
       },
-      permissions: true,
-      _count: {
-        select: {
-          userPermissionGroups: true,
-          permissions: true,
-        },
-      },
-    },
-  });
-
-  const spacesPromise = prisma.space.findMany({
-    orderBy: { name: "asc" },
-    include: {
-      agents: {
-        orderBy: { name: "asc" },
-      },
-    },
-  });
-
-  const [permissionGroup, spaces] = await Promise.all([
-    permissionGroupPromise,
-    spacesPromise,
+    }),
   ]);
 
   if (!permissionGroup) {
-    throw new Response("Permission Group not found", { status: 404 });
+    throw new Response("Permission group not found", { status: 404 });
   }
-
-  // Calculate inherited permissions count
-  const livePermissions = permissionGroup.permissions.map((p) => ({
-    scope: p.scope,
-    referenceId: p.referenceId,
-  }));
-
-  // Create space-agent mapping
-  const spaceAgentMap = new Map<string, string[]>();
-  spaces.forEach((space) => {
-    spaceAgentMap.set(
-      space.id,
-      space.agents.map((agent) => agent.id),
-    );
-  });
-
-  // Create hierarchical permission checker
-  const checker = new HierarchicalPermissionChecker(
-    livePermissions,
-    spaceAgentMap,
-  );
-  const userScopes = await getUserScopes(user);
-
-  const getPermissionsForContext = (context: string, referenceId: string) => {
-    let contextPermissions = livePermissions.filter((p) => {
-      if (context === "global") {
-        return p.scope.startsWith("global.") && p.referenceId === "global";
-      } else if (context === "space") {
-        return p.scope.startsWith("space.") && p.referenceId === referenceId;
-      } else if (context === "agent") {
-        return p.scope.startsWith("agent.") && p.referenceId === referenceId;
-      }
-      return false;
-    });
-    return contextPermissions.map((p) => p.scope);
-  };
-
-  let inheritedPermissionsCount = 0;
-
-  // Calculate inherited permissions count for all contexts
-  Object.entries(AVAILABLE_PERMISSIONS).forEach(([permission]) => {
-    const [scope] = permission.split(".");
-
-    if (scope === "global") {
-      const directPermissions = getPermissionsForContext("global", "global");
-      const hasDirect = directPermissions.includes(permission);
-      const hasInherited =
-        !hasDirect && checker.hasPermission(permission, "global");
-      if (hasInherited) inheritedPermissionsCount++;
-    } else if (scope === "space") {
-      spaces.forEach((space) => {
-        const directPermissions = getPermissionsForContext("space", space.id);
-        const hasDirect = directPermissions.includes(permission);
-        const hasInherited =
-          !hasDirect && checker.hasPermission(permission, space.id);
-        if (hasInherited) inheritedPermissionsCount++;
-      });
-    } else if (scope === "agent") {
-      spaces.forEach((space) => {
-        space.agents.forEach((agent) => {
-          const directPermissions = getPermissionsForContext("agent", agent.id);
-          const hasDirect = directPermissions.includes(permission);
-          const hasInherited =
-            !hasDirect && checker.hasPermission(permission, agent.id);
-          if (hasInherited) inheritedPermissionsCount++;
-        });
-      });
-    }
-  });
 
   return {
     user,
-    permissionGroup,
+    allGroupPermissions,
     spaces,
-    inheritedPermissionsCount,
-    userScopes,
+    permissionGroup,
   };
 };
 
@@ -249,41 +161,22 @@ const HierarchicalPermissionSection = ({
   availablePermissions,
   context,
   referenceId,
-  checker,
   spaceName,
   agentName,
-  onPermissionChange,
+  toggleScope,
 }: {
   title: string;
-  permissions: string[];
+  permissions: {
+    scope: string;
+    direct: boolean;
+  }[];
   availablePermissions: [string, PermissionEntry][];
   context: string;
   referenceId: string;
-  checker: HierarchicalPermissionChecker;
   spaceName?: string;
   agentName?: string;
-  onPermissionChange: (
-    permission: string,
-    checked: boolean,
-    referenceId: string,
-  ) => void;
+  toggleScope: (scope: string) => void;
 }) => {
-  const getPermissionStatus = (permission: string) => {
-    const hasDirect = permissions.includes(permission);
-    const hasInherited =
-      !hasDirect && checker.hasPermission(permission, referenceId);
-    const inheritedFrom = checker
-      .inheritedFrom(permission, permissions)
-      .map((p) => p.name);
-    return {
-      hasDirect,
-      hasInherited,
-      inheritedFrom,
-      hasAny: hasDirect || hasInherited,
-    };
-  };
-
-  // Since all permissions are now objects, the key is the permission scope
   const getPermissionScope = (key: string): string => key;
   const getPermissionName = (permissionEntry: PermissionEntry): string =>
     permissionEntry.name;
@@ -301,15 +194,6 @@ const HierarchicalPermissionSection = ({
     }
   };
 
-  const directPermissions = availablePermissions.filter(([key]) =>
-    permissions.includes(getPermissionScope(key)),
-  );
-
-  const inheritedPermissions = availablePermissions.filter(([key]) => {
-    const status = getPermissionStatus(getPermissionScope(key));
-    return status.hasInherited;
-  });
-
   return (
     <div className="border rounded-lg p-4 bg-white">
       <div className="flex items-center justify-between mb-4">
@@ -319,21 +203,16 @@ const HierarchicalPermissionSection = ({
           {spaceName && <Badge variant="outline">{spaceName}</Badge>}
           {agentName && <Badge variant="outline">{agentName}</Badge>}
         </div>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <Badge variant="secondary">{directPermissions.length} direct</Badge>
           {inheritedPermissions.length > 0 && (
             <Badge variant="outline">
               {inheritedPermissions.length} inherited
             </Badge>
           )}
-        </div>
+        </div> */}
       </div>
-
-      <Form method="post" className="space-y-4">
-        <input type="hidden" name="intent" value="updatePermissions" />
-        <input type="hidden" name="context" value={context} />
-        <input type="hidden" name="referenceId" value={referenceId} />
-
+      <div className="space-y-4">
         {/* Direct Permissions */}
         <div>
           <h5 className="font-medium text-sm text-muted-foreground mb-3">
@@ -343,7 +222,10 @@ const HierarchicalPermissionSection = ({
             {availablePermissions.map(([key, permissionEntry]) => {
               const permissionScope = getPermissionScope(key);
               const permissionName = getPermissionName(permissionEntry);
-              const status = getPermissionStatus(permissionScope);
+              const status = permissions.find(
+                (p) => p.scope === permissionScope,
+              );
+              const hasInherited = status && !status.direct;
               return (
                 <div
                   key={permissionScope}
@@ -354,28 +236,22 @@ const HierarchicalPermissionSection = ({
                     id={`${context}-${referenceId}-${permissionScope}`}
                     name="permissions"
                     value={permissionScope}
-                    checked={status.hasAny}
-                    disabled={status.hasInherited && !status.hasDirect}
-                    onChange={(e) =>
-                      onPermissionChange(
-                        permissionScope,
-                        e.target.checked,
-                        referenceId,
-                      )
-                    }
+                    checked={status?.direct}
+                    disabled={hasInherited}
+                    onChange={(e) => toggleScope(permissionScope)}
                     className={`rounded border ${
-                      status.hasInherited && !status.hasDirect
-                        ? "border-blue-300 bg-blue-50 text-blue-600"
-                        : "border-gray-300"
+                      hasInherited
+                        ? "border-gray-300"
+                        : "border-blue-300 bg-blue-50 text-blue-600"
                     }`}
                   />
                   <div className="flex-1">
                     <Label
                       htmlFor={`${context}-${referenceId}-${permissionScope}`}
                       className={`text-sm font-medium leading-none ${
-                        status.hasDirect
-                          ? "text-foreground"
-                          : "text-muted-foreground"
+                        hasInherited
+                          ? "text-muted-foreground"
+                          : "text-foreground"
                       }`}
                     >
                       {permissionName}
@@ -383,7 +259,7 @@ const HierarchicalPermissionSection = ({
                     <div className="text-xs text-muted-foreground mt-1">
                       {permissionEntry.description}
                     </div>
-                    {status.hasInherited && !status.hasDirect && (
+                    {/* {!status?.direct && (
                       <div className="flex items-center gap-1 mt-1">
                         <ArrowDown className="h-3 w-3 text-blue-600" />
                         <span className="text-xs text-blue-600">
@@ -391,12 +267,12 @@ const HierarchicalPermissionSection = ({
                           {status.inheritedFrom.join(", ")}.
                         </span>
                       </div>
-                    )}
+                    )} */}
                   </div>
-                  {status.hasAny && (
+                  {status && (
                     <Check
                       className={`h-4 w-4 ${
-                        status.hasDirect ? "text-green-600" : "text-blue-600"
+                        status.direct ? "text-green-600" : "text-blue-600"
                       }`}
                     />
                   )}
@@ -405,105 +281,48 @@ const HierarchicalPermissionSection = ({
             })}
           </div>
         </div>
-        <Button type="submit" size="sm">
-          Update {title} Permissions
-        </Button>
-      </Form>
+      </div>
     </div>
   );
 };
 
 const PermissionGroupDetail = () => {
-  const {
-    user,
-    permissionGroup,
-    spaces,
-    inheritedPermissionsCount,
-    userScopes,
-  } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
+  const { user, allGroupPermissions, spaces, permissionGroup } =
+    useLoaderData<typeof loader>();
   const [openSpaces, setOpenSpaces] = useState<{ [key: string]: boolean }>({});
   const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const updateFetcher = useFetcher();
+  const [currentPermissions, setCurrentPermissions] =
+    useState(allGroupPermissions);
 
-  // Local state for live permission updates
-  const [livePermissions, setLivePermissions] = useState<PermissionContext[]>(
-    permissionGroup.permissions.map((p) => ({
-      scope: p.scope,
-      referenceId: p.referenceId,
-    })),
-  );
-
-  useEffect(() => {
-    if (actionData && actionData.success) {
-      toast.success(actionData.message);
-    }
-    if (actionData && actionData.error) {
-      toast.error(actionData.error);
-    }
-  }, [actionData]);
-
-  // Create space-agent mapping
-  const spaceAgentMap = new Map<string, string[]>();
-  spaces.forEach((space) => {
-    spaceAgentMap.set(
-      space.id,
-      space.agents.map((agent) => agent.id),
-    );
-  });
-
-  // Create hierarchical permission checker with live permissions
-  const checker = new HierarchicalPermissionChecker(
-    livePermissions,
-    spaceAgentMap,
-  );
-
-  // Handle permission toggle for live updates
-  const handlePermissionToggle = (
-    permission: string,
-    checked: boolean,
+  const toggleScope = (
+    scope: keyof typeof AVAILABLE_PERMISSIONS,
     referenceId: string,
   ) => {
-    setLivePermissions((prev) => {
-      if (checked) {
-        // Add permission if not already present
-        const exists = prev.some(
-          (p) => p.scope === permission && p.referenceId === referenceId,
-        );
-        if (!exists) {
-          return [...prev, { scope: permission, referenceId }];
-        }
-        return prev;
-      } else {
-        // Remove permission when unchecked
-        return prev.filter(
-          (p) => !(p.scope === permission && p.referenceId === referenceId),
-        );
-      }
-    });
+    setHasUnsavedChanges(true);
+    let permissionCopy = structuredClone(currentPermissions);
+    const hasPermissionIndex = permissionCopy.findIndex(
+      (p) => p.scope === scope && p.referenceId === referenceId,
+    );
+    if (hasPermissionIndex !== -1) {
+      // delete that index from the array
+      permissionCopy.splice(hasPermissionIndex, 1);
+      setCurrentPermissions([...permissionCopy]);
+    } else {
+      permissionCopy.push({
+        scope,
+        direct: true,
+        referenceId: referenceId,
+      });
+      setCurrentPermissions([...permissionCopy]);
+    }
+    const formData = new FormData();
+    formData.append("intent", "recalculatePermissions");
+    formData.append("permissions", JSON.stringify(permissionCopy));
+    updateFetcher.submit(formData, { method: "post" });
   };
-
-  const getPermissionsForContext = (context: string, referenceId: string) => {
-    let contextPermissions = livePermissions.filter((p) => {
-      if (context === "global") {
-        return p.scope.startsWith("global.") && p.referenceId === "global";
-      } else if (context === "space") {
-        return p.scope.startsWith("space.") && p.referenceId === referenceId;
-      } else if (context === "agent") {
-        return p.scope.startsWith("agent.") && p.referenceId === referenceId;
-      }
-      return false;
-    });
-    return contextPermissions.map((p) => p.scope);
-  };
-
-  const toggleSpace = (spaceId: string) => {
-    setOpenSpaces((prev) => ({ ...prev, [spaceId]: !prev[spaceId] }));
-  };
-
-  const toggleAgent = (agentId: string) => {
-    setOpenAgents((prev) => ({ ...prev, [agentId]: !prev[agentId] }));
-  };
-
+  console.log(currentPermissions);
   // Helper function to get available permissions by scope
   const getAvailablePermissionsByScope = (
     scope: string,
@@ -513,50 +332,51 @@ const PermissionGroupDetail = () => {
       .map(([key, value]) => [key, value as PermissionEntry]);
   };
 
-  // Helper function to calculate permission counts for a context
-  const getPermissionCounts = (context: string, referenceId: string) => {
-    const availablePerms = getAvailablePermissionsByScope(context).map(
-      ([key]) => key,
-    );
-
-    const directPermissions = getPermissionsForContext(context, referenceId);
-    const directCount = directPermissions.length;
-
-    let inheritedCount = 0;
-    availablePerms.forEach((permission) => {
-      const hasDirect = directPermissions.includes(permission);
-      const hasInherited =
-        !hasDirect && checker.hasPermission(permission, referenceId);
-      if (hasInherited) inheritedCount++;
-    });
-
-    return { direct: directCount, inherited: inheritedCount };
+  const submitScopes = () => {
+    const formData = new FormData();
+    const directPermissions = currentPermissions.filter((p) => p.direct);
+    formData.append("intent", "updatePermissions");
+    formData.append("permissions", JSON.stringify(directPermissions));
+    updateFetcher.submit(formData, { method: "post" });
   };
 
-  // Helper function to calculate total agent permissions in a space
-  const getSpaceAgentPermissionCounts = (space: any) => {
-    let totalDirect = 0;
-    let totalInherited = 0;
-
-    space.agents.forEach((agent: any) => {
-      const counts = getPermissionCounts("agent", agent.id);
-      totalDirect += counts.direct;
-      totalInherited += counts.inherited;
-    });
-
-    return { direct: totalDirect, inherited: totalInherited };
-  };
+  useEffect(() => {
+    if (
+      updateFetcher.state === "idle" &&
+      updateFetcher.data?.success &&
+      updateFetcher.data.intent === "updatePermissions"
+    ) {
+      setCurrentPermissions(allGroupPermissions);
+      setHasUnsavedChanges(false);
+    }
+    if (
+      updateFetcher.state === "idle" &&
+      updateFetcher.data?.success &&
+      updateFetcher.data.intent === "recalculatePermissions"
+    ) {
+      setCurrentPermissions(updateFetcher.data.updatedPermissions);
+    }
+  }, [updateFetcher.state, updateFetcher.data]);
 
   return (
-    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
+    <Layout
+      navComponent={
+        <OverviewNav userScopes={allGroupPermissions.map((p) => p.scope)} />
+      }
+      user={user}
+    >
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
+        {/* Header */}
         <div className="mb-8">
-          <Link className="mb-4 block" to="/permissions">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Permissions
-            </Button>
-          </Link>
+          <div className="flex items-center justify-between mb-6">
+            <Link to="/permissions">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Permissions
+              </Button>
+            </Link>
+          </div>
+
           <div>
             <h1 className="text-3xl font-medium">{permissionGroup.name}</h1>
             <p className="text-muted-foreground">
@@ -589,16 +409,16 @@ const PermissionGroupDetail = () => {
                     Total Permissions
                   </div>
                   <div className="text-2xl font-bold">
-                    {permissionGroup._count.permissions +
-                      inheritedPermissionsCount}
+                    {currentPermissions.length}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="secondary" className="text-xs">
-                      {permissionGroup._count.permissions} direct
+                      {currentPermissions.filter((p) => p.direct).length} direct
                     </Badge>
-                    {inheritedPermissionsCount > 0 && (
+                    {currentPermissions.filter((p) => !p.direct).length > 0 && (
                       <Badge variant="outline" className="text-xs">
-                        {inheritedPermissionsCount} inherited
+                        {currentPermissions.filter((p) => !p.direct).length}{" "}
+                        inherited
                       </Badge>
                     )}
                   </div>
@@ -615,7 +435,7 @@ const PermissionGroupDetail = () => {
             </Card>
 
             {/* Users in Group */}
-            <Card className="mt-6">
+            {/* <Card className="mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
@@ -623,7 +443,7 @@ const PermissionGroupDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {permissionGroup.userPermissionGroups.length === 0 ? (
+                {permissionGroup._count.userPermissionGroups === 0 ? (
                   <p className="text-muted-foreground text-sm">
                     No users assigned to this group.
                   </p>
@@ -645,7 +465,7 @@ const PermissionGroupDetail = () => {
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
           {/* Permission Management */}
@@ -674,14 +494,15 @@ const PermissionGroupDetail = () => {
                 <CardContent>
                   <HierarchicalPermissionSection
                     title="Global System Permissions"
-                    permissions={getPermissionsForContext("global", "global")}
+                    permissions={currentPermissions.filter((p) =>
+                      p.scope.startsWith("global."),
+                    )}
                     availablePermissions={getAvailablePermissionsByScope(
                       "global",
                     )}
                     context="global"
                     referenceId="global"
-                    checker={checker}
-                    onPermissionChange={handlePermissionToggle}
+                    toggleScope={(scope) => toggleScope(scope as any, "global")}
                   />
                 </CardContent>
               </Card>
@@ -693,16 +514,30 @@ const PermissionGroupDetail = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {spaces.map((space) => {
-                    const spaceCounts = getPermissionCounts("space", space.id);
-                    const agentCounts = getSpaceAgentPermissionCounts(space);
-                    const totalDirect = spaceCounts.direct + agentCounts.direct;
-                    const totalInherited =
-                      spaceCounts.inherited + agentCounts.inherited;
+                    // const spaceCounts = spaces.length;
+                    // const agentCounts = space.agents.length;
+                    const totalDirect = currentPermissions.filter(
+                      (p) =>
+                        p.scope.startsWith("space.") &&
+                        p.referenceId === space.id &&
+                        p.direct,
+                    ).length;
+                    const totalInherited = currentPermissions.filter(
+                      (p) =>
+                        p.scope.startsWith("space.") &&
+                        p.referenceId === space.id &&
+                        !p.direct,
+                    ).length;
 
                     return (
                       <div key={space.id}>
                         <button
-                          onClick={() => toggleSpace(space.id)}
+                          onClick={() =>
+                            setOpenSpaces((prev) => ({
+                              ...prev,
+                              [space.id]: !prev[space.id],
+                            }))
+                          }
                           className="flex items-center justify-between w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100"
                         >
                           <div className="flex items-center gap-2">
@@ -731,18 +566,20 @@ const PermissionGroupDetail = () => {
                               {/* Space Permissions */}
                               <HierarchicalPermissionSection
                                 title={`${space.name} Space Permissions`}
-                                permissions={getPermissionsForContext(
-                                  "space",
-                                  space.id,
+                                permissions={currentPermissions.filter(
+                                  (p) =>
+                                    p.scope.startsWith("space.") &&
+                                    p.referenceId === space.id,
                                 )}
                                 availablePermissions={getAvailablePermissionsByScope(
                                   "space",
                                 )}
                                 context="space"
                                 referenceId={space.id}
-                                checker={checker}
                                 spaceName={space.name}
-                                onPermissionChange={handlePermissionToggle}
+                                toggleScope={(scope) =>
+                                  toggleScope(scope as any, space.id)
+                                }
                               />
 
                               {/* Agent Permissions */}
@@ -752,15 +589,30 @@ const PermissionGroupDetail = () => {
                                     Agents in {space.name}
                                   </h5>
                                   {space.agents.map((agent) => {
-                                    const agentCounts = getPermissionCounts(
-                                      "agent",
-                                      agent.id,
-                                    );
+                                    const totalDirect =
+                                      currentPermissions.filter(
+                                        (p) =>
+                                          p.scope.startsWith("agent.") &&
+                                          p.referenceId === agent.id &&
+                                          p.direct,
+                                      ).length;
+                                    const totalInherited =
+                                      currentPermissions.filter(
+                                        (p) =>
+                                          p.scope.startsWith("agent.") &&
+                                          p.referenceId === agent.id &&
+                                          !p.direct,
+                                      ).length;
 
                                     return (
                                       <div key={agent.id}>
                                         <button
-                                          onClick={() => toggleAgent(agent.id)}
+                                          onClick={() =>
+                                            setOpenAgents((prev) => ({
+                                              ...prev,
+                                              [agent.id]: !prev[agent.id],
+                                            }))
+                                          }
                                           className="flex items-center justify-between w-full p-2 text-left bg-blue-50 rounded hover:bg-blue-100"
                                         >
                                           <div className="flex items-center gap-2">
@@ -778,13 +630,13 @@ const PermissionGroupDetail = () => {
                                               variant="secondary"
                                               className="text-xs"
                                             >
-                                              {agentCounts.direct} direct
+                                              {totalDirect} direct
                                             </Badge>
                                             <Badge
                                               variant="outline"
                                               className="text-xs"
                                             >
-                                              {agentCounts.inherited} inherited
+                                              {totalInherited} inherited
                                             </Badge>
                                           </div>
                                         </button>
@@ -792,20 +644,25 @@ const PermissionGroupDetail = () => {
                                           <div className="pt-3">
                                             <HierarchicalPermissionSection
                                               title={`${agent.name} Agent Permissions`}
-                                              permissions={getPermissionsForContext(
-                                                "agent",
-                                                agent.id,
+                                              permissions={currentPermissions.filter(
+                                                (p) =>
+                                                  p.scope.startsWith(
+                                                    "agent.",
+                                                  ) &&
+                                                  p.referenceId === agent.id,
                                               )}
                                               availablePermissions={getAvailablePermissionsByScope(
                                                 "agent",
                                               )}
                                               context="agent"
                                               referenceId={agent.id}
-                                              checker={checker}
                                               spaceName={space.name}
                                               agentName={agent.name}
-                                              onPermissionChange={
-                                                handlePermissionToggle
+                                              toggleScope={(scope) =>
+                                                toggleScope(
+                                                  scope as any,
+                                                  agent.id,
+                                                )
                                               }
                                             />
                                           </div>
@@ -827,6 +684,36 @@ const PermissionGroupDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Save Button */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="flex flex-col items-end gap-2">
+            <Badge
+              variant="outline"
+              className="text-amber-600 border-amber-300 bg-white shadow-lg"
+            >
+              Unsaved changes
+            </Badge>
+            <Button
+              onClick={() => submitScopes()}
+              disabled={updateFetcher.state === "submitting"}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+              size="lg"
+            >
+              {updateFetcher.state === "submitting" ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  Saving...
+                </>
+              ) : (
+                "Save All Changes"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Toaster />
     </Layout>
   );

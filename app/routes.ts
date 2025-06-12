@@ -35,22 +35,42 @@ export const routes = (
         `${corePrefix}/permission.group.$groupId.tsx`,
       ),
       route("space/:spaceId", `${corePrefix}/space.$spaceId._index.tsx`),
+      route(
+        "space/:spaceId/permissions",
+        `${corePrefix}/space.$spaceId.permissions.tsx`,
+      ),
+      route(
+        "space/:spaceId/permissions/group/:groupId",
+        `${corePrefix}/space.$spaceId.permissions.group.$groupId.tsx`,
+      ),
       // Agent-specific routes
-      layout(`${corePrefix}/agent.$agentId.tsx`, [
+      layout(`${corePrefix}/space.$spaceId.agent.$agentId.tsx`, [
         ...prefix("/space/:spaceId/agent/:agentId/", [
-          index(`${corePrefix}/agent.$agentId._index.tsx`),
-          route("feedback", `${corePrefix}/agent.$agentId.feedback.tsx`),
-          route("plugins", `${corePrefix}/agent.$agentId.plugins._index.tsx`),
-          route("prompts", `${corePrefix}/agent.$agentId.prompts._index.tsx`),
-          route("settings", `${corePrefix}/agent.$agentId.settings.tsx`),
-          // route("users", `${corePrefix}/agent.$agentId.users.tsx`),
+          index(`${corePrefix}/space.$spaceId.agent.$agentId._index.tsx`),
+          route(
+            "feedback",
+            `${corePrefix}/space.$spaceId.agent.$agentId.feedback.tsx`,
+          ),
+          route(
+            "plugins",
+            `${corePrefix}/space.$spaceId.agent.$agentId.plugins._index.tsx`,
+          ),
+          route(
+            "prompts",
+            `${corePrefix}/space.$spaceId.agent.$agentId.prompts._index.tsx`,
+          ),
+          route(
+            "settings",
+            `${corePrefix}/space.$spaceId.agent.$agentId.settings.tsx`,
+          ),
+          // route("users", `${corePrefix}/space.$spaceId.agent.$agentId.users.tsx`),
           route(
             "conversations",
-            `${corePrefix}/agent.$agentId.conversations._index.tsx`,
+            `${corePrefix}/space.$spaceId.agent.$agentId.conversations._index.tsx`,
           ),
           route(
             "conversations/:id",
-            `${corePrefix}/agent.$agentId.conversations.$id.tsx`,
+            `${corePrefix}/space.$spaceId.agent.$agentId.conversations.$id.tsx`,
           ),
           // ...routeArray.map((r) => route(r.routePath, r.relativePath)),
           ...plugins
@@ -75,12 +95,14 @@ export const routes = (
               ),
             ),
           // Knowledge Routes
-          layout(`${corePrefix}/agent.$agentId.knowledge.tsx`, [
+          layout(`${corePrefix}/space.$spaceId.agent.$agentId.knowledge.tsx`, [
             ...prefix("knowledge/", [
-              index(`${corePrefix}/agent.$agentId.knowledge.documents.tsx`),
+              index(
+                `${corePrefix}/space.$spaceId.agent.$agentId.knowledge.documents.tsx`,
+              ),
               route(
                 "settings",
-                `${corePrefix}/agent.$agentId.knowledge.settings.tsx`,
+                `${corePrefix}/space.$spaceId.agent.$agentId.knowledge.settings.tsx`,
               ),
             ]),
           ]),

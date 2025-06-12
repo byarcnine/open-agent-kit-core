@@ -2,7 +2,7 @@ import { Outlet, useLoaderData, useParams } from "react-router";
 import Layout from "~/components/layout/layout";
 import { type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { prisma } from "@db/db.server";
-import { AdminNav } from "~/components/adminNav/adminNav";
+import { AgentAdminNav } from "~/components/agentAdminNav/agentAdminNav";
 import { getAgentPluginMenuItems } from "~/lib/plugins/availability.server";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
@@ -33,7 +33,7 @@ const Agent = () => {
   return (
     <Layout
       navComponent={
-        <AdminNav
+        <AgentAdminNav
           agentSettings={agent.agentSettings as string}
           spaceId={spaceId as string}
           pluginMenuItems={pluginMenuItems}

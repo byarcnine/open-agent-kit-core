@@ -18,7 +18,7 @@ import type { AgentSettings } from "~/types/agentSetting";
 import { initialAgentSettings } from "~/constants/agentSettings";
 import Bubble from "../ui/bubble";
 
-export const AdminNav = ({
+export const AgentAdminNav = ({
   pluginMenuItems = [],
   spaceId,
   agentSettings,

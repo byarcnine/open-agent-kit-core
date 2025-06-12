@@ -58,12 +58,18 @@ export const AVAILABLE_PERMISSIONS = {
       "space.view_agents",
       "global.delete_space_after_all_agents_deleted",
       "global.view_spaces",
+      "agent.*",
     ],
   },
   "global.view_spaces": {
     name: "View Spaces",
     description: "Can view all spaces in the system",
-    grants: ["space.view_space_settings", "space.view_agents"],
+    grants: [
+      "space.view_space_settings",
+      "space.view_agents",
+      "agent.chat",
+      "agent.view_agent_settings",
+    ],
   },
   // ------------------------------------------------
   // Space Permissions

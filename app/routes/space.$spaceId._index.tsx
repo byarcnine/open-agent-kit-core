@@ -15,7 +15,6 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
-import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
 import { useEffect, useState } from "react";
@@ -29,7 +28,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import {
-  allowedAgentsInSpaceForUser,
+  allowedAgentsToViewForUser,
   getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
@@ -42,7 +41,7 @@ import {
   AgentCardHeader,
   AgentCardTitle,
 } from "~/components/ui/agent-card";
-import { cn } from "~/lib/utils";
+import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 import Bubble from "~/components/ui/bubble";
 
 const CreateAgentSchema = z.object({
@@ -110,10 +109,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     PERMISSION["space.view_agents"],
     spaceId,
   );
-  const allowedAgentsInSpace = await allowedAgentsInSpaceForUser(
-    user,
-    spaceId as string,
-  );
+  const allowedAgents = await allowedAgentsToViewForUser(user);
   const globalUserCount = await prisma.user.count({
     where: {
       role: {
@@ -133,7 +129,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       where: {
         spaceId,
         id: {
-          in: allowedAgentsInSpace,
+          in: allowedAgents,
         },
       },
       include: {
@@ -204,11 +200,6 @@ const Index = () => {
   };
 
   const filteredAgents = agents.filter((agent) => {
-    if (true) {
-      return search
-        ? agent.name.toLowerCase().includes(search.toLowerCase())
-        : true;
-    }
     return (
       agent.isActive &&
       (search ? agent.name.toLowerCase().includes(search.toLowerCase()) : true)
@@ -227,7 +218,10 @@ const Index = () => {
   console.log("Filtered Agents:", filteredAgents);
 
   return (
-    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
+    <Layout
+      navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
+      user={user}
+    >
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">

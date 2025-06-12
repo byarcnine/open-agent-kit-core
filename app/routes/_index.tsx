@@ -11,8 +11,7 @@ import {
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
-  allowedSpacesToViewForUser,
-  checkPermissionHierarchical,
+  allowedAgentsToViewForUser,
   getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
@@ -51,18 +50,8 @@ const CreateSpaceSchema = z.object({
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  await hasAccessHierarchical(request);
-  const canCreateSpace = await checkPermissionHierarchical(
-    request,
-    PERMISSION["global.edit_spaces"],
-  );
-  if (!canCreateSpace) {
-    return {
-      errors: {
-        slug: ["You are not authorized to create spaces"],
-      },
-    };
-  }
+  await hasAccessHierarchical(request, PERMISSION["global.edit_spaces"]);
+
   const formData = await request.formData();
 
   const validation = CreateSpaceSchema.safeParse({
@@ -97,9 +86,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await hasAccessHierarchical(request);
-  const allowedSpaces = await allowedSpacesToViewForUser(user);
+  const allowedSpaces = await allowedAgentsToViewForUser(user);
   const spaces = await prisma.space.findMany({
     include: {
       _count: {
@@ -109,8 +98,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
     },
     where: {
-      id: {
-        in: allowedSpaces,
+      agents: {
+        some: {
+          id: {
+            in: allowedSpaces,
+          },
+        },
       },
     },
     orderBy: {
