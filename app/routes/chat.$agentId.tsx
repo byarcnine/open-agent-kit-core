@@ -235,10 +235,10 @@ const ChatOverview = () => {
           )}
           <h2 className="text-primary mb-4 flex items-center gap-2 px-3 py-2 border-b">
             <MessageCircle className="h-4 w-4" />
-            Chats
+            Chat Conversations
           </h2>
           <Link
-            className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all bg-primary text-primary-foreground hover:bg-primary/90 mb-8"
+            className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all bg-white text-primary hover:bg-white/50 mb-8"
             to={`/chat/${agentId}`}
             reloadDocument
           >
@@ -258,8 +258,8 @@ const ChatOverview = () => {
                       className={cn(
                         "flex justify-between transition-all rounded-xl text-sm font-normal relative group",
                         currentConversationIndex === c.id
-                          ? "bg-stone-900 text-white"
-                          : "hover:bg-stone-900 hover:text-white text-neutral-900",
+                          ? "bg-white text-primary"
+                          : "hover:bg-white/50",
                       )}
                     >
                       {editMode === c.id ? (
@@ -290,7 +290,7 @@ const ChatOverview = () => {
                       )}
                       <Popover.Trigger asChild>
                         <div className="w-10 h-auto flex items-center justify-center cursor-pointer">
-                          <MoreVertical className="w-4 h-4 text-white" />
+                          <MoreVertical className="w-4 h-4 text-primary" />
                         </div>
                       </Popover.Trigger>
                       <Popover.Anchor asChild>

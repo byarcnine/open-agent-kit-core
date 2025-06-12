@@ -40,7 +40,7 @@ const CreateSpaceDialog = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="green">
+        <Button>
           <PlusCircle className="h-4 w-4" />
           New Space
         </Button>

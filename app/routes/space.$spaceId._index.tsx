@@ -224,6 +224,8 @@ const Index = () => {
     }
   }, []);
 
+  console.log("Filtered Agents:", filteredAgents);
+
   return (
     <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
