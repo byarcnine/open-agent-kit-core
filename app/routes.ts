@@ -26,6 +26,8 @@ export const routes = (
     layout(`${corePrefix}/admin.layout.tsx`, [
       index(`${corePrefix}/_index.tsx`),
       route("settings", `${corePrefix}/settings.tsx`),
+      route("insights", `${corePrefix}/insights.tsx`),
+      route("cost_control", `${corePrefix}/cost_control.tsx`),
       route("plugins", `${corePrefix}/plugins.tsx`),
       route("permissions", `${corePrefix}/permission._index.tsx`),
       route(
@@ -128,7 +130,7 @@ export const routes = (
       "api/agentChatSettings/:agentId",
       `${corePrefix}/api.agentChatSettings.$agentId.ts`,
     ),
-     route(
+    route(
       "api/agentSettings/:agentId",
       `${corePrefix}/api.agentSettings.$agentId.ts`,
     ),

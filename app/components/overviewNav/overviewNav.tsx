@@ -99,17 +99,22 @@ export const OverviewNav = ({ userScopes }: { userScopes: string[] }) => {
             coming soon
           </div>
         </div>
-        <div
+        <Link
+          to="/cost_control"
+          prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  pointer-events-none truncate",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  truncate",
+            {
+              "bg-white text-primary": location.pathname === "/plugins",
+            },
+            {
+              "hover:bg-white/50": location.pathname !== "/plugins",
+            },
           )}
         >
           <DollarSign className="h-4 w-4" />
           Cost Control
-          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-white/75 p-1 truncate">
-            coming soon
-          </div>
-        </div>
+        </Link>
         {userScopes.includes(PERMISSION["global.edit_global_users"]) && (
           <Link
             to="/permissions"

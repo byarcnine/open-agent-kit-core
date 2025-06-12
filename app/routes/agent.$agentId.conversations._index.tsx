@@ -89,9 +89,8 @@ const Conversations = () => {
   const fetcher = useFetcher<typeof loader>();
   const [searchParams] = useSearchParams();
 
-  const {
-    agentSettings: { trackingEnabled },
-  } = initialLoaderData;
+  const trackingEnabled =
+    initialLoaderData.agentSettings?.trackingEnabled ?? false;
 
   // Initialize showArchived from URL or default to false
   const [showArchived, setShowArchived] = useState(

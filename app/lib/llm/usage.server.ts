@@ -123,3 +123,33 @@ export const trackUsageForMessageResponse = async (
     });
   }
 };
+
+export const timeRangeOptions = [
+  { value: "7", label: "Last 7 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 90 days" },
+];
+
+export const getUsageForAgent = async (agentId: string, time: string) => {
+  if (!agentId || !time) return undefined;
+
+  const days = parseInt(time, 10);
+  if (isNaN(days)) {
+    throw new Error("Invalid time range provided");
+  }
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  return await prisma.usage.findMany({
+    where: {
+      agentId: agentId,
+      createdAt: {
+        gte: startDate,
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
