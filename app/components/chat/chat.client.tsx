@@ -7,11 +7,14 @@ import { type ChatSettings } from "../../types/chat";
 import useOakChat from "../../hooks/useOakChat";
 import ChatInput from "./chatInput";
 import { initialChatSettings } from "../../constants/chat";
+import type { AgentSettings } from "~/types/agentSetting";
+import { initialAgentSettings } from "~/constants/agentSettings";
 
 interface ChatContextType {
   isEmbed: boolean;
   conversationId?: string;
   apiUrl?: string;
+  agentSettings: AgentSettings;
   chatSettings: ChatSettings;
 }
 
@@ -20,6 +23,7 @@ export const ChatContext = React.createContext<ChatContextType>({
   conversationId: undefined,
   apiUrl: undefined,
   chatSettings: initialChatSettings,
+  agentSettings: initialAgentSettings,
 });
 
 const Chat = (props: {
@@ -33,6 +37,7 @@ const Chat = (props: {
   meta?: object;
   isEmbed?: boolean;
   agentChatSettings?: ChatSettings | null;
+  agentSettings?: AgentSettings | null;
   toolNamesList?: Record<string, string>;
   avatarImageURL?: string;
   anchorToBottom?: boolean;
@@ -43,6 +48,7 @@ const Chat = (props: {
     conversationId,
     apiUrl,
     chatSettings,
+    agentSettings,
     toolNames,
     chatInitialized,
     sessionTokenIsRefreshing,
@@ -66,8 +72,14 @@ const Chat = (props: {
   } = useOakChat(props);
 
   const chatContext = useMemo(
-    () => ({ isEmbed: !!props.isEmbed, chatSettings, conversationId, apiUrl }),
-    [props.isEmbed, chatSettings, conversationId, apiUrl],
+    () => ({
+      isEmbed: !!props.isEmbed,
+      chatSettings,
+      agentSettings,
+      conversationId,
+      apiUrl,
+    }),
+    [props.isEmbed, chatSettings, agentSettings, conversationId, apiUrl],
   );
   useEffect(() => {
     if (props.onMessage) {
@@ -85,7 +97,6 @@ const Chat = (props: {
       </div>
     );
   }
-
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
   return (
@@ -140,6 +151,7 @@ const Chat = (props: {
               fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
               supportedFileTypes={supportedFileTypes}
               chatSettings={chatSettings}
+              agentSettings={agentSettings}
               handleFileInputChange={handleFileInputChange}
               handleFileButtonClick={handleFileButtonClick}
               onClearFile={clearSelectedFile}

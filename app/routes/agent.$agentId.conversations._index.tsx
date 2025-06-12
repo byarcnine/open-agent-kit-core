@@ -21,6 +21,7 @@ import NoDataCard from "~/components/ui/no-data-card";
 import { useState, useEffect } from "react";
 import Checkbox from "~/components/ui/checkbox";
 import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
+import type { AgentSettings } from "~/types/agentSetting";
 
 dayjs.extend(relativeTime);
 
@@ -32,6 +33,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const page = parseInt(url.searchParams.get("page") || "1", 10);
   const pageSize = 25;
   const skip = (page - 1) * pageSize;
+
+  // get the agent settings
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : null;
+  if (!agentSettings?.trackingEnabled) {
+    throw new Error(
+      "Please activate the conversation tracking option in the agent settings.",
+    );
+  }
 
   const where = {
     agentId: agentId,

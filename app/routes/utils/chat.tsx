@@ -1,4 +1,4 @@
-import { prisma, type Conversation } from "@db/db.server";
+import { prisma } from "@db/db.server";
 
 export const loadConversations = async({ page, agentId, userId, archived = false, take = 25 }: { page: number, agentId: string, userId: string, archived?: boolean, take?: number }) => {
   return await prisma.conversation.findMany({

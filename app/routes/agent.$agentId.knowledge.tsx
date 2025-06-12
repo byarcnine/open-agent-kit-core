@@ -1,10 +1,17 @@
-import { Outlet, useNavigate, useParams, type LoaderFunctionArgs, useMatches } from "react-router";
+import {
+  Outlet,
+  useNavigate,
+  useParams,
+  type LoaderFunctionArgs,
+  useMatches,
+} from "react-router";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { FileText, Settings } from "react-feather";
 import { prisma } from "@db/db.server";
 import { sessionStorage } from "~/lib/sessions.server";
 import { data } from "react-router";
 import { Toaster } from "sonner";
+import type { AgentSettings } from "~/types/agentSetting";
 
 const enum TAB_TYPE {
   DOCUMENTS = "",
@@ -30,16 +37,31 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     where: { agentId },
   });
   const session = await sessionStorage.getSession(
-    request.headers.get("Cookie")
+    request.headers.get("Cookie"),
   );
   const message = session.get("message");
+
+  // get the agent settings
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : null;
+  if (!agentSettings?.hasKnowledgeBase) {
+    throw new Error(
+      "Please activate the agent knowledge base in the agent settings.",
+    );
+  }
+
   return data(
     { files, message },
     {
       headers: {
         "Set-Cookie": await sessionStorage.commitSession(session),
       },
-    }
+    },
   );
 };
 
@@ -48,7 +70,9 @@ const KnowledgeBaseView = () => {
   const { agentId } = useParams();
   const matches = useMatches();
 
-  const activeTab = matches.some(match => match.pathname.endsWith(`knowledge/settings`))
+  const activeTab = matches.some((match) =>
+    match.pathname.endsWith(`knowledge/settings`),
+  )
     ? TAB_TYPE.SETTINGS
     : TAB_TYPE.DOCUMENTS;
 
@@ -58,7 +82,9 @@ const KnowledgeBaseView = () => {
 
   return (
     <div className="p-6 w-full">
-      <h1 className="text-3xl font-medium tracking-tight my-8">Knowledge Base</h1>
+      <h1 className="text-3xl font-medium tracking-tight my-8">
+        Knowledge Base
+      </h1>
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid grid-cols-2 w-fit mb-8">
           {TABS.map((tab) => (

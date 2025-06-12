@@ -30,10 +30,12 @@ import {
   AlertTriangle,
   Book,
   Code,
+  Link,
   Lock,
   MessageCircle,
   Power,
   Settings,
+  Video,
 } from "react-feather";
 import { type ChatSettings } from "~/types/chat";
 import { initialChatSettings } from "~/constants/chat";
@@ -415,7 +417,7 @@ const AgentSettings = () => {
   };
 
   return (
-    <div className="w-full py-8 px-4 md:p-8 space-y-6">
+    <div className="w-full py-8 px-4 md:p-8 space-y-6 max-w-6xl">
       <h1 className="text-3xl mb-6">Agent Settings</h1>
       <Tabs defaultValue="general" className="w-auto">
         <TabsList className="grid w-full max-w-xl grid-cols-5 mb-6">
@@ -839,9 +841,16 @@ const AgentSettings = () => {
                       Enter a note that will be displayed below the chat input.
                     </p>
                   </div>
+                </CardContentSection>
+
+                <CardContentSection
+                  className={cn({
+                    hidden: chatSettingsTab !== "formatting",
+                  })}
+                >
                   <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
                     <div className="bg-white rounded-xl aspect-square p-3">
-                      <Settings size={20} />
+                      <MessageCircle size={20} />
                     </div>
                     <div className="flex flex-col gap-1">
                       <Label htmlFor="showMessageToolBar">
@@ -859,13 +868,6 @@ const AgentSettings = () => {
                       defaultChecked={chatSettings?.showMessageToolBar}
                     />
                   </div>
-                </CardContentSection>
-
-                <CardContentSection
-                  className={cn({
-                    hidden: chatSettingsTab !== "formatting",
-                  })}
-                >
                   <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
                     <div className="bg-white rounded-xl aspect-square p-3">
                       <Code size={20} />
@@ -887,7 +889,7 @@ const AgentSettings = () => {
 
                   <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
                     <div className="bg-white rounded-xl aspect-square p-3">
-                      <Code size={20} />
+                      <Link size={20} />
                     </div>
                     <div className="flex flex-col gap-1">
                       <Label htmlFor="openExternalLinksInNewTab">
@@ -904,7 +906,7 @@ const AgentSettings = () => {
 
                   <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
                     <div className="bg-white rounded-xl aspect-square p-3">
-                      <Code size={20} />
+                      <Link size={20} />
                     </div>
                     <div className="flex flex-col gap-1">
                       <Label htmlFor="openInternalLinksInNewTab">
@@ -921,7 +923,7 @@ const AgentSettings = () => {
 
                   <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
                     <div className="bg-white rounded-xl aspect-square p-3">
-                      <Code size={20} />
+                      <Video size={20} />
                     </div>
                     <div className="flex flex-col gap-1">
                       <Label htmlFor="openYoutubeVideosInIframe ">

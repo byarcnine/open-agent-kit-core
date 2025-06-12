@@ -4,6 +4,8 @@ import { MessageRole, type ChatSettings } from "../types/chat";
 import { initialChatSettings } from "../constants/chat";
 import { solveChallenge } from "altcha-lib";
 import { getApiUrl } from "~/components/chat/utils";
+import type { AgentSettings } from "~/types/agentSetting";
+import { initialAgentSettings } from "~/constants/agentSettings";
 
 type UseOakChatArgs = {
   onConversationStart?: (conversationId: string) => void;
@@ -15,6 +17,7 @@ type UseOakChatArgs = {
   meta?: object;
   isEmbed?: boolean;
   agentChatSettings?: ChatSettings | null;
+  agentDefaultSettings?: AgentSettings | null;
   toolNamesList?: Record<string, string>;
   anchorToBottom?: boolean;
   avatarImageURL?: string;
@@ -25,6 +28,7 @@ type UseOakChatReturn = {
   conversationId: string | undefined;
   apiUrl: string | undefined;
   chatSettings: ChatSettings;
+  agentSettings: AgentSettings;
   toolNames: Record<string, string>;
   chatInitialized: boolean;
   sessionToken: string | null;
@@ -72,6 +76,7 @@ const useOakChat = ({
   meta,
   isEmbed = false,
   agentChatSettings = null,
+  agentDefaultSettings = null,
   toolNamesList = {},
   avatarImageURL,
   onEmbedInit,
@@ -83,6 +88,11 @@ const useOakChat = ({
   const [chatSettings, setChatSettings] = useState<ChatSettings>(
     agentChatSettings || initialChatSettings,
   );
+
+  const [agentSettings, setAgentSettings] = useState<AgentSettings>(
+    agentDefaultSettings || initialAgentSettings,
+  );
+
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [sessionTokenIsRefreshing, setSessionTokenIsRefreshing] =
     useState(false);
@@ -185,6 +195,29 @@ const useOakChat = ({
     }
   };
 
+  const getAgentSettings = async () => {
+    const headers: HeadersInit = {};
+    const oakConversationToken = sessionStorage.getItem(
+      OAK_CONVERSATION_TOKEN_KEY,
+    );
+    if (oakConversationToken) {
+      headers["x-oak-conversation-token"] = oakConversationToken;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/agentSettings/${agentId}`, {
+        headers,
+      });
+      const data = await res.json();
+      setAgentSettings(data.agentSettings || agentSettings);
+    } catch (error) {
+      console.error("Error fetching agent settings:", error);
+      throw new Error(
+        `Failed to fetch agent settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`,
+      );
+    }
+  };
+
   const validateSessionToken = async () => {
     let token = sessionToken || "";
     if (isJwtExpired(token)) {
@@ -211,6 +244,10 @@ const useOakChat = ({
       initChat();
     }
   }, [isEmbed]);
+
+  useEffect(() => {
+    getAgentSettings();
+  }, [agentId]);
 
   useEffect(() => {
     if (isEmbed && chatInitialized) {
@@ -409,6 +446,7 @@ const useOakChat = ({
   return {
     conversationId,
     chatSettings,
+    agentSettings,
     toolNames,
     chatInitialized,
     sessionToken,

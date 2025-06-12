@@ -16,6 +16,7 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import NoDataCard from "~/components/ui/no-data-card";
+import type { AgentSettings } from "~/types/agentSetting";
 
 // Add this line near the top of the file
 dayjs.extend(relativeTime);
@@ -32,6 +33,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       createdAt: "desc",
     },
   });
+
+  // get the agent settings
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : null;
+  if (!agentSettings?.captureFeedback) {
+    throw new Error(
+      "Please activate the feedback option in the agent settings.",
+    );
+  }
+
   return { feedback };
 };
 
