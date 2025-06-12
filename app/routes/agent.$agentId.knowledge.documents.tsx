@@ -41,6 +41,9 @@ import React from "react";
 import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
+import type { AgentSettings } from "~/types/agentSetting";
+import NoDataCard from "~/components/ui/no-data-card";
+import Warning from "~/components/ui/warning";
 
 dayjs.extend(relativeTime);
 
@@ -187,6 +190,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const where = { agentId };
 
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : null;
+
   const [totalCount, files] = await prisma.$transaction([
     prisma.knowledgeDocument.count({ where }),
     prisma.knowledgeDocument.findMany({
@@ -215,6 +225,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       totalCount,
       currentPage: page,
       pageSize,
+      agentSettings,
     },
     {
       headers: {
@@ -233,6 +244,7 @@ const DocumentsTab = () => {
     totalCount = 0,
     currentPage = 1,
     pageSize = 25,
+    agentSettings,
   } = loaderData;
   const { agentId } = useParams();
   useEffect(() => {
@@ -270,11 +282,20 @@ const DocumentsTab = () => {
 
   return (
     <div>
-      <div className="h-[150px]">
-        <ClientOnlyComponent>
-          {Dropzone && <Dropzone agentId={agentId as string} />}
-        </ClientOnlyComponent>
-      </div>
+      {agentSettings?.hasKnowledgeBase ? (
+        <div className="h-[150px]">
+          <ClientOnlyComponent>
+            {Dropzone && <Dropzone agentId={agentId as string} />}
+          </ClientOnlyComponent>
+        </div>
+      ) : (
+        <Warning
+          className="mb-4"
+          headline="Note"
+          description="Knowledge base is disabled for this agent. Please enable it in settings to upload documents."
+        />
+      )}
+
       {files.length > 0 ? (
         <>
           <div className="rounded-xl border">
@@ -309,7 +330,15 @@ const DocumentsTab = () => {
         </>
       ) : (
         !message && (
-          <p className="text-center text-gray-500 mt-4">No documents found.</p>
+          <NoDataCard
+            headline="No Documents Found"
+            description={
+              agentSettings?.hasKnowledgeBase
+                ? "Upload documents to get started."
+                : "Please activate the knowledge base in settings to upload documents."
+            }
+            className="mt-4"
+          />
         )
       )}
       <Toaster expand={true} />

@@ -22,6 +22,8 @@ import { useState, useEffect } from "react";
 import Checkbox from "~/components/ui/checkbox";
 import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
 import type { AgentSettings } from "~/types/agentSetting";
+import Warning from "~/components/ui/warning";
+import { Switch } from "~/components/ui/switch";
 
 dayjs.extend(relativeTime);
 
@@ -42,11 +44,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentSettings: AgentSettings = agent?.agentSettings
     ? JSON.parse(agent.agentSettings as string)
     : null;
-  if (!agentSettings?.trackingEnabled) {
-    throw new Error(
-      "Please activate the conversation tracking option in the agent settings.",
-    );
-  }
 
   const where = {
     agentId: agentId,
@@ -81,15 +78,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     totalCount,
     currentPage: page,
     pageSize,
+    agentSettings,
     showArchivedQueryParam,
   };
 };
 
 const Conversations = () => {
   const initialLoaderData = useLoaderData<typeof loader>();
-  const { agentId } = useParams();
+  const { agentId, spaceId } = useParams();
   const fetcher = useFetcher<typeof loader>();
   const [searchParams] = useSearchParams();
+
+  const {
+    agentSettings: { trackingEnabled },
+  } = initialLoaderData;
 
   // Initialize showArchived from URL or default to false
   const [showArchived, setShowArchived] = useState(
@@ -115,7 +117,7 @@ const Conversations = () => {
     newSearchParams.set("showArchived", String(newShowArchived));
     newSearchParams.set("page", "1"); // Reset to page 1 when filter changes
     fetcher.load(
-      `/agent/${agentId}/conversations?${newSearchParams.toString()}`,
+      `/space/${spaceId}/agent/${agentId}/conversations?${newSearchParams.toString()}`,
     );
   };
 
@@ -124,18 +126,31 @@ const Conversations = () => {
 
   return (
     <div className="py-8 px-4 md:p-8 w-full">
-      <h1 className="text-3xl font-medium mb-8">Agent Conversations</h1>
+      <h1 className="text-3xl font-medium mb-4">Agent Conversations</h1>
+      <div className="mb-4 text-sm flex gap-2">
+        <span className="text-muted-foreground">
+          Show archived conversations
+        </span>
 
-      <div className="mb-4 text-sm flex justify-end">
-        <Checkbox
-          checked={showArchived}
-          onCheckedChange={handleCheckboxChange}
-          label="Show Archived"
-        />
+        <Switch checked={showArchived} onCheckedChange={handleCheckboxChange} />
       </div>
+      {!trackingEnabled && (
+        <Warning
+          className="mb-4"
+          headline="Note"
+          description="Tracking is not enabled for this agent. Conversations will only be recorded in an anonymous manner for compliance with privacy regulations."
+        />
+      )}
 
       {(!conversations || conversations.length === 0) && (
-        <NoDataCard description="No conversations found for this agent." />
+        <NoDataCard
+          headline="No conversations found "
+          description={
+            trackingEnabled
+              ? "There are no conversations available for this agent yet."
+              : "Detailed Tracking is not enabled for this agent"
+          }
+        />
       )}
       {conversations && conversations.length > 0 && (
         <>

@@ -43,6 +43,7 @@ import {
   AgentCardTitle,
 } from "~/components/ui/agent-card";
 import { cn } from "~/lib/utils";
+import Bubble from "~/components/ui/bubble";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -252,8 +253,12 @@ const Index = () => {
                 className="w-full max-w-md"
               >
                 <TabsList>
-                  <TabsTrigger reduced value="grid">Grid</TabsTrigger>
-                  <TabsTrigger reduced value="list">List</TabsTrigger>
+                  <TabsTrigger reduced value="grid">
+                    Grid
+                  </TabsTrigger>
+                  <TabsTrigger reduced value="list">
+                    List
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -285,16 +290,10 @@ const Index = () => {
                       >
                         <AgentCardHeader className="flex flex-col">
                           <div className="flex-1 flex justify-between items-center gap-2">
-                            <AgentCardTitle className="truncate">{agent.name}</AgentCardTitle>
-                            <div
-                              className={cn(
-                                "w-3 h-3 rounded-full overflow-hidden",
-                                {
-                                  "bg-green-400": agent.isActive,
-                                  "bg-red-400": !agent.isActive,
-                                },
-                              )}
-                            />
+                            <AgentCardTitle className="truncate">
+                              {agent.name}
+                            </AgentCardTitle>
+                            <Bubble isActive={agent.isActive} />
                           </div>
                           <AgentCardDescription className="flex gap-1 items-center">
                             {agent.description || "No description"}
