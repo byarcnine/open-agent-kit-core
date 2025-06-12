@@ -295,7 +295,7 @@ import { AVAILABLE_PERMISSIONS } from "./permissions";
 // }
 
 export const getAllPermissionsWithInheritance = (scopes: string[]) => {
-  const allPermissions = new Set<string>();
+  const allPermissions = new Set<string>(scopes);
   const visited = new Set<string>(); // Prevent infinite recursion
 
   const processScope = (scope: string) => {

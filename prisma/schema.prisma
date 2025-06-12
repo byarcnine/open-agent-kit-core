@@ -234,7 +234,7 @@ model Permission {
   user              User?            @relation(fields: [userId], references: [id])
   userId            String?
 
-  @@unique([scope, referenceId])
+  @@unique([scope, referenceId, permissionGroupId])
   @@map("permission")
 }
 

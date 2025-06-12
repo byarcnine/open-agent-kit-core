@@ -1,4 +1,4 @@
-import { prisma } from "@db/db.server";
+import { prisma, type Permission } from "@db/db.server";
 import {
   getAllPermissionsWithInheritance,
   // HierarchicalPermissionChecker,
@@ -225,27 +225,11 @@ type UserGrantedPermissions = Partial<{
   [K in keyof typeof AVAILABLE_PERMISSIONS]: {
     allAllowed: boolean;
     referenceIds: string[];
+    direct: boolean;
   };
 }>;
 
-export const getUserGrantedPermissions = async (
-  user: SessionUser,
-): Promise<UserGrantedPermissions> => {
-  const userPermissions = await prisma.userPermissionGroup.findMany({
-    where: { userId: user.id },
-    include: {
-      permissionGroup: {
-        include: {
-          permissions: true,
-        },
-      },
-    },
-  });
-
-  const permissions = userPermissions.flatMap(
-    (upg) => upg.permissionGroup.permissions,
-  );
-
+const resolvePermissionReferences = async (permissions: Permission[]) => {
   const allAgents = await prisma.agent.findMany({
     select: { id: true, spaceId: true },
   });
@@ -263,9 +247,13 @@ export const getUserGrantedPermissions = async (
           userGrantedPermissions[inheritedScope] = {
             allAllowed: true,
             referenceIds: [],
+            direct: inheritedPermission === scope,
           };
         } else {
           userGrantedPermissions[inheritedScope].allAllowed = true;
+          if (inheritedPermission === scope) {
+            userGrantedPermissions[inheritedScope].direct = true;
+          }
         }
       }
     } else if (scope.startsWith("space.")) {
@@ -282,14 +270,18 @@ export const getUserGrantedPermissions = async (
             userGrantedPermissions[inheritedScope] = {
               allAllowed: false,
               referenceIds: agentIdsInSpace,
+              direct: inheritedPermission === scope,
             };
           } else {
             userGrantedPermissions[inheritedScope].referenceIds = Array.from(
-              new Set(
+              new Set([
                 ...userGrantedPermissions[inheritedScope].referenceIds,
                 ...agentIdsInSpace,
-              ),
+              ]),
             );
+            if (inheritedPermission === scope) {
+              userGrantedPermissions[inheritedScope].direct = true;
+            }
           }
         }
         if (inheritedPermission.startsWith("space.")) {
@@ -299,11 +291,18 @@ export const getUserGrantedPermissions = async (
             userGrantedPermissions[inheritedScope] = {
               allAllowed: false,
               referenceIds: [permission.referenceId],
+              direct: inheritedPermission === scope,
             };
           } else {
-            userGrantedPermissions[inheritedScope].referenceIds.push(
-              permission.referenceId,
+            userGrantedPermissions[inheritedScope].referenceIds = Array.from(
+              new Set([
+                ...userGrantedPermissions[inheritedScope].referenceIds,
+                permission.referenceId,
+              ]),
             );
+            if (inheritedPermission === scope) {
+              userGrantedPermissions[inheritedScope].direct = true;
+            }
           }
         }
       }
@@ -317,16 +316,51 @@ export const getUserGrantedPermissions = async (
           userGrantedPermissions[inheritedScope] = {
             allAllowed: false,
             referenceIds: [permission.referenceId],
+            direct: inheritedPermission === scope,
           };
         } else {
           userGrantedPermissions[inheritedScope].referenceIds.push(
             permission.referenceId,
           );
+          if (inheritedPermission === scope) {
+            userGrantedPermissions[inheritedScope].direct = true;
+          }
         }
       }
     }
   }
   return userGrantedPermissions;
+};
+
+export const getUserGrantedPermissions = async (
+  user: SessionUser,
+  groupId?: string, // allows to retrieve permissions that were granted by a specific group
+): Promise<UserGrantedPermissions> => {
+  const permissions = await prisma.permission.findMany({
+    where: {
+      permissionGroup: {
+        ...(groupId && {
+          id: groupId,
+        }),
+        userPermissionGroups: {
+          some: { userId: user.id },
+        },
+      },
+    },
+  });
+  return resolvePermissionReferences(permissions);
+};
+
+export const getGroupGrantedPermissions = async (
+  groupId: string, // allows to retrieve permissions that were granted by a specific group
+): Promise<UserGrantedPermissions> => {
+  const permissions = await prisma.permission.findMany({
+    where: {
+      permissionGroupId: groupId,
+    },
+  });
+
+  return resolvePermissionReferences(permissions);
 };
 
 export const hasAccessHierarchical = async (
