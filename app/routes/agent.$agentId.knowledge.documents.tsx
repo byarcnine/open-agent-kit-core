@@ -497,7 +497,7 @@ const Tag = ({
 
 const TagPopover = React.memo(({ file, tags }: { file: any; tags: any[] }) => {
   const fetcher = useFetcher();
-  const { agentId } = useParams();
+  const { agentId, spacedId } = useParams();
 
   const handleTagAction = (isSelected: boolean, tagId: string) => {
     fetcher.submit(
@@ -560,7 +560,7 @@ const TagPopover = React.memo(({ file, tags }: { file: any; tags: any[] }) => {
               })
             ) : (
               <a
-                href={`/agent/${agentId}/knowledge/settings`}
+                href={`/space/${spacedId}/agent/${agentId}/knowledge/settings`}
                 className="text-sm p-1 hover:bg-gray-100 rounded flex items-center w-full"
               >
                 <PlusSquare className="w-4 h-4 mr-2 shrink-0" />

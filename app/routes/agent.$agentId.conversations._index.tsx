@@ -170,7 +170,7 @@ const Conversations = () => {
                   <TableRow key={conversation.id}>
                     <TableCell className="font-medium">
                       <Link
-                        to={`/agent/${agentId}/conversations/${conversation.id}`}
+                        to={`/space/${spaceId}/agent/${agentId}/conversations/${conversation.id}`}
                       >
                         {conversation.id}
                       </Link>

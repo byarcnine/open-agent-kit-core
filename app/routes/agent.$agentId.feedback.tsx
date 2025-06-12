@@ -50,7 +50,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 const Conversations = () => {
   const { feedback, agentSettings } = useLoaderData<typeof loader>();
   const { captureFeedback } = agentSettings;
-  const { agentId } = useParams();
+  const { agentId, spaceId } = useParams();
   return (
     <div className="py-8 px-4 md:p-8 w-full">
       <h1 className="text-3xl font-medium mb-4">Feedback</h1>
@@ -96,7 +96,7 @@ const Conversations = () => {
                   <TableCell>{dayjs(fb.createdAt).fromNow()}</TableCell>
                   <TableCell className="font-medium">
                     <Link
-                      to={`/agent/${agentId}/conversations/${fb.conversationId}`}
+                      to={`/space/${spaceId}/agent/${agentId}/conversations/${fb.conversationId}`}
                     >
                       {fb.conversationId}
                     </Link>
