@@ -1,5 +1,6 @@
 :root {
   --oak-color-primary: rgba(23, 23, 23, 1);
+  --oak-text-color-primary: rgba(23, 23, 23, 1);
   --oak-color-bg: rgb(244, 244, 245);
   --oak-border-color: #e2e8f0;
   --oak-color-secondary: white;
@@ -31,49 +32,53 @@
 
   .oak-chat {
     &__empty-state {
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
+      padding-top: 10%;
       align-items: center;
       flex: 1;
       z-index: 1;
-      width: 100%;
       margin: 0 auto;
-      padding-top: 30px;
-      padding-left: 30px;
-      padding-right: 30px;
+      padding-left: 15px;
+      padding-right: 15px;
+      overflow-y: auto;
 
-      @media (min-width: 768px) {
-        padding-top: 20vh;
-        padding-left: 0;
-        padding-right: 0;
+      @container chat-container (min-width: 768px) {
+        padding-left: 30px;
+        padding-right: 30px;
+        padding-top: 20%;
       }
 
       &-heading {
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 500;
-        margin-bottom: 20px;
+        color: var(--oak-text-color-primary);
+
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.3s;
+        max-width: 100%;
+        text-align: center;
+        word-wrap: break-word;
 
-        @media (min-width: 768px) {
-          font-size: 24px;
-          margin-bottom: 26px;
+        @container chat-container (min-width: 768px) {
+          margin-bottom: 18px;
         }
       }
 
       &-subheading {
-        font-size: 16px;
+        color: var(--oak-text-color-primary);
+        font-size: 18px;
         font-weight: 400;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
         animation: fadeInScale 0.3s ease-out;
         animation-fill-mode: both;
         animation-delay: 0.4s;
         text-align: center;
+        max-width: 100%;
+        word-wrap: break-word;
 
-        @media (min-width: 768px) {
-          font-size: 18px;
+        @container chat-container (min-width: 768px) {
           margin-bottom: 48px;
         }
       }
@@ -239,7 +244,7 @@
       display: flex;
       width: 100%;
       flex: 1;
-      color: var(--oak-color-primary);
+      color: var(--oak-text-color-primary);
       height: 100%;
       border: none;
       outline: none;
@@ -379,15 +384,10 @@
 
     &__advice-badges {
       display: grid;
+      padding: 16px;
       grid-template-columns: repeat(1, 1fr);
       gap: 10px;
-      padding: 12px;
-
-      @media (min-width: 768px) {
-        padding: 16px;
-      }
-
-      @media (min-width: 1024px) {
+      @container chat-container (min-width: 960px) {
         grid-template-columns: repeat(2, 1fr);
       }
 
@@ -395,7 +395,7 @@
         background-color: var(--oak-color-secondary);
         border: 1px solid var(--oak-border-color);
         border-radius: var(--oak-border-radius);
-        padding: 10px;
+        padding: 15px;
         cursor: pointer;
         transition: background-color 0.3s ease;
         animation: fadeInUp 0.3s ease-out;
@@ -409,10 +409,6 @@
           &:nth-child(#{$i}) {
             animation-delay: #{($i * 0.1) + 0.5}s;
           }
-        }
-
-        @media (min-width: 768px) {
-          padding: 15px;
         }
       }
 
@@ -583,7 +579,6 @@
       padding: 8px;
       font-size: 19.2px;
       font-weight: 400;
-      color: var(--oak-color-primary);
     }
 
     &__message-avatar {
@@ -681,7 +676,7 @@
 
   a {
     text-decoration: underline;
-    color: var(--oak-color-primary);
+    color: var(--oak-text-color-primary);
   }
   hr {
     margin-top: 20px;
@@ -772,29 +767,29 @@
   }
 
   h1 {
-    @include heading-style(var(--oak-color-primary), 500, 8px, 20.8px);
+    @include heading-style(var(--oak-text-color-primary), 500, 8px, 20.8px);
     padding-bottom: 4.8px;
   }
 
   h2 {
-    @include heading-style(var(--oak-color-primary), 500, 8px, 19.2px);
+    @include heading-style(var(--oak-text-color-primary), 500, 8px, 19.2px);
     padding-bottom: 4.8px;
   }
 
   h3 {
-    @include heading-style(var(--oak-color-primary), 500, 8px, 17.6px);
+    @include heading-style(var(--oak-text-color-primary), 500, 8px, 17.6px);
     padding-bottom: 4.8px;
   }
 
   h4 {
-    @include heading-style(var(--oak-color-primary), 500, 4.8px, 16px);
+    @include heading-style(var(--oak-text-color-primary), 500, 4.8px, 16px);
   }
 
   h5 {
-    @include heading-style(var(--oak-color-primary), 500, 3.2px, 16px);
+    @include heading-style(var(--oak-text-color-primary), 500, 3.2px, 16px);
   }
 
   h6 {
-    @include heading-style(var(--text-primary), 500, 3.2px, 16px);
+    @include heading-style(var(--oak-text-color-primary), 500, 3.2px, 16px);
   }
 }
