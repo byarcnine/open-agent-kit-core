@@ -6,12 +6,18 @@ import { getChatSettings } from "~/lib/llm/chat.server";
 import jwt from "jsonwebtoken";
 
 export const loader: LoaderFunction = async ({ params, request }) => {
-  const corsHeaders = await getCorsHeaderForAgent(
-    request.headers.get("Origin") as string,
-    params.agentId as string,
-  );
+  const origin = request.headers.get("Origin") || "";
+  const agentId = params.agentId as string;
 
-  const agentId = params.agentId;
+  const corsHeaders = await getCorsHeaderForAgent(origin, agentId);
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
+
   const agent = await prisma.agent.findUnique({
     where: {
       id: agentId,

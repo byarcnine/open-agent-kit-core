@@ -1,7 +1,7 @@
 import { prisma } from "../../../prisma/db.server";
 
 // CORS header constants
-export const CORS_ALLOW_HEADERS = "Content-Type, Authorization, x-oak-session-token";
+export const CORS_ALLOW_HEADERS = "Content-Type, Authorization, x-oak-session-token, x-oak-conversation-token";
 export const CORS_ALLOW_METHODS = "GET, POST, PUT, DELETE, OPTIONS";
 export const CORS_EXPOSE_HEADERS = "x-conversation-id, x-oak-conversation-token";
 
