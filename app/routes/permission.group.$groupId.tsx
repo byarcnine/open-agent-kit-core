@@ -9,7 +9,7 @@ import {
   type MetaFunction,
   useFetcher,
 } from "react-router";
-import { prisma } from "@db/db.server";
+import { prisma, type Permission } from "@db/db.server";
 import Layout from "~/components/layout/layout";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import { Button } from "~/components/ui/button";
@@ -28,6 +28,7 @@ import {
 import {
   getGroupGrantedPermissions,
   hasAccessHierarchical,
+  resolvePermissionReferences,
 } from "~/lib/permissions/enhancedHasAccess.server";
 
 type ActionData = {
@@ -35,6 +36,7 @@ type ActionData = {
   error?: string;
   message?: string;
   intent: string;
+  updatedPermissions?: Partial<Permission>[];
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -45,6 +47,40 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   switch (intent) {
+    case "recalculatePermissions": {
+      const permissions = JSON.parse(formData.get("permissions") as string) as {
+        scope: string;
+        direct: boolean;
+        referenceIds: string[];
+        allAllowed: boolean;
+      }[];
+      const flatPermissions = permissions
+        .filter((p) => p.direct)
+        .flatMap((p) => {
+          return p.referenceIds.map((id) => ({
+            scope: p.scope,
+            referenceId: id,
+            permissionGroupId: groupId,
+          }));
+        });
+      const updatedPermissions =
+        await resolvePermissionReferences(flatPermissions);
+      return data<ActionData>(
+        {
+          success: true,
+          intent: intent as string,
+          updatedPermissions: Object.entries(updatedPermissions).map(
+            ([key, value]) => ({
+              scope: key,
+              direct: value.direct,
+              referenceIds: value.referenceIds,
+              allAllowed: value.allAllowed,
+            }),
+          ),
+        },
+        { status: 200 },
+      );
+    }
     case "updatePermissions": {
       const permissions = JSON.parse(formData.get("permissions") as string) as {
         scope: string;
@@ -318,49 +354,48 @@ const PermissionGroupDetail = () => {
   const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const updateFetcher = useFetcher();
-  let [currentPermissions, setCurrentPermissions] =
+  const [currentPermissions, setCurrentPermissions] =
     useState(allGroupPermissions);
 
   const toggleScope = (scope: string, referenceId: string) => {
     setHasUnsavedChanges(true);
-    const hasPermissionIndex = currentPermissions.findIndex(
+    let permissionCopy = structuredClone(currentPermissions);
+    const hasPermissionIndex = permissionCopy.findIndex(
       (p) => p.scope === scope,
     );
     if (hasPermissionIndex !== -1) {
       if (
-        currentPermissions[hasPermissionIndex].referenceIds.includes(
-          referenceId,
-        )
+        permissionCopy[hasPermissionIndex].referenceIds.includes(referenceId)
       ) {
         if (referenceId === "global") {
-          console.log("removing global permission", hasPermissionIndex);
-          currentPermissions = currentPermissions.filter(
+          permissionCopy = currentPermissions.filter(
             (_, index) => index !== hasPermissionIndex,
           );
         } else {
           // delete the referenceId from the referenceIds array
-          currentPermissions[hasPermissionIndex].referenceIds =
-            currentPermissions[hasPermissionIndex].referenceIds.filter(
-              (id) => id !== referenceId,
-            );
+          permissionCopy[hasPermissionIndex].referenceIds = permissionCopy[
+            hasPermissionIndex
+          ].referenceIds.filter((id) => id !== referenceId);
         }
       } else {
         // add the referenceId to the referenceIds array
-        currentPermissions[hasPermissionIndex].referenceIds.push(referenceId);
-        currentPermissions[hasPermissionIndex].direct = true;
+        permissionCopy[hasPermissionIndex].referenceIds.push(referenceId);
+        permissionCopy[hasPermissionIndex].direct = true;
       }
-      setCurrentPermissions([...currentPermissions]);
+      setCurrentPermissions([...permissionCopy]);
     } else {
-      setCurrentPermissions((prev) => [
-        ...prev,
-        {
-          scope,
-          direct: true,
-          referenceIds: [referenceId],
-          allAllowed: false,
-        },
-      ]);
+      permissionCopy.push({
+        scope,
+        direct: true,
+        referenceIds: [referenceId],
+        allAllowed: false,
+      });
+      setCurrentPermissions([...permissionCopy]);
     }
+    const formData = new FormData();
+    formData.append("intent", "recalculatePermissions");
+    formData.append("permissions", JSON.stringify(permissionCopy));
+    updateFetcher.submit(formData, { method: "post" });
   };
 
   // Helper function to get available permissions by scope
@@ -381,9 +416,20 @@ const PermissionGroupDetail = () => {
   };
 
   useEffect(() => {
-    if (updateFetcher.state === "idle" && updateFetcher.data?.success) {
+    if (
+      updateFetcher.state === "idle" &&
+      updateFetcher.data?.success &&
+      updateFetcher.data.intent === "updatePermissions"
+    ) {
       setCurrentPermissions(allGroupPermissions);
       setHasUnsavedChanges(false);
+    }
+    if (
+      updateFetcher.state === "idle" &&
+      updateFetcher.data?.success &&
+      updateFetcher.data.intent === "recalculatePermissions"
+    ) {
+      setCurrentPermissions(updateFetcher.data.updatedPermissions);
     }
   }, [updateFetcher.state, updateFetcher.data]);
 

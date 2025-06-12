@@ -229,7 +229,9 @@ type UserGrantedPermissions = Partial<{
   };
 }>;
 
-const resolvePermissionReferences = async (permissions: Permission[]) => {
+export const resolvePermissionReferences = async (
+  permissions: Partial<Permission>[],
+) => {
   const allAgents = await prisma.agent.findMany({
     select: { id: true, spaceId: true },
   });
@@ -290,14 +292,14 @@ const resolvePermissionReferences = async (permissions: Permission[]) => {
           if (!userGrantedPermissions[inheritedScope]) {
             userGrantedPermissions[inheritedScope] = {
               allAllowed: false,
-              referenceIds: [permission.referenceId],
+              referenceIds: [permission.referenceId as string],
               direct: inheritedPermission === scope,
             };
           } else {
             userGrantedPermissions[inheritedScope].referenceIds = Array.from(
               new Set([
                 ...userGrantedPermissions[inheritedScope].referenceIds,
-                permission.referenceId,
+                permission.referenceId as string,
               ]),
             );
             if (inheritedPermission === scope) {
@@ -315,14 +317,14 @@ const resolvePermissionReferences = async (permissions: Permission[]) => {
         if (!userGrantedPermissions[inheritedScope]) {
           userGrantedPermissions[inheritedScope] = {
             allAllowed: false,
-            referenceIds: [permission.referenceId],
+            referenceIds: [permission.referenceId as string],
             direct: inheritedPermission === scope,
           };
         } else {
           userGrantedPermissions[inheritedScope].referenceIds = Array.from(
             new Set([
               ...userGrantedPermissions[inheritedScope].referenceIds,
-              permission.referenceId,
+              permission.referenceId as string,
             ]),
           );
           if (inheritedPermission === scope) {
