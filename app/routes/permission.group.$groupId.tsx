@@ -322,7 +322,6 @@ const PermissionGroupDetail = () => {
     formData.append("permissions", JSON.stringify(permissionCopy));
     updateFetcher.submit(formData, { method: "post" });
   };
-  console.log(currentPermissions);
   // Helper function to get available permissions by scope
   const getAvailablePermissionsByScope = (
     scope: string,
@@ -516,18 +515,45 @@ const PermissionGroupDetail = () => {
                   {spaces.map((space) => {
                     // const spaceCounts = spaces.length;
                     // const agentCounts = space.agents.length;
-                    const totalDirect = currentPermissions.filter(
-                      (p) =>
-                        p.scope.startsWith("space.") &&
-                        p.referenceId === space.id &&
-                        p.direct,
-                    ).length;
-                    const totalInherited = currentPermissions.filter(
-                      (p) =>
-                        p.scope.startsWith("space.") &&
-                        p.referenceId === space.id &&
-                        !p.direct,
-                    ).length;
+                    const directInAgents = space.agents.reduce((acc, agent) => {
+                      return (
+                        acc +
+                        currentPermissions.filter(
+                          (p) =>
+                            p.scope.startsWith("agent.") &&
+                            p.referenceId === agent.id &&
+                            p.direct,
+                        ).length
+                      );
+                    }, 0);
+                    const indirectInAgents = space.agents.reduce(
+                      (acc, agent) => {
+                        return (
+                          acc +
+                          currentPermissions.filter(
+                            (p) =>
+                              p.scope.startsWith("agent.") &&
+                              p.referenceId === agent.id &&
+                              !p.direct,
+                          ).length
+                        );
+                      },
+                      0,
+                    );
+                    const totalDirect =
+                      currentPermissions.filter(
+                        (p) =>
+                          p.scope.startsWith("space.") &&
+                          p.referenceId === space.id &&
+                          p.direct,
+                      ).length + directInAgents;
+                    const totalInherited =
+                      currentPermissions.filter(
+                        (p) =>
+                          p.scope.startsWith("space.") &&
+                          p.referenceId === space.id &&
+                          !p.direct,
+                      ).length + indirectInAgents;
 
                     return (
                       <div key={space.id}>
