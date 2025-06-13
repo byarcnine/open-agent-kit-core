@@ -2,6 +2,7 @@ import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { MessageRole } from "~/types/chat";
 import "../public/embed/core.css";
 import { type Message } from "@ai-sdk/react";
+import { type ChatRef } from "../app/components/chat/chat.client";
 
 export type ChatComponentType = {
   apiUrl?: string;
@@ -36,7 +37,7 @@ const ChatModule = forwardRef<ChatModuleRef, ChatComponentType>((
   },
   ref
 ) => {
-  const chatAPIRef = useRef<any>(null);
+  const chatAPIRef = useRef<ChatRef>(null);
 
   useImperativeHandle(ref, () => ({
     setInput: (input: string) => {
