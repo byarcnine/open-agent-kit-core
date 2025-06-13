@@ -9,8 +9,8 @@
   --oak-chat-widget-border-radius: 16px;
   --oak-chat-widget-window-bottom: 80px; // 64px + 16px
 
-  --oak-chat-widget-color-primary: #64D855;
-  --oak-chat-widget-color-header-background: #64D855;
+  --oak-chat-widget-color-primary: #64d855;
+  --oak-chat-widget-color-header-background: #64d855;
   --oak-chat-widget-color-background: #fff;
   --oak-chat-widget-color-background-hover: #f3f4f6;
   --oak-chat-widget-color-border: #eee;
@@ -37,7 +37,9 @@
       opacity: 0;
       pointer-events: none;
       transform: translateY(20px);
-      transition: opacity 0.5s ease, transform var(--oak-chat-widget-transition);
+      transition:
+        opacity 0.5s ease,
+        transform var(--oak-chat-widget-transition);
 
       &--fade-in {
         opacity: 1;
@@ -80,7 +82,7 @@
         cursor: pointer;
         opacity: 0;
         pointer-events: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         transition: opacity 0.2s;
         z-index: 2;
       }
@@ -123,7 +125,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s, transform 0.2s;
+      transition:
+        background 0.2s,
+        transform 0.2s;
       &:hover {
         transform: scale(1.05);
       }
@@ -175,12 +179,32 @@
         height var(--oak-chat-widget-transition),
         opacity var(--oak-chat-widget-transition);
 
+      // Full screen on mobile
+      @media (max-width: 767px) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
       &--closed {
         height: 0;
         opacity: 0;
         pointer-events: none;
-      }
 
+        @media (max-width: 767px) {
+          height: 100vh;
+          transform: translateY(100%);
+          transition:
+            transform var(--oak-chat-widget-transition),
+            opacity var(--oak-chat-widget-transition);
+        }
+      }
     }
 
     &__close-btn {
@@ -206,12 +230,12 @@
 
     &__visually-hidden {
       position: absolute !important;
-      height: 1px; width: 1px;
+      height: 1px;
+      width: 1px;
       overflow: hidden;
       clip: rect(1px, 1px, 1px, 1px);
       white-space: nowrap;
     }
-
   }
 }
 
@@ -232,14 +256,18 @@
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: opacity 0.2s;
   z-index: 2;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.8);}
-  to { opacity: 1; transform: scale(1);}
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-
-
