@@ -1,5 +1,10 @@
 import { prisma } from "../../../prisma/db.server";
 
+// CORS header constants
+export const CORS_ALLOW_HEADERS = "Content-Type, Authorization, x-oak-session-token, x-oak-conversation-token";
+export const CORS_ALLOW_METHODS = "GET, POST, PUT, DELETE, OPTIONS";
+export const CORS_EXPOSE_HEADERS = "x-conversation-id, x-oak-conversation-token";
+
 export const getAllowedUrlsForAgent = async (agentId: string) => {
   const agent = await prisma.agent.findUnique({
     where: {
@@ -28,14 +33,15 @@ export const getCorsHeaderForAgent = async (
   if (isOriginAllowed) {
     return {
       "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Headers":
-        "Content-Type, Authorization, x-oak-session-token",
-      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": CORS_ALLOW_HEADERS,
+      "Access-Control-Allow-Methods": CORS_ALLOW_METHODS,
+      "Access-Control-Expose-Headers": CORS_EXPOSE_HEADERS,
     };
   }
   return {
     "Access-Control-Allow-Origin": "",
     "Access-Control-Allow-Headers": "",
     "Access-Control-Allow-Methods": "",
+    "Access-Control-Expose-Headers": "",
   };
 };
