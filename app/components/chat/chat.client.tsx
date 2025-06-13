@@ -151,7 +151,6 @@ const Chat = (props: {
               fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
               supportedFileTypes={supportedFileTypes}
               chatSettings={chatSettings}
-              agentSettings={agentSettings}
               handleFileInputChange={handleFileInputChange}
               handleFileButtonClick={handleFileButtonClick}
               onClearFile={clearSelectedFile}

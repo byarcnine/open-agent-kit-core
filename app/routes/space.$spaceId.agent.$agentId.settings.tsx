@@ -1033,7 +1033,7 @@ const AgentSettings = () => {
                   name="intent"
                   value={Intent.UPDATE_EMBED_SETTINGS}
                 />
-                <CardContentSection title="">
+                <CardContentSection>
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="maintainConversationSession">
                       Maintain Conversation Session in Embed

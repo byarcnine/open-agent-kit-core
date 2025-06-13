@@ -26,7 +26,7 @@ export const routes = (
     layout(`${corePrefix}/admin.layout.tsx`, [
       index(`${corePrefix}/_index.tsx`),
       route("settings", `${corePrefix}/settings.tsx`),
-      route("insights", `${corePrefix}/insights.tsx`),
+      //  route("insights", `${corePrefix}/insights.tsx`),
       route("cost_control", `${corePrefix}/cost_control.tsx`),
       route("plugins", `${corePrefix}/plugins.tsx`),
       route("permissions", `${corePrefix}/permission._index.tsx`),
