@@ -25,6 +25,7 @@ import {
 } from "~/lib/permissions/permissions";
 import {
   getGroupGrantedPermissions,
+  getUserScopes,
   hasAccessHierarchical,
   resolvePermissionReferences,
   type UserGrantedPermissions,
@@ -141,12 +142,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!permissionGroup) {
     throw new Response("Permission group not found", { status: 404 });
   }
+  const userScopes = await getUserScopes(user);
 
   return {
     user,
     allGroupPermissions,
     spaces,
     permissionGroup,
+    userScopes,
   };
 };
 
@@ -287,7 +290,7 @@ const HierarchicalPermissionSection = ({
 };
 
 const PermissionGroupDetail = () => {
-  const { user, allGroupPermissions, spaces, permissionGroup } =
+  const { user, allGroupPermissions, spaces, permissionGroup, userScopes } =
     useLoaderData<typeof loader>();
   const [openSpaces, setOpenSpaces] = useState<{ [key: string]: boolean }>({});
   const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
@@ -358,12 +361,7 @@ const PermissionGroupDetail = () => {
   }, [updateFetcher.state, updateFetcher.data]);
 
   return (
-    <Layout
-      navComponent={
-        <OverviewNav userScopes={allGroupPermissions.map((p) => p.scope)} />
-      }
-      user={user}
-    >
+    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         {/* Header */}
         <div className="mb-8">
