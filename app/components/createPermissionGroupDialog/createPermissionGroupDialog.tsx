@@ -48,7 +48,6 @@ export const CreatePermissionGroupDialog = ({
               id="description"
               name="description"
               placeholder="Describe what this permission group is for"
-              required
               rows={3}
             />
           </div>

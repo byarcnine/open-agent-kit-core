@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, LogOut, Menu, X } from "react-feather";
-import { Link } from "react-router";
+import { Link, useParams } from "react-router";
 import type { User } from "better-auth";
 import { authClient } from "../../lib/auth/auth.client";
 import { cn } from "../../lib/utils";
@@ -20,6 +20,7 @@ const Layout = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [spaceDropdownOpen, setSpaceDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { spaceId } = useParams();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -54,7 +55,7 @@ const Layout = ({
               )}
             >
               <Link
-                to="/"
+                to={spaceId ? `/space/${spaceId}` : "/"}
                 className="flex flex-col gap-1 w-full overflow-hidden"
               >
                 <span className="text-base flex items-center gap-2">

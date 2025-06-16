@@ -252,19 +252,17 @@ export const setUserPermissionGroups = async (
   ) {
     throw new Response("Forbidden", { status: 403 });
   }
-  for (const id of permissionGroupIds) {
-    await prisma.userPermissionGroup.upsert({
+  await prisma.$transaction(async (tx) => {
+    await tx.userPermissionGroup.deleteMany({
       where: {
-        userId_permissionGroupId: {
-          userId: userId,
-          permissionGroupId: id,
-        },
+        userId: userId,
       },
-      create: {
+    });
+    await tx.userPermissionGroup.createMany({
+      data: permissionGroupIds.map((id) => ({
         userId: userId,
         permissionGroupId: id,
-      },
-      update: {},
+      })),
     });
-  }
+  });
 };

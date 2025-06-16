@@ -366,7 +366,7 @@ const PermissionGroupDetail = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <Link to="/permissions">
+            <Link to={`/space/${space.id}/permissions`}>
               <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Permissions
