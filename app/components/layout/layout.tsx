@@ -20,7 +20,7 @@ const Layout = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [spaceDropdownOpen, setSpaceDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { spaceId } = useParams();
+  const { agentId, spaceId } = useParams();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -55,7 +55,7 @@ const Layout = ({
               )}
             >
               <Link
-                to={spaceId ? `/space/${spaceId}` : "/"}
+                to={agentId ? `/space/${spaceId}` : "/"}
                 className="flex flex-col gap-1 w-full overflow-hidden"
               >
                 <span className="text-base flex items-center gap-2">

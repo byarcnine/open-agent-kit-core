@@ -19,7 +19,7 @@ export const loader = async ({
   const { agentId, id } = params;
   const conversationsPromise = prisma.conversation
     .findUnique({
-      where: { id: id, agentId },
+      where: { id: id, agentId, private: false },
       include: {
         messages: {
           orderBy: {

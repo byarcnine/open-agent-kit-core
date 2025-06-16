@@ -115,6 +115,7 @@ model Conversation {
   user             User?      @relation(fields: [userId], references: [id])
   customIdentifier String?
   archived         Boolean    @default(false)
+  private          Boolean    @default(false)
 
   @@map("conversation")
 }

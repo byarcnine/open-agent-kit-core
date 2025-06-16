@@ -246,11 +246,40 @@ export const setUserPermissionGroups = async (
   permissionGroupIds: string[],
 ) => {
   const userGrantedPermissions = await getUserGrantedPermissions(currentUser);
-  if (
-    // TODO: Make sure can't assign another user to a group he doesnt have access to. This is a temporary and too restrictive.
-    !userGrantedPermissions.some((p) => p.scope === "global.edit_global_users")
-  ) {
-    throw new Response("Forbidden", { status: 403 });
+  // if one fail throw out the whole update
+  for (const id of permissionGroupIds) {
+    const group = await prisma.permissionGroup.findUnique({
+      where: { id },
+    });
+    if (!group) {
+      throw new Response("Permission group not found", { status: 404 });
+    }
+    if (group.level === "SPACE") {
+      // make sure the user has access to the space
+      const hasAccess = userGrantedPermissions.some(
+        (p) =>
+          p.scope === "space.edit_users" && p.referenceId === group.spaceId,
+      );
+      if (!hasAccess) {
+        throw new Response("Forbidden - no access to space", { status: 403 });
+      }
+    } else if (group.level === "AGENT") {
+      // make sure the user has access to the agent
+      const hasAccess = userGrantedPermissions.some(
+        (p) =>
+          p.scope === "agent.edit_agent" && p.referenceId === group.agentId,
+      );
+      if (!hasAccess) {
+        throw new Response("Forbidden - no access to agent", { status: 403 });
+      }
+    } else {
+      const hasAccess = userGrantedPermissions.some(
+        (p) => p.scope === "global.edit_global_users",
+      );
+      if (!hasAccess) {
+        throw new Response("Forbidden - no access to global", { status: 403 });
+      }
+    }
   }
   await prisma.$transaction(async (tx) => {
     await tx.userPermissionGroup.deleteMany({

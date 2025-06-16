@@ -19,7 +19,6 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import NoDataCard from "~/components/ui/no-data-card";
 import { useState, useEffect } from "react";
-import Checkbox from "~/components/ui/checkbox";
 import { PaginationBlock } from "~/components/paginationBlock/paginationBlock";
 import type { AgentSettings } from "~/types/agentSetting";
 import Warning from "~/components/ui/warning";
@@ -48,6 +47,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const where = {
     agentId: agentId,
     archived: showArchivedQueryParam,
+    private: false,
   };
 
   const [totalCount, conversations] = await prisma.$transaction([

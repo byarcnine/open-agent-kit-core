@@ -444,7 +444,6 @@ const useOakChat = ({
   };
 
   return {
-    apiUrl: API_URL,
     conversationId,
     chatSettings,
     agentSettings,
