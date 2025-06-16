@@ -481,7 +481,7 @@ const SpacePermissionManagement = () => {
                   Permission Groups ({permissionGroups.length})
                 </CardTitle>
                 <CardDescription>
-                  Permission groups for this space
+                  Permission groups for this agent
                 </CardDescription>
               </CardHeader>
               <CardContent>
