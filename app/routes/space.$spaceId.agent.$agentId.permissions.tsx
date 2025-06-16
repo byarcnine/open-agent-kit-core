@@ -163,7 +163,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       try {
         // Remove existing space-scoped permission groups for this user
-        await setUserPermissionGroups(user, userId, permissionGroups);
+        await setUserPermissionGroups(
+          user,
+          userId,
+          permissionGroups,
+          "AGENT",
+          undefined,
+          agentId,
+        );
 
         return data<ActionData>(
           {
@@ -443,10 +450,7 @@ const SpacePermissionManagement = () => {
                                       variant="secondary"
                                       className="text-xs"
                                     >
-                                      {upg.permissionGroup.name.replace(
-                                        /^[^:]+:/,
-                                        "",
-                                      )}
+                                      {upg.permissionGroup.name}
                                     </Badge>
                                   ))}
                                 </div>
@@ -514,9 +518,7 @@ const SpacePermissionManagement = () => {
                           <TableRow key={group.id}>
                             <TableCell>
                               <div>
-                                <div className="font-medium">
-                                  {group.name.replace(/^[^:]+:/, "")}
-                                </div>
+                                <div className="font-medium">{group.name}</div>
                                 <div className="text-sm text-muted-foreground">
                                   {group.description}
                                 </div>

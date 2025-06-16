@@ -34,15 +34,17 @@ export const routes = (
         "permissions/group/:groupId",
         `${corePrefix}/permission.group.$groupId.tsx`,
       ),
-      route("space/:spaceId", `${corePrefix}/space.$spaceId._index.tsx`),
-      route(
-        "space/:spaceId/permissions",
-        `${corePrefix}/space.$spaceId.permissions.tsx`,
-      ),
-      route(
-        "space/:spaceId/permissions/group/:groupId",
-        `${corePrefix}/space.$spaceId.permissions.group.$groupId.tsx`,
-      ),
+      layout(`${corePrefix}/space.$spaceId.tsx`, [
+        ...prefix("/space/:spaceId/", [
+          index(`${corePrefix}/space.$spaceId._index.tsx`),
+          route("permissions", `${corePrefix}/space.$spaceId.permissions.tsx`),
+          route(
+            "permissions/group/:groupId",
+            `${corePrefix}/space.$spaceId.permissions.group.$groupId.tsx`,
+          ),
+          route("settings", `${corePrefix}/space.$spaceId.settings.tsx`),
+        ]),
+      ]),
       // Agent-specific routes
       layout(`${corePrefix}/space.$spaceId.agent.$agentId.tsx`, [
         ...prefix("/space/:spaceId/agent/:agentId/", [

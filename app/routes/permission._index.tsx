@@ -189,7 +189,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const { userId, permissionGroups } = result.data;
 
       try {
-        await setUserPermissionGroups(user, userId, permissionGroups);
+        await setUserPermissionGroups(user, userId, permissionGroups, "GLOBAL");
 
         return data<ActionData>(
           {

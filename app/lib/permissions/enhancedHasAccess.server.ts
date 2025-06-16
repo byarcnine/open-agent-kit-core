@@ -1,10 +1,9 @@
-import { prisma, type Permission, type PermissionGroup } from "@db/db.server";
+import { PermissionGroupLevel, prisma, type Permission } from "@db/db.server";
 import { getAllPermissionsWithInheritance } from "./hierarchical";
 import { redirect } from "react-router";
 import { getSession } from "~/lib/auth/auth.server";
 import type { SessionUser } from "~/types/auth";
 import { AVAILABLE_PERMISSIONS } from "./permissions";
-import { log } from "../utils";
 
 export const getUserScopes = async (user: SessionUser) => {
   return await getUserGrantedPermissions(user);
@@ -244,6 +243,9 @@ export const setUserPermissionGroups = async (
   currentUser: SessionUser,
   userId: string,
   permissionGroupIds: string[],
+  level: PermissionGroupLevel,
+  spaceId?: string,
+  agentId?: string,
 ) => {
   const userGrantedPermissions = await getUserGrantedPermissions(currentUser);
   // if one fail throw out the whole update
@@ -285,6 +287,11 @@ export const setUserPermissionGroups = async (
     await tx.userPermissionGroup.deleteMany({
       where: {
         userId: userId,
+        permissionGroup: {
+          level,
+          spaceId,
+          agentId,
+        },
       },
     });
     await tx.userPermissionGroup.createMany({

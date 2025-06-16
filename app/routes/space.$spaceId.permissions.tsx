@@ -42,18 +42,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
-import { Textarea } from "~/components/ui/textarea";
 import { toast, Toaster } from "sonner";
 import { createInvitation } from "~/lib/auth/handleInvite.server";
 import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
@@ -178,7 +167,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const { userId, permissionGroups } = result.data;
 
       try {
-        await setUserPermissionGroups(user, userId, permissionGroups);
+        await setUserPermissionGroups(
+          user,
+          userId,
+          permissionGroups,
+          "SPACE",
+          spaceId,
+        );
 
         return data<ActionData>(
           {
@@ -189,6 +184,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
+        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -370,10 +366,7 @@ const SpacePermissionManagement = () => {
   }, [actionData]);
 
   return (
-    <Layout
-      navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
-      user={user}
-    >
+    <>
       <Toaster />
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         <div className="flex justify-between items-center mb-8">
@@ -560,7 +553,7 @@ const SpacePermissionManagement = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 

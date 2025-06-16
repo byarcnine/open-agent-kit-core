@@ -79,6 +79,11 @@ export const AVAILABLE_PERMISSIONS = {
     description: "Can edit space settings and configuration",
     grants: ["space.*", "agent.*"],
   },
+  "space.delete_space": {
+    name: "Delete Space",
+    description: "Can delete this space",
+    grants: [],
+  },
   "space.view_space_settings": {
     name: "View Space Settings",
     description: "Can view space configuration and settings",
@@ -108,11 +113,6 @@ export const AVAILABLE_PERMISSIONS = {
     name: "View Agents",
     description: "Can view agents in this space",
     grants: ["agent.chat", "agent.view_agent_settings"],
-  },
-  "space.use_agents": {
-    name: "Use Agents",
-    description: "Can use agents in this space",
-    grants: ["agent.chat"],
   },
   // ------------------------------------------------
   // Agent Permissions

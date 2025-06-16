@@ -1,7 +1,6 @@
 import { cn } from "../../lib/utils";
-import { Settings, Tool, User } from "react-feather";
+import { Box, Settings, User } from "react-feather";
 import { Link, useLocation } from "react-router";
-import { PERMISSION } from "~/lib/permissions/permissions";
 import type { Space } from "@prisma/client";
 import type { UserGrantedPermissions } from "~/lib/permissions/enhancedHasAccess.server";
 
@@ -30,7 +29,7 @@ export const SpaceDetailNav = ({
             },
           )}
         >
-          <User className="h-4 w-4" />
+          <Box className="h-4 w-4" />
           {space.name} Agents
         </Link>
         {/* {userScopes.includes(PERMISSION["global.edit_plugins"]) && (
@@ -51,6 +50,30 @@ export const SpaceDetailNav = ({
             Agent Tools
           </Link>
         )} */}
+        {userScopes.some(
+          (p) => p.scope === "space.edit_space" && p.referenceId === space.id,
+        ) && (
+          <Link
+            to={`/space/${space.id}/settings`}
+            prefetch="intent"
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 transition-all truncate",
+              {
+                "bg-white text-primary": location.pathname.includes(
+                  `/space/${space.id}/settings`,
+                ),
+              },
+              {
+                "hover:bg-white/50": !location.pathname.includes(
+                  `/space/${space.id}/settings`,
+                ),
+              },
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+        )}
         {userScopes.some(
           (p) => p.scope === "space.edit_users" && p.referenceId === space.id,
         ) && (

@@ -235,7 +235,7 @@ const HierarchicalPermissionSection = ({
                     id={`${context}-${referenceId}-${permissionScope}`}
                     name="permissions"
                     value={permissionScope}
-                    checked={status?.direct}
+                    checked={status?.direct || hasInherited}
                     disabled={hasInherited}
                     onChange={(e) => toggleScope(permissionScope)}
                     className={`rounded border ${

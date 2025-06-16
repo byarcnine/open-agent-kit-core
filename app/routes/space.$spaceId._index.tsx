@@ -183,10 +183,7 @@ const Index = () => {
   }, []);
 
   return (
-    <Layout
-      navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
-      user={user}
-    >
+    <>
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
@@ -355,7 +352,7 @@ const Index = () => {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 

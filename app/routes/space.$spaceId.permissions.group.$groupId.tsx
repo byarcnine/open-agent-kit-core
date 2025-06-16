@@ -237,7 +237,7 @@ const HierarchicalPermissionSection = ({
                     id={`${context}-${referenceId}-${permissionScope}`}
                     name="permissions"
                     value={permissionScope}
-                    checked={status?.direct}
+                    checked={status?.direct || hasInherited}
                     disabled={hasInherited}
                     onChange={() => toggleScope(permissionScope)}
                     className={`rounded border ${
@@ -358,10 +358,7 @@ const PermissionGroupDetail = () => {
   }, [updateFetcher.state, updateFetcher.data]);
 
   return (
-    <Layout
-      navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
-      user={user}
-    >
+    <>
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -622,7 +619,7 @@ const PermissionGroupDetail = () => {
       )}
 
       <Toaster />
-    </Layout>
+    </>
   );
 };
 

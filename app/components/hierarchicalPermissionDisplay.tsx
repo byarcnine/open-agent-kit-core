@@ -50,7 +50,6 @@ export const PermissionHierarchyDisplay = ({
   referenceId,
   spaceName,
   agentName,
-  isEditing = false,
   availablePermissions = [],
   onPermissionChange,
   checker,
@@ -59,13 +58,6 @@ export const PermissionHierarchyDisplay = ({
 
   const directPermissions = permissions.filter((p) => !p.inherited);
   const inheritedPermissions = permissions.filter((p) => p.inherited);
-
-  const formatPermissionName = (scope: string) => {
-    const [, permission] = scope.split(".");
-    return permission
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (l) => l.toUpperCase());
-  };
 
   const getContextIcon = (context: string) => {
     switch (context) {
@@ -106,248 +98,10 @@ export const PermissionHierarchyDisplay = ({
     };
   };
 
-  const renderEditingMode = () => {
-    if (!availablePermissions.length) return null;
-
-    const directPermissionScopes = directPermissions.map((p) => p.scope);
-    const inheritedAvailablePermissions = availablePermissions.filter(
-      (perm) => {
-        const status = getPermissionStatus(perm.key);
-        return status.hasInherited;
-      },
-    );
-
-    return (
-      <Form method="post" className="space-y-4">
-        <input type="hidden" name="intent" value="updatePermissions" />
-        <input type="hidden" name="context" value={context} />
-        <input type="hidden" name="referenceId" value={referenceId} />
-
-        {/* Direct Permissions */}
-        <div>
-          <h4 className="font-medium text-sm text-muted-foreground mb-3">
-            Direct Permissions
-          </h4>
-          <div className="space-y-3">
-            {availablePermissions.map((permission) => {
-              const status = getPermissionStatus(permission.key);
-              return (
-                <div
-                  key={permission.key}
-                  className="flex items-start space-x-3"
-                >
-                  <input
-                    type="checkbox"
-                    id={`${context}-${referenceId}-${permission.key}`}
-                    name="permissions"
-                    value={permission.key}
-                    checked={status.hasAny}
-                    disabled={status.hasInherited && !status.hasDirect}
-                    onChange={(e) =>
-                      onPermissionChange?.(
-                        permission.key,
-                        e.target.checked,
-                        referenceId,
-                      )
-                    }
-                    className={`mt-1 rounded border ${
-                      status.hasInherited && !status.hasDirect
-                        ? "border-blue-300 bg-blue-50 text-blue-600"
-                        : "border-gray-300"
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <Label
-                      htmlFor={`${context}-${referenceId}-${permission.key}`}
-                      className={`cursor-pointer ${
-                        status.hasDirect
-                          ? "text-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      <div className="font-medium">{permission.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {permission.description}
-                      </div>
-                    </Label>
-                    {status.hasInherited && !status.hasDirect && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <ArrowDown className="h-3 w-3 text-blue-600" />
-                        <span className="text-xs text-blue-600">
-                          Available via inheritance from{" "}
-                          {status.inheritedFrom.join(", ")}.
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {status.hasAny && (
-                    <Check
-                      className={`h-4 w-4 ${
-                        status.hasDirect ? "text-green-600" : "text-blue-600"
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Inherited Permissions */}
-        {inheritedAvailablePermissions.length > 0 && (
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowInherited(!showInherited)}
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              {showInherited ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-              Inherited Permissions ({inheritedAvailablePermissions.length})
-            </button>
-
-            {showInherited && (
-              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                {inheritedAvailablePermissions.map((permission) => {
-                  const status = getPermissionStatus(permission.key);
-                  return (
-                    <div
-                      key={permission.key}
-                      className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200"
-                    >
-                      <ArrowDown className="h-4 w-4 text-blue-600" />
-                      <div className="flex-1">
-                        <span className="text-sm font-medium">
-                          {permission.name}
-                        </span>
-                        <div className="text-xs text-blue-600">
-                          via {status.inheritedFrom.join(", ")}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Permission Flow Visualization */}
-        {context === "agent" && (
-          <div className="pt-3 border-t">
-            <h4 className="font-medium text-sm text-muted-foreground mb-2">
-              Permission Flow
-            </h4>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="px-2 py-1 bg-purple-100 rounded">Global</span>
-              <ArrowDown className="h-3 w-3" />
-              <span className="px-2 py-1 bg-blue-100 rounded">Space</span>
-              <ArrowDown className="h-3 w-3" />
-              <span className="px-2 py-1 bg-green-100 rounded font-medium">
-                Agent
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="pt-4 border-t">
-          <Button type="submit">Update {title} Permissions</Button>
-        </div>
-      </Form>
-    );
-  };
-
-  const renderDisplayMode = () => (
-    <>
-      {/* Direct Permissions */}
-      <div>
-        <h4 className="font-medium text-sm text-muted-foreground mb-2">
-          Direct Permissions
-        </h4>
-        {directPermissions.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">
-            No direct permissions assigned
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {directPermissions.map((permission) => (
-              <div
-                key={permission.scope}
-                className="flex items-center gap-2 p-2 bg-green-50 rounded border border-green-200"
-              >
-                <Check className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">
-                  {formatPermissionName(permission.scope)}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Inherited Permissions */}
-      {inheritedPermissions.length > 0 && (
-        <div>
-          <button
-            onClick={() => setShowInherited(!showInherited)}
-            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            {showInherited ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            Inherited Permissions ({inheritedPermissions.length})
-          </button>
-
-          {showInherited && (
-            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-              {inheritedPermissions.map((permission) => (
-                <div
-                  key={permission.scope}
-                  className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200"
-                >
-                  <ArrowDown className="h-4 w-4 text-blue-600" />
-                  <div className="flex-1">
-                    <span className="text-sm font-medium">
-                      {formatPermissionName(permission.scope)}
-                    </span>
-                    {permission.inheritedFrom && (
-                      <div className="text-xs text-blue-600">
-                        via {permission.inheritedFrom}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Permission Flow Visualization */}
-      {context === "agent" &&
-        (directPermissions.length > 0 || inheritedPermissions.length > 0) && (
-          <div className="pt-3 border-t">
-            <h4 className="font-medium text-sm text-muted-foreground mb-2">
-              Permission Flow
-            </h4>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="px-2 py-1 bg-purple-100 rounded">Global</span>
-              <ArrowDown className="h-3 w-3" />
-              <span className="px-2 py-1 bg-blue-100 rounded">Space</span>
-              <ArrowDown className="h-3 w-3" />
-              <span className="px-2 py-1 bg-green-100 rounded font-medium">
-                Agent
-              </span>
-            </div>
-          </div>
-        )}
-    </>
-  );
+  const inheritedAvailablePermissions = availablePermissions.filter((perm) => {
+    const status = getPermissionStatus(perm.key);
+    return status.hasInherited;
+  });
 
   return (
     <Card className="border-l-4 border-l-blue-500">
@@ -370,7 +124,145 @@ export const PermissionHierarchyDisplay = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isEditing ? renderEditingMode() : renderDisplayMode()}
+        <Form method="post" className="space-y-4">
+          <input type="hidden" name="intent" value="updatePermissions" />
+          <input type="hidden" name="context" value={context} />
+          <input type="hidden" name="referenceId" value={referenceId} />
+
+          {/* Direct Permissions */}
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-3">
+              Direct Permissions
+            </h4>
+            <div className="space-y-3">
+              {availablePermissions.map((permission) => {
+                const status = getPermissionStatus(permission.key);
+                return (
+                  <div
+                    key={permission.key}
+                    className="flex items-start space-x-3"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`${context}-${referenceId}-${permission.key}`}
+                      name="permissions"
+                      value={permission.key}
+                      checked={status.hasAny}
+                      disabled={status.hasInherited && !status.hasDirect}
+                      onChange={(e) =>
+                        onPermissionChange?.(
+                          permission.key,
+                          e.target.checked,
+                          referenceId,
+                        )
+                      }
+                      className={`mt-1 rounded border ${
+                        status.hasInherited && !status.hasDirect
+                          ? "border-blue-300 bg-blue-50 text-blue-600"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor={`${context}-${referenceId}-${permission.key}`}
+                        className={`cursor-pointer ${
+                          status.hasDirect
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <div className="font-medium">{permission.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {permission.description}
+                        </div>
+                      </Label>
+                      {status.hasInherited && !status.hasDirect && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <ArrowDown className="h-3 w-3 text-blue-600" />
+                          <span className="text-xs text-blue-600">
+                            Available via inheritance from{" "}
+                            {status.inheritedFrom.join(", ")}.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {status.hasAny && (
+                      <Check
+                        className={`h-4 w-4 ${
+                          status.hasDirect ? "text-green-600" : "text-blue-600"
+                        }`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Inherited Permissions */}
+          {inheritedAvailablePermissions.length > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowInherited(!showInherited)}
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                {showInherited ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                Inherited Permissions ({inheritedAvailablePermissions.length})
+              </button>
+
+              {showInherited && (
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {inheritedAvailablePermissions.map((permission) => {
+                    const status = getPermissionStatus(permission.key);
+                    return (
+                      <div
+                        key={permission.key}
+                        className="flex items-center gap-2 p-2 bg-blue-50 rounded border border-blue-200"
+                      >
+                        <ArrowDown className="h-4 w-4 text-blue-600" />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">
+                            {permission.name}
+                          </span>
+                          <div className="text-xs text-blue-600">
+                            via {status.inheritedFrom.join(", ")}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Permission Flow Visualization */}
+          {context === "agent" && (
+            <div className="pt-3 border-t">
+              <h4 className="font-medium text-sm text-muted-foreground mb-2">
+                Permission Flow
+              </h4>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="px-2 py-1 bg-purple-100 rounded">Global</span>
+                <ArrowDown className="h-3 w-3" />
+                <span className="px-2 py-1 bg-blue-100 rounded">Space</span>
+                <ArrowDown className="h-3 w-3" />
+                <span className="px-2 py-1 bg-green-100 rounded font-medium">
+                  Agent
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="pt-4 border-t">
+            <Button type="submit">Update {title} Permissions</Button>
+          </div>
+        </Form>
       </CardContent>
     </Card>
   );

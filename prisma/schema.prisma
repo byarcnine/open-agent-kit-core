@@ -93,7 +93,7 @@ model Agent {
   agentPluginData       AgentPluginData[]
   mcps                  MCPs[]
   knowledgeDocumentTags KnowledgeDocumentTag[]
-  space                 Space                  @relation(fields: [spaceId], references: [id])
+  space                 Space                  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   spaceId               String
   permissionGroup       PermissionGroup[]
 
