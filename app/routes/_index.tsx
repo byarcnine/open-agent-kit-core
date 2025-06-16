@@ -11,7 +11,7 @@ import {
 import { prisma } from "@db/db.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
-  allowedAgentsToViewForUser,
+  allowedSpacesToViewForUser,
   getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
@@ -88,7 +88,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await hasAccessHierarchical(request);
-  const allowedSpaces = await allowedAgentsToViewForUser(user);
+  const allowedSpaces = await allowedSpacesToViewForUser(user);
   const spaces = await prisma.space.findMany({
     include: {
       _count: {
@@ -98,12 +98,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       },
     },
     where: {
-      agents: {
-        some: {
-          id: {
-            in: allowedSpaces,
-          },
-        },
+      id: {
+        in: allowedSpaces,
       },
     },
     orderBy: {

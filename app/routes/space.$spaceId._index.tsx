@@ -104,19 +104,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { spaceId } = params;
-  const user = await hasAccessHierarchical(
-    request,
-    PERMISSION["space.view_agents"],
-    spaceId,
-  );
+  const user = await hasAccessHierarchical(request);
   const allowedAgents = await allowedAgentsToViewForUser(user);
-  const globalUserCount = await prisma.user.count({
-    where: {
-      role: {
-        in: ["SUPER_ADMIN", "EDIT_ALL_AGENTS", "VIEW_ALL_AGENTS"],
-      },
-    },
-  });
   const spacePromise = await prisma.space.findUnique({
     where: {
       id: spaceId,
@@ -124,46 +113,24 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
   const userScopes = await getUserScopes(user);
 
-  const agentsPromise = (
-    await prisma.agent.findMany({
-      where: {
-        spaceId,
-        id: {
-          in: allowedAgents,
+  const agentsPromise = await prisma.agent.findMany({
+    where: {
+      spaceId,
+      id: {
+        in: allowedAgents,
+      },
+    },
+    include: {
+      agentUsers: {
+        include: {
+          user: true,
         },
       },
-      include: {
-        agentUsers: {
-          include: {
-            user: true,
-          },
-        },
-        _count: {
-          select: {
-            agentUsers: {
-              where: {
-                user: {
-                  role: {
-                    notIn: [
-                      "SUPER_ADMIN",
-                      "EDIT_ALL_AGENTS",
-                      "VIEW_ALL_AGENTS",
-                    ],
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    })
-  ).map((agent) => ({
-    ...agent,
-    activeUserCount: agent._count.agentUsers + globalUserCount,
-  }));
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
   const [agents, space] = await Promise.all([agentsPromise, spacePromise]);
   if (!space) {
     throw data({ error: "Space not found" }, { status: 404 });
@@ -291,12 +258,12 @@ const Index = () => {
                           </div>
                           <AgentCardDescription className="flex gap-1 items-center">
                             {agent.description || "No description"}
-                            {agent.activeUserCount && (
+                            {/* {agent.activeUserCount && (
                               <div className="ml-auto text-xs text-primary flex items-center rounded-lg  bg-neutral-200 py-1 px-2">
                                 <Users className="h-3 w-3 inline mr-1" />
                                 {agent.activeUserCount}
                               </div>
-                            )}
+                            )} */}
                           </AgentCardDescription>
                         </AgentCardHeader>
                         <AgentCardContent>

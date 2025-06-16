@@ -5,7 +5,7 @@ import {
   AgentUserRole,
 } from "@db/db.server";
 import type { SessionUser } from "~/types/auth";
-import { sendAgentAddedConfirmation } from "../email/sendAgentAddedConfirmation.server";
+// import { sendAgentAddedConfirmation } from "../email/sendAgentAddedConfirmation.server";
 import { sendInvitationEmail } from "../email/sendInvitationEmail.server";
 import { APP_URL } from "../config/config";
 
@@ -18,23 +18,19 @@ export const handleInvite = async (user: SessionUser, invitationId: string) => {
   if (!invite) {
     return;
   }
-  if (invite.type === InvitationType.AGENT && invite.agentId) {
-    await prisma.agentUser.create({
-      data: {
+  await prisma.userPermissionGroup.upsert({
+    where: {
+      userId_permissionGroupId: {
         userId: user.id,
-        agentId: invite.agentId,
-        role: invite.agentRole ?? AgentUserRole.VIEWER,
+        permissionGroupId: invite.permissionGroupId,
       },
-    });
-  }
-  if (invite.type === InvitationType.GLOBAL) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        role: invite.globalRole ?? GlobalUserRole.VIEW_EDIT_ASSIGNED_AGENTS,
-      },
-    });
-  }
+    },
+    create: {
+      userId: user.id,
+      permissionGroupId: invite.permissionGroupId,
+    },
+    update: {},
+  });
   await prisma.invitation.delete({
     where: {
       id: invite.id,
@@ -44,36 +40,44 @@ export const handleInvite = async (user: SessionUser, invitationId: string) => {
 
 export const createInvitation = async (
   email: string,
-  agentId: string,
-  agentRole: AgentUserRole
+  permissionGroupId: string,
 ) => {
   // check if user exists
   const user = await prisma.user.findUnique({ where: { email } });
-  const agent = await prisma.agent.findUnique({ where: { id: agentId } });
-  if (!agent) {
-    return { error: "Agent not found", success: false };
+  const permissionGroup = await prisma.permissionGroup.findUnique({
+    where: { id: permissionGroupId },
+  });
+  if (!permissionGroup) {
+    return { error: "Permission group not found", success: false };
   }
   if (user) {
     // Check if user is already in agent
-    const existingAgentUser = await prisma.agentUser.findUnique({
-      where: { userId_agentId: { userId: user.id, agentId } },
+    const existingAgentUser = await prisma.userPermissionGroup.findFirst({
+      where: {
+        userId: user.id,
+        permissionGroupId,
+      },
     });
 
     if (existingAgentUser) {
       return {
         error: "User is already a member of this agent",
-        success: false,
+        success: true,
       };
     }
 
-    await prisma.agentUser.create({
-      data: { userId: user.id, agentId, role: agentRole },
+    await prisma.userPermissionGroup.create({
+      data: { userId: user.id, permissionGroupId },
     });
-    await sendAgentAddedConfirmation(user.email, agent?.name, agentId);
+    // await sendAgentAddedConfirmation(
+    //   user.email,
+    //   permissionGroup.name,
+    //   permissionGroupId,
+    // );
   } else {
     // Check if invitation already exists
     const existingInvitation = await prisma.invitation.findFirst({
-      where: { email, agentId },
+      where: { email, permissionGroupId },
     });
 
     if (existingInvitation) {
@@ -84,7 +88,7 @@ export const createInvitation = async (
     }
 
     const invitation = await prisma.invitation.create({
-      data: { email, agentId, agentRole },
+      data: { email, permissionGroupId },
     });
     const inviteLink = `${APP_URL()}/invite/${invitation.id}`;
     await sendInvitationEmail(email, inviteLink);

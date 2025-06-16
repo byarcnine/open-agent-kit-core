@@ -72,31 +72,30 @@ enum KnowledgeSourceStatus {
 }
 
 model Agent {
-  id                   String                 @id @default(cuid())
-  name                 String
-  description          String?
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  isActive             Boolean                @default(true)
-  isPublic             Boolean                @default(false)
-  agentSettings        Json?
-  allowedUrls          String[]               @default([])
-  chatSettings         Json?
-  modelSettings        Json?
-  conversations        Conversation[]
-  systemPrompts        SystemPrompt[]
-  knowledgeDocuments   KnowledgeDocument[]
-  usage                Usage[]
-  agentUsers           AgentUser[]
-  invitation           Invitation[]
-  pluginAvailability   PluginAvailability[]
-  PluginConfig         PluginConfig[]
-  AgentPluginData      AgentPluginData[]
-  MCPs                 MCPs[]
-  KnowledgeDocumentTag KnowledgeDocumentTag[]
-  space                Space                  @relation(fields: [spaceId], references: [id])
-  spaceId              String
-  permissionGroup      PermissionGroup[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  description           String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  isActive              Boolean                @default(true)
+  isPublic              Boolean                @default(false)
+  agentSettings         Json?
+  allowedUrls           String[]               @default([])
+  chatSettings          Json?
+  modelSettings         Json?
+  conversations         Conversation[]
+  systemPrompts         SystemPrompt[]
+  knowledgeDocuments    KnowledgeDocument[]
+  usage                 Usage[]
+  agentUsers            AgentUser[]
+  pluginAvailability    PluginAvailability[]
+  pluginConfig          PluginConfig[]
+  agentPluginData       AgentPluginData[]
+  mcps                  MCPs[]
+  knowledgeDocumentTags KnowledgeDocumentTag[]
+  space                 Space                  @relation(fields: [spaceId], references: [id])
+  spaceId               String
+  permissionGroup       PermissionGroup[]
 
   @@map("agent")
 }
@@ -251,6 +250,7 @@ model PermissionGroup {
   permissions          Permission[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
+  invitation           Invitation[]
 
   @@unique([name, level, spaceId, agentId])
   @@map("permission_group")
@@ -273,17 +273,13 @@ model Invitation {
   id    String @id @default(cuid())
   email String
 
-  type InvitationType @default(AGENT)
+  permissionGroupId String
+  permissionGroup   PermissionGroup @relation(fields: [permissionGroupId], references: [id], onDelete: Cascade)
 
-  agentRole  AgentUserRole?  @default(VIEWER)
-  globalRole GlobalUserRole? @default(VIEW_EDIT_ASSIGNED_AGENTS)
-
-  agentId   String?
-  agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([email, agentId])
+  @@unique([email, permissionGroupId])
   @@map("invitation")
 }
 
