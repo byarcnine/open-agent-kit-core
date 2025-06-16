@@ -25,6 +25,7 @@ import {
 } from "~/lib/permissions/permissions";
 import {
   getGroupGrantedPermissions,
+  getUserScopes,
   hasAccessHierarchical,
   resolvePermissionReferences,
   type UserGrantedPermissions,
@@ -141,12 +142,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!permissionGroup) {
     throw new Response("Permission group not found", { status: 404 });
   }
+  const userScopes = await getUserScopes(user);
 
   return {
     user,
     allGroupPermissions,
     spaces,
     permissionGroup,
+    userScopes,
   };
 };
 
@@ -287,7 +290,7 @@ const HierarchicalPermissionSection = ({
 };
 
 const PermissionGroupDetail = () => {
-  const { user, allGroupPermissions, spaces, permissionGroup } =
+  const { user, allGroupPermissions, spaces, permissionGroup, userScopes } =
     useLoaderData<typeof loader>();
   const [openSpaces, setOpenSpaces] = useState<{ [key: string]: boolean }>({});
   const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
@@ -322,7 +325,6 @@ const PermissionGroupDetail = () => {
     formData.append("permissions", JSON.stringify(permissionCopy));
     updateFetcher.submit(formData, { method: "post" });
   };
-  console.log(currentPermissions);
   // Helper function to get available permissions by scope
   const getAvailablePermissionsByScope = (
     scope: string,
@@ -359,12 +361,7 @@ const PermissionGroupDetail = () => {
   }, [updateFetcher.state, updateFetcher.data]);
 
   return (
-    <Layout
-      navComponent={
-        <OverviewNav userScopes={allGroupPermissions.map((p) => p.scope)} />
-      }
-      user={user}
-    >
+    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -516,18 +513,45 @@ const PermissionGroupDetail = () => {
                   {spaces.map((space) => {
                     // const spaceCounts = spaces.length;
                     // const agentCounts = space.agents.length;
-                    const totalDirect = currentPermissions.filter(
-                      (p) =>
-                        p.scope.startsWith("space.") &&
-                        p.referenceId === space.id &&
-                        p.direct,
-                    ).length;
-                    const totalInherited = currentPermissions.filter(
-                      (p) =>
-                        p.scope.startsWith("space.") &&
-                        p.referenceId === space.id &&
-                        !p.direct,
-                    ).length;
+                    const directInAgents = space.agents.reduce((acc, agent) => {
+                      return (
+                        acc +
+                        currentPermissions.filter(
+                          (p) =>
+                            p.scope.startsWith("agent.") &&
+                            p.referenceId === agent.id &&
+                            p.direct,
+                        ).length
+                      );
+                    }, 0);
+                    const indirectInAgents = space.agents.reduce(
+                      (acc, agent) => {
+                        return (
+                          acc +
+                          currentPermissions.filter(
+                            (p) =>
+                              p.scope.startsWith("agent.") &&
+                              p.referenceId === agent.id &&
+                              !p.direct,
+                          ).length
+                        );
+                      },
+                      0,
+                    );
+                    const totalDirect =
+                      currentPermissions.filter(
+                        (p) =>
+                          p.scope.startsWith("space.") &&
+                          p.referenceId === space.id &&
+                          p.direct,
+                      ).length + directInAgents;
+                    const totalInherited =
+                      currentPermissions.filter(
+                        (p) =>
+                          p.scope.startsWith("space.") &&
+                          p.referenceId === space.id &&
+                          !p.direct,
+                      ).length + indirectInAgents;
 
                     return (
                       <div key={space.id}>

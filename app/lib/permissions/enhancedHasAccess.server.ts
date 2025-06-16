@@ -6,7 +6,7 @@ import type { SessionUser } from "~/types/auth";
 import { AVAILABLE_PERMISSIONS } from "./permissions";
 
 export const getUserScopes = async (user: SessionUser) => {
-  return Object.keys(await getUserGrantedPermissions(user));
+  return await getUserGrantedPermissions(user);
 };
 
 export type UserGrantedPermissions = {

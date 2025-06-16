@@ -34,13 +34,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const body = await request.json();
     const { feedback, feedbackType, sentiment, conversationId } = body;
 
-    console.log("Received feedback:", {
-      feedback,
-      feedbackType,
-      sentiment,
-      conversationId,
-    });
-
     if (!feedback || !feedbackType || !conversationId) {
       return new Response(
         JSON.stringify({ message: "Missing required fields" }),
