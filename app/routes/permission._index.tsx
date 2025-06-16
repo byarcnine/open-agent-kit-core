@@ -24,29 +24,28 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
 import { CreatePermissionGroupDialog } from "~/components/createPermissionGroupDialog/createPermissionGroupDialog";
 import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
-import { GLOBAL_ROLES } from "~/lib/auth/roles";
 import { z } from "zod";
 import { useEffect } from "react";
 import { toast, Toaster } from "sonner";
-import { sendInvitationEmail } from "~/lib/email/sendInvitationEmail.server";
-import { InvitationType } from "@prisma/client";
-import { APP_URL } from "~/lib/config/config";
 import {
   getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
+import { createInvitation } from "~/lib/auth/handleInvite.server";
 
 dayjs.extend(relativeTime);
 
 const inviteUserSchema = z.object({
   email: z.string().email("Invalid email address"),
-  role: z.enum(["SUPER_ADMIN", "EDIT_ALL_AGENTS", "VIEW_ALL_AGENTS"]),
+  permissionGroupIds: z
+    .array(z.string())
+    .min(1, "At least one permission group is required"),
 });
 
 const createPermissionGroupSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().optional(),
 });
 
 const manageUserPermissionGroupsSchema = z.object({
@@ -76,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "invite": {
       const result = inviteUserSchema.safeParse({
         email: formData.get("email"),
-        role: formData.get("role"),
+        permissionGroupIds: formData.getAll("permissionGroupIds"),
       });
 
       if (!result.success) {
@@ -90,7 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
       }
 
-      const { email, role } = result.data;
+      const { email, permissionGroupIds } = result.data;
 
       const existingUser = await prisma.user.findUnique({
         where: { email },
@@ -107,15 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         );
       }
 
-      const invitation = await prisma.invitation.create({
-        data: {
-          email,
-          globalRole: role,
-          type: InvitationType.GLOBAL,
-        },
-      });
-      const inviteLink = `${APP_URL()}/invite/${invitation.id}`;
-      await sendInvitationEmail(email, inviteLink);
+      await createInvitation(email, permissionGroupIds);
       return data<ActionData>(
         {
           success: true,
@@ -193,22 +184,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const { userId, permissionGroups } = result.data;
 
       try {
-        // Remove all existing user permission groups for this user
-        await prisma.userPermissionGroup.deleteMany({
-          where: {
-            userId,
-          },
-        });
-
-        // Add new user permission groups
-        if (permissionGroups.length > 0) {
-          await prisma.userPermissionGroup.createMany({
-            data: permissionGroups.map((groupId) => ({
-              userId,
-              permissionGroupId: groupId,
-            })),
-          });
-        }
+        await createInvitation(userId, permissionGroups);
 
         return data<ActionData>(
           {
@@ -322,14 +298,20 @@ const PermissionManagement = () => {
         <div className="mb-12">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-medium">Users</h2>
-            <InviteUserModal roles={GLOBAL_ROLES} error={actionData?.error} />
+            <InviteUserModal
+              permissionGroups={permissionGroups}
+              error={actionData?.error}
+            />
           </div>
           {!users || users.length === 0 ? (
             <NoDataCard
               headline="No Users Found"
               description="There are no users in the system at the moment."
             >
-              <InviteUserModal roles={GLOBAL_ROLES} error={actionData?.error} />
+              <InviteUserModal
+                permissionGroups={permissionGroups}
+                error={actionData?.error}
+              />
             </NoDataCard>
           ) : (
             <div className="rounded-md border">
@@ -426,9 +408,7 @@ const PermissionManagement = () => {
                         </Link>
                       </TableCell>
                       <TableCell className="max-w-xs">
-                        <div className="truncate" title={group.description}>
-                          {group.description}
-                        </div>
+                        <div className="truncate">{group.description}</div>
                       </TableCell>
                       <TableCell>
                         {group._count.userPermissionGroups > 0 ? (

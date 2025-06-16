@@ -13,7 +13,7 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Button } from "~/components/ui/button";
 import { z } from "zod";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Toaster } from "~/components/ui/sonner";
 import { Switch } from "~/components/ui/switch";
@@ -34,7 +34,6 @@ import {
   Lock,
   MessageCircle,
   Power,
-  Settings,
   Video,
 } from "react-feather";
 import { type ChatSettings } from "~/types/chat";
@@ -1033,7 +1032,7 @@ const AgentSettings = () => {
                   name="intent"
                   value={Intent.UPDATE_EMBED_SETTINGS}
                 />
-                <CardContentSection title="">
+                <CardContentSection>
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="maintainConversationSession">
                       Maintain Conversation Session in Embed

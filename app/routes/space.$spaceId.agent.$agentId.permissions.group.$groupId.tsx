@@ -10,13 +10,13 @@ import {
 import { prisma, type Permission } from "@db/db.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { ArrowLeft, Shield, ChevronDown, ChevronRight } from "react-feather";
+import { ArrowLeft, Shield } from "react-feather";
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
 import { Label } from "~/components/ui/label";
 
 import { Badge } from "~/components/ui/badge";
-import { Check, ArrowDown } from "react-feather";
+import { Check } from "react-feather";
 import {
   AVAILABLE_PERMISSIONS,
   PERMISSION,
@@ -298,7 +298,7 @@ const PermissionGroupDetail = () => {
     referenceId: string,
   ) => {
     setHasUnsavedChanges(true);
-    let permissionCopy = structuredClone(currentPermissions);
+    const permissionCopy = structuredClone(currentPermissions);
     const hasPermissionIndex = permissionCopy.findIndex(
       (p) => p.scope === scope && p.referenceId === referenceId,
     );

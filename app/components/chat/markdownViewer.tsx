@@ -147,13 +147,11 @@ const MarkdownViewer = ({ text }: { text: string }) => {
         li: CustomLI,
         a: (props) => renderMarkdownLink({ ...props, chatSettings }),
         code({
-          node,
           inline,
           className,
           children,
           ...props
         }: {
-          node?: any;
           inline?: boolean;
           className?: string;
           children?: React.ReactNode;

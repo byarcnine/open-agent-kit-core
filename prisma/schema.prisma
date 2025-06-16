@@ -240,7 +240,7 @@ model Permission {
 model PermissionGroup {
   id                   String                @id @default(cuid())
   name                 String
-  description          String
+  description          String?
   level                PermissionGroupLevel  @default(GLOBAL)
   spaceId              String? // null for GLOBAL, required for SPACE and AGENT levels
   agentId              String? // null for GLOBAL and SPACE, required for AGENT level

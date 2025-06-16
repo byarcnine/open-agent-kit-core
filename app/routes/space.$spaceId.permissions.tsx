@@ -9,7 +9,7 @@ import {
   Link,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { Search, Users, UserPlus, Settings, Trash2, Plus } from "react-feather";
+import { Users, Settings, Plus } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
@@ -54,10 +54,13 @@ import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
 import { toast, Toaster } from "sonner";
+import { createInvitation } from "~/lib/auth/handleInvite.server";
+import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
+import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
 
 const createPermissionGroupSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().optional(),
 });
 
 const manageUserPermissionGroupsSchema = z.object({
@@ -119,7 +122,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       try {
         // Create space-scoped permission group
-        const permissionGroup = await prisma.permissionGroup.create({
+        await prisma.permissionGroup.create({
           data: {
             name,
             description,
@@ -137,6 +140,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
+        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -237,33 +241,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const { email, permissionGroupIds } = result.data;
 
       try {
-        // Check if user already exists
-        let user = await prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (!user) {
-          // Create new user
-          user = await prisma.user.create({
-            data: {
-              email,
-              name: email.split("@")[0],
-              emailVerified: false,
-            },
-          });
-        }
-
-        // Add user to permission groups
-        const userPermissionGroupData = permissionGroupIds.map((groupId) => ({
-          userId: user.id,
-          permissionGroupId: groupId,
-        }));
-
-        await prisma.userPermissionGroup.createMany({
-          data: userPermissionGroupData,
-          skipDuplicates: true,
-        });
-
+        await createInvitation(email, permissionGroupIds);
         return data<ActionData>(
           {
             success: true,
@@ -273,6 +251,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
+        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -442,152 +421,6 @@ const CreatePermissionGroupDialog = () => {
   );
 };
 
-const ManageUserPermissionGroupsDialog = ({
-  user,
-  permissionGroups,
-}: {
-  user: any;
-  permissionGroups: any[];
-}) => {
-  const userGroupIds = user.userPermissionGroups.map(
-    (upg: any) => upg.permissionGroup.id,
-  );
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Settings className="h-4 w-4 mr-1" />
-          Manage
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Manage Permission Groups</DialogTitle>
-          <DialogDescription>
-            Assign or remove permission groups for {user.name || user.email}
-          </DialogDescription>
-        </DialogHeader>
-        <Form method="post">
-          <input
-            type="hidden"
-            name="intent"
-            value="manageUserPermissionGroups"
-          />
-          <input type="hidden" name="userId" value={user.id} />
-          <div className="grid gap-4 py-4">
-            <div className="space-y-3">
-              {permissionGroups.map((group) => (
-                <div key={group.id} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`group-${group.id}`}
-                    name="permissionGroups"
-                    value={group.id}
-                    defaultChecked={userGroupIds.includes(group.id)}
-                    className="rounded"
-                  />
-                  <Label
-                    htmlFor={`group-${group.id}`}
-                    className="text-sm font-normal flex-1"
-                  >
-                    <div>
-                      <div className="font-medium">{group.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {group.description}
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-          <input
-            type="hidden"
-            name="permissionGroups"
-            value={JSON.stringify(userGroupIds)}
-          />
-          <DialogFooter>
-            <Button type="submit">Update Groups</Button>
-          </DialogFooter>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const InviteUserDialog = ({
-  permissionGroups,
-}: {
-  permissionGroups: any[];
-}) => {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invite User
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Invite User to Space</DialogTitle>
-          <DialogDescription>
-            Invite a new user to this space and assign them to permission
-            groups.
-          </DialogDescription>
-        </DialogHeader>
-        <Form method="post">
-          <input type="hidden" name="intent" value="invite" />
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="user@example.com"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Permission Groups</Label>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {permissionGroups.map((group) => (
-                  <div key={group.id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`invite-group-${group.id}`}
-                      name="permissionGroupIds"
-                      value={group.id}
-                      className="rounded"
-                    />
-                    <Label
-                      htmlFor={`invite-group-${group.id}`}
-                      className="text-sm font-normal"
-                    >
-                      <div>
-                        <div className="font-medium">
-                          {group.name.replace(/^[^:]+:/, "")}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {group.description.replace(/^\[Space: [^\]]+\] /, "")}
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Send Invitation</Button>
-          </DialogFooter>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 const SpacePermissionManagement = () => {
   const { user, space, users, permissionGroups, userScopes } =
     useLoaderData<typeof loader>();
@@ -619,7 +452,14 @@ const SpacePermissionManagement = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <InviteUserDialog permissionGroups={permissionGroups} />
+            <InviteUserModal
+              permissionGroups={permissionGroups}
+              error={
+                actionData && "error" in actionData
+                  ? actionData.error
+                  : undefined
+              }
+            />
             <CreatePermissionGroupDialog />
           </div>
         </div>
@@ -643,7 +483,14 @@ const SpacePermissionManagement = () => {
                     headline="No users"
                     description="No users have been assigned to this space yet."
                   >
-                    <InviteUserDialog permissionGroups={permissionGroups} />
+                    <InviteUserModal
+                      permissionGroups={permissionGroups}
+                      error={
+                        actionData && "error" in actionData
+                          ? actionData.error
+                          : undefined
+                      }
+                    />
                   </NoDataCard>
                 ) : (
                   <div className="border rounded-lg overflow-hidden">
@@ -744,10 +591,7 @@ const SpacePermissionManagement = () => {
                                   {group.name.replace(/^[^:]+:/, "")}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {group.description.replace(
-                                    /^\[Space: [^\]]+\] /,
-                                    "",
-                                  )}
+                                  {group.description}
                                 </div>
                               </div>
                             </TableCell>

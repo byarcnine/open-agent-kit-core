@@ -17,7 +17,7 @@ import { Toaster } from "sonner";
 import { Label } from "~/components/ui/label";
 
 import { Badge } from "~/components/ui/badge";
-import { Check, ArrowDown } from "react-feather";
+import { Check } from "react-feather";
 import {
   AVAILABLE_PERMISSIONS,
   PERMISSION,
@@ -239,7 +239,7 @@ const HierarchicalPermissionSection = ({
                     value={permissionScope}
                     checked={status?.direct}
                     disabled={hasInherited}
-                    onChange={(e) => toggleScope(permissionScope)}
+                    onChange={() => toggleScope(permissionScope)}
                     className={`rounded border ${
                       hasInherited
                         ? "border-gray-300"
@@ -290,7 +290,6 @@ const HierarchicalPermissionSection = ({
 const PermissionGroupDetail = () => {
   const { user, allGroupPermissions, space, permissionGroup, userScopes } =
     useLoaderData<typeof loader>();
-  const [openSpaces, setOpenSpaces] = useState<{ [key: string]: boolean }>({});
   const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const updateFetcher = useFetcher();
@@ -302,7 +301,7 @@ const PermissionGroupDetail = () => {
     referenceId: string,
   ) => {
     setHasUnsavedChanges(true);
-    let permissionCopy = structuredClone(currentPermissions);
+    const permissionCopy = structuredClone(currentPermissions);
     const hasPermissionIndex = permissionCopy.findIndex(
       (p) => p.scope === scope && p.referenceId === referenceId,
     );
@@ -357,39 +356,6 @@ const PermissionGroupDetail = () => {
       setCurrentPermissions(updateFetcher.data.updatedPermissions);
     }
   }, [updateFetcher.state, updateFetcher.data]);
-
-  const directInAgents = space.agents.reduce((acc, agent) => {
-    return (
-      acc +
-      currentPermissions.filter(
-        (p) =>
-          p.scope.startsWith("agent.") &&
-          p.referenceId === agent.id &&
-          p.direct,
-      ).length
-    );
-  }, 0);
-  const indirectInAgents = space.agents.reduce((acc, agent) => {
-    return (
-      acc +
-      currentPermissions.filter(
-        (p) =>
-          p.scope.startsWith("agent.") &&
-          p.referenceId === agent.id &&
-          !p.direct,
-      ).length
-    );
-  }, 0);
-  const totalDirect =
-    currentPermissions.filter(
-      (p) =>
-        p.scope.startsWith("space.") && p.referenceId === space.id && p.direct,
-    ).length + directInAgents;
-  const totalInherited =
-    currentPermissions.filter(
-      (p) =>
-        p.scope.startsWith("space.") && p.referenceId === space.id && !p.direct,
-    ).length + indirectInAgents;
 
   return (
     <Layout
@@ -526,7 +492,10 @@ const PermissionGroupDetail = () => {
                           referenceId={space.id}
                           spaceName={space.name}
                           toggleScope={(scope) =>
-                            toggleScope(scope as any, space.id)
+                            toggleScope(
+                              scope as keyof typeof AVAILABLE_PERMISSIONS,
+                              space.id,
+                            )
                           }
                         />
 

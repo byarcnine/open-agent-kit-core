@@ -40,57 +40,41 @@ export const handleInvite = async (user: SessionUser, invitationId: string) => {
 
 export const createInvitation = async (
   email: string,
-  permissionGroupId: string,
+  permissionGroupIds: string[],
 ) => {
   // check if user exists
   const user = await prisma.user.findUnique({ where: { email } });
-  const permissionGroup = await prisma.permissionGroup.findUnique({
-    where: { id: permissionGroupId },
+  const permissionGroups = await prisma.permissionGroup.findMany({
+    where: { id: { in: permissionGroupIds } },
   });
-  if (!permissionGroup) {
+  if (permissionGroups.length !== permissionGroupIds.length) {
     return { error: "Permission group not found", success: false };
   }
   if (user) {
-    // Check if user is already in agent
-    const existingAgentUser = await prisma.userPermissionGroup.findFirst({
-      where: {
+    await prisma.userPermissionGroup.createMany({
+      data: permissionGroups.map((group) => ({
         userId: user.id,
-        permissionGroupId,
-      },
+        permissionGroupId: group.id,
+      })),
+      skipDuplicates: true,
     });
-
-    if (existingAgentUser) {
-      return {
-        error: "User is already a member of this agent",
-        success: true,
-      };
-    }
-
-    await prisma.userPermissionGroup.create({
-      data: { userId: user.id, permissionGroupId },
-    });
-    // await sendAgentAddedConfirmation(
-    //   user.email,
-    //   permissionGroup.name,
-    //   permissionGroupId,
-    // );
   } else {
-    // Check if invitation already exists
-    const existingInvitation = await prisma.invitation.findFirst({
-      where: { email, permissionGroupId },
-    });
-
-    if (existingInvitation) {
-      return {
-        error: "An invitation has already been sent to this email",
-        success: false,
-      };
-    }
-
-    const invitation = await prisma.invitation.create({
-      data: { email, permissionGroupId },
-    });
-    const inviteLink = `${APP_URL()}/invite/${invitation.id}`;
+    const invitation = await Promise.all(
+      permissionGroups.map(
+        async (permissionGroup) =>
+          await prisma.invitation.upsert({
+            where: {
+              email_permissionGroupId: {
+                email,
+                permissionGroupId: permissionGroup.id,
+              },
+            },
+            create: { email, permissionGroupId: permissionGroup.id },
+            update: {},
+          }),
+      ),
+    );
+    const inviteLink = `${APP_URL()}/invite/${invitation[0].id}`;
     await sendInvitationEmail(email, inviteLink);
   }
 };

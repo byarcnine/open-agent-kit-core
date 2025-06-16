@@ -11,21 +11,29 @@ import { Label } from "../ui/label";
 import { Button } from "../ui/button";
 import { Plus } from "react-feather";
 import { Form } from "react-router";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import Checkbox from "~/components/ui/checkbox";
+import { useState } from "react";
+import type { PermissionGroup } from "@prisma/client";
 
 export const InviteUserModal = ({
   error,
-  roles,
+  permissionGroups,
 }: {
   error?: string | null;
-  roles: { name: string; label: string }[];
+  permissionGroups: PermissionGroup[];
 }) => {
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+
+  const handleGroupToggle = (groupId: string) => {
+    const newSelectedGroups = new Set(selectedGroups);
+    if (newSelectedGroups.has(groupId)) {
+      newSelectedGroups.delete(groupId);
+    } else {
+      newSelectedGroups.add(groupId);
+    }
+    setSelectedGroups(newSelectedGroups);
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -51,19 +59,37 @@ export const InviteUserModal = ({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="role">Role</Label>
-            <Select defaultValue={roles[0].name} name="role" required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((r) => (
-                  <SelectItem key={r.name} value={r.name}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Permission Groups</Label>
+            <div className="space-y-3 max-h-[200px] overflow-y-auto">
+              {permissionGroups.map((group) => (
+                <div key={group.id} className="flex items-start space-x-3">
+                  <Checkbox
+                    checked={selectedGroups.has(group.id)}
+                    onCheckedChange={() => handleGroupToggle(group.id)}
+                    label=""
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{group.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {group.description}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {selectedGroups.size === 0 && (
+              <p className="text-sm text-destructive">
+                Please select at least one permission group
+              </p>
+            )}
+            {Array.from(selectedGroups).map((groupId) => (
+              <input
+                key={groupId}
+                type="hidden"
+                name="permissionGroupIds"
+                value={groupId}
+              />
+            ))}
           </div>
           {error && <div className="text-sm text-red-500">{error}</div>}
           <div className="flex flex-wrap sm:justify-end gap-4 pt-4">
@@ -72,7 +98,9 @@ export const InviteUserModal = ({
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit">Send Invitation</Button>
+            <Button type="submit" disabled={selectedGroups.size === 0}>
+              Send Invitation
+            </Button>
           </div>
         </Form>
       </DialogContent>
