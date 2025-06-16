@@ -145,7 +145,7 @@ export const getGroupGrantedPermissions = async (
 
 export const hasAccessHierarchical = async (
   request: Request,
-  requiredPermission?: string,
+  requiredPermission?: keyof typeof AVAILABLE_PERMISSIONS,
   targetReferenceId?: string,
 ) => {
   const session = await getSession(request);

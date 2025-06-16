@@ -280,8 +280,11 @@ const Index = () => {
                               </Button>
                             </Link>
 
-                            {/* {userCanEdit(agent) && ( */}
-                            {agent && (
+                            {userScopes.some(
+                              (scope) =>
+                                scope.scope === "agent.edit_agent" &&
+                                scope.referenceId === agent.id,
+                            ) && (
                               <Link
                                 className="flex-1"
                                 to={`/space/${space.id}/agent/${agent.id}`}

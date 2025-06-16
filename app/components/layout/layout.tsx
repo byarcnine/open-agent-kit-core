@@ -11,16 +11,18 @@ const Layout = ({
   user,
   agentName,
   navComponent,
+  agentSpaceId,
 }: {
   children: React.ReactNode;
   user?: User;
   agentName?: string;
   navComponent?: React.ReactNode;
+  agentSpaceId?: string;
 }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [spaceDropdownOpen, setSpaceDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { agentId, spaceId } = useParams();
+  const { agentId, spaceId = agentSpaceId } = useParams();
 
   // Close dropdown when clicking outside
   useEffect(() => {

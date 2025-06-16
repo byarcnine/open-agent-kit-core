@@ -109,6 +109,11 @@ export const AVAILABLE_PERMISSIONS = {
     description: "Can view agents in this space",
     grants: ["agent.chat", "agent.view_agent_settings"],
   },
+  "space.use_agents": {
+    name: "Use Agents",
+    description: "Can use agents in this space",
+    grants: ["agent.chat"],
+  },
   // ------------------------------------------------
   // Agent Permissions
   // ------------------------------------------------

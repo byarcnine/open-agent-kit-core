@@ -340,6 +340,7 @@ const ChatOverview = () => {
       }
       user={user}
       agentName={agent?.name}
+      agentSpaceId={agent?.spaceId}
     >
       <Outlet
         context={{
