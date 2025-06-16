@@ -23,6 +23,7 @@ import {
 } from "~/components/ui/table";
 import {
   getUserScopes,
+  getUserWithAccessToAgent,
   hasAccessHierarchical,
   setUserPermissionGroups,
 } from "~/lib/permissions/enhancedHasAccess.server";
@@ -268,24 +269,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   // Get all users and their space-scoped permission groups
-  const usersPromise = prisma.user.findMany({
-    include: {
-      userPermissionGroups: {
-        where: {
-          permissionGroup: {
-            level: "AGENT",
-            agentId,
-          },
-        },
-        include: {
-          permissionGroup: true,
-        },
-      },
-    },
-    orderBy: {
-      email: "asc",
-    },
-  });
+  const usersPromise = getUserWithAccessToAgent(agentId);
 
   // Get all space-scoped permission groups
   const permissionGroupsPromise = prisma.permissionGroup.findMany({

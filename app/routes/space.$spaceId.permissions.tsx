@@ -26,6 +26,7 @@ import {
 } from "~/components/ui/table";
 import {
   getUserScopes,
+  getUserWithAccessToSpace,
   hasAccessHierarchical,
   setUserPermissionGroups,
 } from "~/lib/permissions/enhancedHasAccess.server";
@@ -272,24 +273,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   // Get all users and their space-scoped permission groups
-  const usersPromise = prisma.user.findMany({
-    include: {
-      userPermissionGroups: {
-        where: {
-          permissionGroup: {
-            level: "SPACE",
-            spaceId,
-          },
-        },
-        include: {
-          permissionGroup: true,
-        },
-      },
-    },
-    orderBy: {
-      email: "asc",
-    },
-  });
+  const usersPromise = getUserWithAccessToSpace(spaceId);
 
   // Get all space-scoped permission groups
   const permissionGroupsPromise = prisma.permissionGroup.findMany({
@@ -326,11 +310,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     permissionGroupsPromise,
   ]);
 
-  // Filter users to only show those with space-scoped groups
-  const filteredUsers = users.filter(
-    (user) => user.userPermissionGroups.length > 0,
-  );
-
   const userScopes = await getUserScopes(user);
 
   // Get available space permissions
@@ -344,7 +323,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return {
     user: user as SessionUser,
     space,
-    users: filteredUsers,
+    users,
     permissionGroups,
     userScopes,
     spacePermissions,
@@ -352,8 +331,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 const SpacePermissionManagement = () => {
-  const { user, space, users, permissionGroups, userScopes } =
-    useLoaderData<typeof loader>();
+  const { space, users, permissionGroups } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   useEffect(() => {
@@ -449,10 +427,7 @@ const SpacePermissionManagement = () => {
                                       variant="secondary"
                                       className="text-xs"
                                     >
-                                      {upg.permissionGroup.name.replace(
-                                        /^[^:]+:/,
-                                        "",
-                                      )}
+                                      {upg.permissionGroup.name}
                                     </Badge>
                                   ))}
                                 </div>

@@ -87,7 +87,7 @@ export function ManageUserPermissionGroupsDialog({
               No permission groups available.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-5">
               {permissionGroups.map((group) => (
                 <div key={group.id} className="flex items-start space-x-3">
                   <Checkbox

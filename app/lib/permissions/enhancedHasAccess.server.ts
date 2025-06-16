@@ -302,3 +302,127 @@ export const setUserPermissionGroups = async (
     });
   });
 };
+
+export const getUserWithAccessToSpace = async (spaceId: string) => {
+  const allAgentsInSpace = await prisma.agent.findMany({
+    where: {
+      spaceId,
+    },
+    select: {
+      id: true,
+    },
+  });
+  const allAgentsIds = allAgentsInSpace.map((a) => a.id);
+  return prisma.user.findMany({
+    include: {
+      userPermissionGroups: {
+        // where: {
+        //   permissionGroup: {
+        //     level: "SPACE",
+        //     spaceId,
+        //   },
+        // },
+        include: {
+          permissionGroup: true,
+        },
+      },
+    },
+    where: {
+      userPermissionGroups: {
+        some: {
+          permissionGroup: {
+            permissions: {
+              some: {
+                OR: [
+                  {
+                    // global permissions
+                    scope: {
+                      startsWith: "global.",
+                    },
+                  },
+                  // space permissions
+                  {
+                    scope: {
+                      startsWith: "space.",
+                    },
+                    referenceId: spaceId,
+                  },
+                  {
+                    scope: {
+                      startsWith: "agent.",
+                    },
+                    referenceId: {
+                      in: allAgentsIds,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const getUserWithAccessToAgent = async (agentId: string) => {
+  const space = await prisma.agent.findUnique({
+    where: {
+      id: agentId,
+    },
+    select: {
+      spaceId: true,
+    },
+  });
+  if (!space) {
+    return [];
+  }
+  return prisma.user.findMany({
+    include: {
+      userPermissionGroups: {
+        // where: {
+        //   permissionGroup: {
+        //     level: "AGENT",
+        //     agentId,
+        //   },
+        // },
+        include: {
+          permissionGroup: true,
+        },
+      },
+    },
+    where: {
+      userPermissionGroups: {
+        some: {
+          permissionGroup: {
+            permissions: {
+              some: {
+                OR: [
+                  {
+                    // global permissions
+                    scope: {
+                      startsWith: "global.",
+                    },
+                  },
+                  // space permissions
+                  {
+                    scope: {
+                      startsWith: "space.",
+                    },
+                    referenceId: space.spaceId,
+                  },
+                  {
+                    scope: {
+                      startsWith: "agent.",
+                    },
+                    referenceId: agentId,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
