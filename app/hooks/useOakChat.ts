@@ -455,6 +455,7 @@ const useOakChat = ({
     messages,
     input,
     status,
+    apiUrl,
     error: error || null,
     files,
     handleInputChange,

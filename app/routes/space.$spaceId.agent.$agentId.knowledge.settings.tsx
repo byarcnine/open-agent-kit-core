@@ -80,8 +80,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       },
     );
   }
-
-  return null;
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
