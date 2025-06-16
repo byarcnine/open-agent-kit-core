@@ -53,6 +53,7 @@ type UseOakChatReturn = {
   avatar: string;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  setInput: (input: string) => void;
 };
 
 const isJwtExpired = (token: string) => {
@@ -470,6 +471,7 @@ const useOakChat = ({
     avatar,
     textareaRef,
     fileInputRef,
+    setInput,
   };
 };
 
