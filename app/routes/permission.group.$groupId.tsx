@@ -28,6 +28,7 @@ import {
   getUserScopes,
   hasAccessHierarchical,
   resolvePermissionReferences,
+  updatePermissionGroupPermissions,
   type UserGrantedPermissions,
 } from "~/lib/permissions/enhancedHasAccess.server";
 
@@ -42,7 +43,10 @@ type ActionData = {
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const groupId = params.groupId as string;
   const formData = await request.formData();
-  await hasAccessHierarchical(request, PERMISSION["global.edit_global_users"]);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.edit_global_users"],
+  );
 
   const intent = formData.get("intent");
 
@@ -67,20 +71,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const permissions = JSON.parse(
         formData.get("permissions") as string,
       ) as UserGrantedPermissions;
-      await prisma.$transaction(async (tx) => {
-        await tx.permission.deleteMany({
-          where: {
-            permissionGroupId: groupId,
-          },
-        });
-        await tx.permission.createMany({
-          data: permissions.map((p) => ({
-            scope: p.scope,
-            referenceId: p.referenceId,
-            permissionGroupId: groupId,
-          })),
-        });
-      });
+      await updatePermissionGroupPermissions(groupId, user, permissions);
       try {
         return data<ActionData>(
           {

@@ -267,9 +267,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           isActive: validatedData.isActive,
           allowedUrls: validatedData.allowedUrls,
           agentSettings: JSON.stringify({
-            hasKnowledgeBase: validatedData.agentSettings.hasKnowledgeBase,
-            captureFeedback: validatedData.agentSettings.captureFeedback,
-            trackingEnabled: validatedData.agentSettings.trackingEnabled,
+            hasKnowledgeBase: validatedData.agentSettings?.hasKnowledgeBase,
+            captureFeedback: validatedData.agentSettings?.captureFeedback,
+            trackingEnabled: validatedData.agentSettings?.trackingEnabled,
           }),
         },
       });

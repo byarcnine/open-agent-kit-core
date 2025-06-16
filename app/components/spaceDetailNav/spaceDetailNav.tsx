@@ -3,12 +3,13 @@ import { Settings, Tool, User } from "react-feather";
 import { Link, useLocation } from "react-router";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import type { Space } from "@prisma/client";
+import type { UserGrantedPermissions } from "~/lib/permissions/enhancedHasAccess.server";
 
 export const SpaceDetailNav = ({
   userScopes,
   space,
 }: {
-  userScopes: string[];
+  userScopes: UserGrantedPermissions;
   space: Space;
 }) => {
   const location = useLocation();
@@ -50,7 +51,9 @@ export const SpaceDetailNav = ({
             Agent Tools
           </Link>
         )} */}
-        {userScopes.includes(PERMISSION["global.edit_global_users"]) && (
+        {userScopes.some(
+          (p) => p.scope === "space.edit_users" && p.referenceId === space.id,
+        ) && (
           <Link
             to={`/space/${space.id}/permissions`}
             prefetch="intent"

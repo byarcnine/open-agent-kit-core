@@ -58,7 +58,7 @@ const Message: React.FC<MessageProps> = React.memo(
     const { chatSettings, agentSettings, conversationId, isEmbed, apiUrl } =
       useContext(ChatContext);
 
-    const { captureFeedback } = agentSettings;
+    const { captureFeedback } = agentSettings || {};
 
     const handleCopy = (text: string) => {
       navigator.clipboard.writeText(text).then(() => {

@@ -181,3 +181,31 @@ export const allowedAgentsToViewForUser = async (user: SessionUser) => {
     .filter((p) => p.scope === "agent.chat")
     .map((p) => p.referenceId);
 };
+
+export const updatePermissionGroupPermissions = async (
+  groupId: string,
+  user: SessionUser,
+  permissions: UserGrantedPermissions,
+) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  // remove all permission that the current user doesnt have
+  const newPermissions = permissions.filter((p) =>
+    userGrantedPermissions.some(
+      (up) => up.scope === p.scope && up.referenceId === p.referenceId,
+    ),
+  );
+  await prisma.$transaction(async (tx) => {
+    await tx.permission.deleteMany({
+      where: {
+        permissionGroupId: groupId,
+      },
+    });
+    await tx.permission.createMany({
+      data: newPermissions.map((p) => ({
+        scope: p.scope,
+        referenceId: p.referenceId,
+        permissionGroupId: groupId,
+      })),
+    });
+  });
+};
