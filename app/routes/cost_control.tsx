@@ -32,6 +32,7 @@ import TokenProgressBar from "~/components/ui/tokenProgressBar";
 import type { JsonValue } from "@prisma/client/runtime/library";
 import MonthDatepicker from "~/components/ui/monthDatepicker";
 import { useEffect, useState } from "react";
+import { Button } from "~/components/ui/button";
 
 interface SpaceWithAgents {
   _count: {
@@ -368,7 +369,15 @@ const CostControl = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <MoreVertical className="ml-auto mr-2" size={18} />
+                        <div className="text-right">
+                          <Button
+                            className="ml-auto"
+                            variant="outline"
+                            size="sm"
+                          >
+                            Manage
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                     {space?.allowedAgents?.length > 0 &&
@@ -405,7 +414,15 @@ const CostControl = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <MoreVertical className="ml-auto mr-2" size={18} />
+                            <div className="text-right">
+                              <Button
+                                className="ml-auto"
+                                variant="outline"
+                                size="sm"
+                              >
+                                Manage
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
