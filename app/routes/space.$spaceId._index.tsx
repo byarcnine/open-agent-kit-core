@@ -182,8 +182,6 @@ const Index = () => {
     }
   }, []);
 
-  console.log("Filtered Agents:", filteredAgents);
-
   return (
     <Layout
       navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
