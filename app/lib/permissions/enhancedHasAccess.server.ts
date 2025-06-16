@@ -1,9 +1,10 @@
-import { prisma, type Permission } from "@db/db.server";
+import { prisma, type Permission, type PermissionGroup } from "@db/db.server";
 import { getAllPermissionsWithInheritance } from "./hierarchical";
 import { redirect } from "react-router";
 import { getSession } from "~/lib/auth/auth.server";
 import type { SessionUser } from "~/types/auth";
 import { AVAILABLE_PERMISSIONS } from "./permissions";
+import { log } from "../utils";
 
 export const getUserScopes = async (user: SessionUser) => {
   return await getUserGrantedPermissions(user);
@@ -237,4 +238,33 @@ export const updatePermissionGroupPermissions = async (
       })),
     });
   });
+};
+
+export const setUserPermissionGroups = async (
+  currentUser: SessionUser,
+  userId: string,
+  permissionGroupIds: string[],
+) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(currentUser);
+  if (
+    // TODO: Make sure can't assign another user to a group he doesnt have access to. This is a temporary and too restrictive.
+    !userGrantedPermissions.some((p) => p.scope === "global.edit_global_users")
+  ) {
+    throw new Response("Forbidden", { status: 403 });
+  }
+  for (const id of permissionGroupIds) {
+    await prisma.userPermissionGroup.upsert({
+      where: {
+        userId_permissionGroupId: {
+          userId: userId,
+          permissionGroupId: id,
+        },
+      },
+      create: {
+        userId: userId,
+        permissionGroupId: id,
+      },
+      update: {},
+    });
+  }
 };

@@ -1,5 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import debug from "debug";
+
+export const log = debug("oak");
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

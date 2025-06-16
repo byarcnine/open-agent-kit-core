@@ -30,6 +30,7 @@ import { toast, Toaster } from "sonner";
 import {
   getUserScopes,
   hasAccessHierarchical,
+  setUserPermissionGroups,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import { createInvitation } from "~/lib/auth/handleInvite.server";
@@ -68,7 +69,10 @@ type ActionData = {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
-  await hasAccessHierarchical(request, PERMISSION["global.edit_global_users"]);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["global.edit_global_users"],
+  );
   const intent = formData.get("intent");
 
   switch (intent) {
@@ -153,6 +157,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
+        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -184,7 +189,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const { userId, permissionGroups } = result.data;
 
       try {
-        await createInvitation(userId, permissionGroups);
+        await setUserPermissionGroups(user, userId, permissionGroups);
 
         return data<ActionData>(
           {
@@ -195,6 +200,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
+        console.error(error);
         return data<ActionData>(
           {
             success: false,

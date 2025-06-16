@@ -27,6 +27,7 @@ import {
 import {
   getUserScopes,
   hasAccessHierarchical,
+  setUserPermissionGroups,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import {
   PERMISSION,
@@ -57,6 +58,7 @@ import { toast, Toaster } from "sonner";
 import { createInvitation } from "~/lib/auth/handleInvite.server";
 import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
 import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
+import { CreatePermissionGroupDialog } from "~/components/createPermissionGroupDialog/createPermissionGroupDialog";
 
 const createPermissionGroupSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -95,7 +97,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { errors: { general: ["Space ID is required"] } };
   }
 
-  await hasAccessHierarchical(request, PERMISSION["space.edit_users"], spaceId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["space.edit_users"],
+    spaceId,
+  );
 
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -172,34 +178,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const { userId, permissionGroups } = result.data;
 
       try {
-        // Remove existing space-scoped permission groups for this user
-        const existingGroups = await prisma.userPermissionGroup.findMany({
-          where: {
-            userId,
-            permissionGroup: {
-              level: "SPACE",
-              spaceId,
-            },
-          },
-        });
-
-        await prisma.userPermissionGroup.deleteMany({
-          where: {
-            id: { in: existingGroups.map((g) => g.id) },
-          },
-        });
-
-        // Add new permission groups
-        if (permissionGroups.length > 0) {
-          const userPermissionGroupData = permissionGroups.map((groupId) => ({
-            userId,
-            permissionGroupId: groupId,
-          }));
-
-          await prisma.userPermissionGroup.createMany({
-            data: userPermissionGroupData,
-          });
-        }
+        await setUserPermissionGroups(user, userId, permissionGroups);
 
         return data<ActionData>(
           {
@@ -374,51 +353,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     userScopes,
     spacePermissions,
   };
-};
-
-const CreatePermissionGroupDialog = () => {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Permission Group
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Create Permission Group</DialogTitle>
-          <DialogDescription>
-            Create a new permission group for this space.
-          </DialogDescription>
-        </DialogHeader>
-        <Form method="post">
-          <input type="hidden" name="intent" value="createPermissionGroup" />
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="e.g., Editors, Viewers"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Describe what this group can do..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Create Group</Button>
-          </DialogFooter>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
 };
 
 const SpacePermissionManagement = () => {

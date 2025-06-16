@@ -24,6 +24,7 @@ import {
 import {
   getUserScopes,
   hasAccessHierarchical,
+  setUserPermissionGroups,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import {
   PERMISSION,
@@ -81,7 +82,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return { errors: { general: ["Space ID is required"] } };
   }
 
-  await hasAccessHierarchical(request, PERMISSION["agent.edit_agent"], agentId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.edit_agent"],
+    agentId,
+  );
 
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -108,7 +113,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       try {
         // Create space-scoped permission group
-        const permissionGroup = await prisma.permissionGroup.create({
+        await prisma.permissionGroup.create({
           data: {
             name,
             description,
@@ -158,33 +163,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       try {
         // Remove existing space-scoped permission groups for this user
-        const existingGroups = await prisma.userPermissionGroup.findMany({
-          where: {
-            userId,
-            permissionGroup: {
-              level: "AGENT",
-              agentId,
-            },
-          },
-        });
-
-        await prisma.userPermissionGroup.deleteMany({
-          where: {
-            id: { in: existingGroups.map((g) => g.id) },
-          },
-        });
-
-        // Add new permission groups
-        if (permissionGroups.length > 0) {
-          const userPermissionGroupData = permissionGroups.map((groupId) => ({
-            userId,
-            permissionGroupId: groupId,
-          }));
-
-          await prisma.userPermissionGroup.createMany({
-            data: userPermissionGroupData,
-          });
-        }
+        await setUserPermissionGroups(user, userId, permissionGroups);
 
         return data<ActionData>(
           {

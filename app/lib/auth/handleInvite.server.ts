@@ -1,9 +1,4 @@
-import {
-  GlobalUserRole,
-  InvitationType,
-  prisma,
-  AgentUserRole,
-} from "@db/db.server";
+import { prisma } from "@db/db.server";
 import type { SessionUser } from "~/types/auth";
 // import { sendAgentAddedConfirmation } from "../email/sendAgentAddedConfirmation.server";
 import { sendInvitationEmail } from "../email/sendInvitationEmail.server";
@@ -75,6 +70,10 @@ export const createInvitation = async (
       ),
     );
     const inviteLink = `${APP_URL()}/invite/${invitation[0].id}`;
-    await sendInvitationEmail(email, inviteLink);
+    try {
+      await sendInvitationEmail(email, inviteLink);
+    } catch (error) {
+      console.error(error);
+    }
   }
 };
