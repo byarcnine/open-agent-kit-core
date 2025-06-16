@@ -222,7 +222,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   try {
     if (type === "SSE") {
       const connectionString = formData.get("connectionString") as string;
-      let additionalArgs = formData.get("additionalArgs") as string;
+      const additionalArgs = formData.get("additionalArgs") as string;
 
       // Validate JSON if provided
       let parsedArgs: Record<string, any> = {};

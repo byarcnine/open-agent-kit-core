@@ -72,6 +72,14 @@ export const routes = (
             "conversations/:id",
             `${corePrefix}/space.$spaceId.agent.$agentId.conversations.$id.tsx`,
           ),
+          route(
+            "permissions",
+            `${corePrefix}/space.$spaceId.agent.$agentId.permissions.tsx`,
+          ),
+          route(
+            "permissions/group/:groupId",
+            `${corePrefix}/space.$spaceId.agent.$agentId.permissions.group.$groupId.tsx`,
+          ),
           // ...routeArray.map((r) => route(r.routePath, r.relativePath)),
           ...plugins
             .filter((p) => (p.adminRoutes ?? p.routes) !== undefined)

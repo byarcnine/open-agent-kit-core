@@ -9,31 +9,18 @@ import {
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import Checkbox from "~/components/ui/checkbox";
-import { Label } from "~/components/ui/label";
 import { useFetcher } from "react-router";
 import { Settings } from "react-feather";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  userPermissionGroups: {
-    id: string;
-    permissionGroup: {
-      id: string;
-      name: string;
-    };
-  }[];
-}
-
-interface PermissionGroup {
-  id: string;
-  name: string;
-  description: string;
-}
+import type { SessionUser } from "~/types/auth";
+import type { PermissionGroup } from "@prisma/client";
 
 interface ManageUserPermissionGroupsDialogProps {
-  user: User;
+  user: SessionUser & {
+    userPermissionGroups: {
+      id: string;
+      permissionGroup: PermissionGroup;
+    }[];
+  };
   permissionGroups: PermissionGroup[];
 }
 

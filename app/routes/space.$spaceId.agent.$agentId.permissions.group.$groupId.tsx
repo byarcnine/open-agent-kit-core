@@ -8,10 +8,9 @@ import {
   useFetcher,
 } from "react-router";
 import { prisma, type Permission } from "@db/db.server";
-import Layout from "~/components/layout/layout";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { ArrowLeft, Shield, ChevronDown, ChevronRight } from "react-feather";
+import { ArrowLeft, Shield } from "react-feather";
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
 import { Label } from "~/components/ui/label";
@@ -30,7 +29,6 @@ import {
   updatePermissionGroupPermissions,
   type UserGrantedPermissions,
 } from "~/lib/permissions/enhancedHasAccess.server";
-import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 
 type ActionData = {
   success: boolean;
@@ -108,17 +106,17 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     request,
     PERMISSION["global.edit_global_users"],
   );
-  const space = await prisma.space.findUnique({
+  const agent = await prisma.agent.findUnique({
     where: {
-      id: params.spaceId as string,
+      id: params.agentId as string,
     },
     include: {
-      agents: true,
+      space: true,
     },
   });
 
-  if (!space) {
-    throw new Response("Space not found", { status: 404 });
+  if (!agent) {
+    throw new Response("Agent not found", { status: 404 });
   }
 
   const [allGroupPermissions, permissionGroup] = await Promise.all([
@@ -147,7 +145,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     allGroupPermissions,
     permissionGroup,
     userScopes,
-    space,
+    agent,
   };
 };
 
@@ -239,7 +237,7 @@ const HierarchicalPermissionSection = ({
                     value={permissionScope}
                     checked={status?.direct}
                     disabled={hasInherited}
-                    onChange={() => toggleScope(permissionScope)}
+                    onChange={(e) => toggleScope(permissionScope)}
                     className={`rounded border ${
                       hasInherited
                         ? "border-gray-300"
@@ -288,9 +286,8 @@ const HierarchicalPermissionSection = ({
 };
 
 const PermissionGroupDetail = () => {
-  const { user, allGroupPermissions, space, permissionGroup, userScopes } =
+  const { allGroupPermissions, agent, permissionGroup } =
     useLoaderData<typeof loader>();
-  const [openAgents, setOpenAgents] = useState<{ [key: string]: boolean }>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const updateFetcher = useFetcher();
   const [currentPermissions, setCurrentPermissions] =
@@ -356,17 +353,13 @@ const PermissionGroupDetail = () => {
       setCurrentPermissions(updateFetcher.data.updatedPermissions);
     }
   }, [updateFetcher.state, updateFetcher.data]);
-
   return (
-    <Layout
-      navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
-      user={user}
-    >
+    <>
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <Link to="/permissions">
+            <Link to={`/space/${agent.spaceId}/agent/${agent.id}/permissions`}>
               <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Permissions
@@ -430,159 +423,33 @@ const PermissionGroupDetail = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Users in Group */}
-            {/* <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Users ({permissionGroup._count.userPermissionGroups})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {permissionGroup._count.userPermissionGroups === 0 ? (
-                  <p className="text-muted-foreground text-sm">
-                    No users assigned to this group.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {permissionGroup.userPermissionGroups.map((upg) => (
-                      <div
-                        key={upg.id}
-                        className="flex items-center justify-between p-2 rounded border"
-                      >
-                        <div>
-                          <div className="font-medium">{upg.user.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {upg.user.email}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card> */}
           </div>
 
           {/* Permission Management */}
           <div className="lg:col-span-3">
             <div className="space-y-6">
-              {/* Space Permissions */}
               <Card>
-                {/* <CardHeader>
-                  <CardTitle>Space & Agent Permissions</CardTitle>
-                </CardHeader> */}
                 <CardContent className="space-y-4">
-                  <div key={space.id}>
-                    <div className="pt-4">
-                      <div className="space-y-4">
-                        {/* Space Permissions */}
-                        <HierarchicalPermissionSection
-                          title={`${space.name} Space Permissions`}
-                          permissions={currentPermissions.filter(
-                            (p) =>
-                              p.scope.startsWith("space.") &&
-                              p.referenceId === space.id,
-                          )}
-                          availablePermissions={getAvailablePermissionsByScope(
-                            "space",
-                          )}
-                          context="space"
-                          referenceId={space.id}
-                          spaceName={space.name}
-                          toggleScope={(scope) =>
-                            toggleScope(
-                              scope as keyof typeof AVAILABLE_PERMISSIONS,
-                              space.id,
-                            )
-                          }
-                        />
-
-                        {/* Agent Permissions */}
-                        {space.agents.length > 0 && (
-                          <div className="ml-4 space-y-3">
-                            <h5 className="font-medium text-muted-foreground">
-                              Agents in {space.name}
-                            </h5>
-                            {space.agents.map((agent) => {
-                              const totalDirect = currentPermissions.filter(
-                                (p) =>
-                                  p.scope.startsWith("agent.") &&
-                                  p.referenceId === agent.id &&
-                                  p.direct,
-                              ).length;
-                              const totalInherited = currentPermissions.filter(
-                                (p) =>
-                                  p.scope.startsWith("agent.") &&
-                                  p.referenceId === agent.id &&
-                                  !p.direct,
-                              ).length;
-
-                              return (
-                                <div key={agent.id}>
-                                  <button
-                                    onClick={() =>
-                                      setOpenAgents((prev) => ({
-                                        ...prev,
-                                        [agent.id]: !prev[agent.id],
-                                      }))
-                                    }
-                                    className="flex items-center justify-between w-full p-2 text-left bg-blue-50 rounded hover:bg-blue-100"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      {openAgents[agent.id] ? (
-                                        <ChevronDown className="h-3 w-3" />
-                                      ) : (
-                                        <ChevronRight className="h-3 w-3" />
-                                      )}
-                                      <span className="text-sm font-medium">
-                                        {agent.name}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-xs"
-                                      >
-                                        {totalDirect} direct
-                                      </Badge>
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        {totalInherited} inherited
-                                      </Badge>
-                                    </div>
-                                  </button>
-                                  {openAgents[agent.id] && (
-                                    <div className="pt-3">
-                                      <HierarchicalPermissionSection
-                                        title={`${agent.name} Agent Permissions`}
-                                        permissions={currentPermissions.filter(
-                                          (p) =>
-                                            p.scope.startsWith("agent.") &&
-                                            p.referenceId === agent.id,
-                                        )}
-                                        availablePermissions={getAvailablePermissionsByScope(
-                                          "agent",
-                                        )}
-                                        context="agent"
-                                        referenceId={agent.id}
-                                        spaceName={space.name}
-                                        agentName={agent.name}
-                                        toggleScope={(scope) =>
-                                          toggleScope(scope as any, agent.id)
-                                        }
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
+                  <div key={agent.id}>
+                    <div className="pt-3">
+                      <HierarchicalPermissionSection
+                        title={`${agent.name} Agent Permissions`}
+                        permissions={currentPermissions.filter(
+                          (p) =>
+                            p.scope.startsWith("agent.") &&
+                            p.referenceId === agent.id,
                         )}
-                      </div>
+                        availablePermissions={getAvailablePermissionsByScope(
+                          "agent",
+                        )}
+                        context="agent"
+                        referenceId={agent.id}
+                        spaceName={agent.space.name}
+                        agentName={agent.name}
+                        toggleScope={(scope) =>
+                          toggleScope(scope as any, agent.id)
+                        }
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -622,7 +489,7 @@ const PermissionGroupDetail = () => {
       )}
 
       <Toaster />
-    </Layout>
+    </>
   );
 };
 

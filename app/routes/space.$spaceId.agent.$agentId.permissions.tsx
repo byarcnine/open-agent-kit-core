@@ -5,15 +5,12 @@ import {
   useLoaderData,
   useActionData,
   data,
-  Form,
   Link,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { Users, Settings, Plus } from "react-feather";
+import { Users, Settings } from "react-feather";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { z } from "zod";
-import Layout from "~/components/layout/layout";
 import NoDataCard from "~/components/ui/no-data-card";
 import { useEffect } from "react";
 import {
@@ -33,7 +30,6 @@ import {
   AVAILABLE_PERMISSIONS,
 } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
-import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 import {
   Card,
   CardContent,
@@ -41,21 +37,11 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
-import { Textarea } from "~/components/ui/textarea";
 import { toast, Toaster } from "sonner";
 import { createInvitation } from "~/lib/auth/handleInvite.server";
 import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
+import { CreatePermissionGroupDialog } from "~/components/createPermissionGroupDialog/createPermissionGroupDialog";
 import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
 
 const createPermissionGroupSchema = z.object({
@@ -89,13 +75,13 @@ type ActionData = {
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { spaceId } = params;
+  const { spaceId, agentId } = params;
 
   if (!spaceId) {
     return { errors: { general: ["Space ID is required"] } };
   }
 
-  await hasAccessHierarchical(request, PERMISSION["space.edit_users"], spaceId);
+  await hasAccessHierarchical(request, PERMISSION["agent.edit_agent"], agentId);
 
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -122,12 +108,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       try {
         // Create space-scoped permission group
-        await prisma.permissionGroup.create({
+        const permissionGroup = await prisma.permissionGroup.create({
           data: {
             name,
             description,
-            level: "SPACE",
-            spaceId,
+            level: "AGENT",
+            agentId,
           },
         });
 
@@ -140,7 +126,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
-        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -177,8 +162,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           where: {
             userId,
             permissionGroup: {
-              level: "SPACE",
-              spaceId,
+              level: "AGENT",
+              agentId,
             },
           },
         });
@@ -242,6 +227,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       try {
         await createInvitation(email, permissionGroupIds);
+
         return data<ActionData>(
           {
             success: true,
@@ -251,7 +237,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
-        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -276,7 +261,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { spaceId } = params;
+  const { spaceId, agentId } = params;
 
   if (!spaceId) {
     throw data({ error: "Space ID is required" }, { status: 400 });
@@ -284,16 +269,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const user = await hasAccessHierarchical(
     request,
-    PERMISSION["space.view_space_settings"],
-    spaceId,
+    PERMISSION["agent.view_agent_settings"],
+    agentId,
   );
 
-  const space = await prisma.space.findUnique({
-    where: { id: spaceId },
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
   });
 
-  if (!space) {
-    throw data({ error: "Space not found" }, { status: 404 });
+  if (!agent) {
+    throw data({ error: "Agent not found" }, { status: 404 });
   }
 
   // Get all users and their space-scoped permission groups
@@ -302,8 +287,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       userPermissionGroups: {
         where: {
           permissionGroup: {
-            level: "SPACE",
-            spaceId,
+            level: "AGENT",
+            agentId,
           },
         },
         include: {
@@ -319,8 +304,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Get all space-scoped permission groups
   const permissionGroupsPromise = prisma.permissionGroup.findMany({
     where: {
-      level: "SPACE",
-      spaceId,
+      level: "AGENT",
+      agentId,
     },
     include: {
       userPermissionGroups: {
@@ -330,8 +315,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       },
       permissions: {
         where: {
-          referenceId: spaceId,
-          scope: { startsWith: "space." },
+          referenceId: agentId,
+          scope: { startsWith: "agent." },
         },
       },
       _count: {
@@ -359,8 +344,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const userScopes = await getUserScopes(user);
 
   // Get available space permissions
-  const spacePermissions = Object.entries(AVAILABLE_PERMISSIONS)
-    .filter(([key]) => key.startsWith("space."))
+  const agentPermissions = Object.entries(AVAILABLE_PERMISSIONS)
+    .filter(([key]) => key.startsWith("agent."))
     .map(([key, value]) => ({
       key,
       ...value,
@@ -368,62 +353,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   return {
     user: user as SessionUser,
-    space,
+    agent,
     users: filteredUsers,
     permissionGroups,
     userScopes,
-    spacePermissions,
+    agentPermissions,
   };
 };
 
-const CreatePermissionGroupDialog = () => {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Permission Group
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Create Permission Group</DialogTitle>
-          <DialogDescription>
-            Create a new permission group for this space.
-          </DialogDescription>
-        </DialogHeader>
-        <Form method="post">
-          <input type="hidden" name="intent" value="createPermissionGroup" />
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="e.g., Editors, Viewers"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Describe what this group can do..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Create Group</Button>
-          </DialogFooter>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 const SpacePermissionManagement = () => {
-  const { user, space, users, permissionGroups, userScopes } =
-    useLoaderData<typeof loader>();
+  const { agent, users, permissionGroups } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   useEffect(() => {
@@ -436,19 +375,16 @@ const SpacePermissionManagement = () => {
   }, [actionData]);
 
   return (
-    <Layout
-      navComponent={<SpaceDetailNav space={space} userScopes={userScopes} />}
-      user={user}
-    >
+    <>
       <Toaster />
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-medium">
-              {space.name} - Permission Management
+              {agent.name} - Permission Management
             </h1>
             <p className="text-muted-foreground">
-              Manage users and permission groups for this space
+              Manage users and permission groups for this agent
             </p>
           </div>
           <div className="flex gap-2">
@@ -460,7 +396,13 @@ const SpacePermissionManagement = () => {
                   : undefined
               }
             />
-            <CreatePermissionGroupDialog />
+            <CreatePermissionGroupDialog
+              error={
+                actionData && "error" in actionData
+                  ? actionData.error
+                  : undefined
+              }
+            />
           </div>
         </div>
 
@@ -474,7 +416,7 @@ const SpacePermissionManagement = () => {
                   Users ({users.length})
                 </CardTitle>
                 <CardDescription>
-                  Users with access to this space
+                  Users with access to this agent
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -569,7 +511,13 @@ const SpacePermissionManagement = () => {
                     headline="No permission groups"
                     description="Create your first permission group to start managing permissions."
                   >
-                    <CreatePermissionGroupDialog />
+                    <CreatePermissionGroupDialog
+                      error={
+                        actionData && "error" in actionData
+                          ? actionData.error
+                          : undefined
+                      }
+                    />
                   </NoDataCard>
                 ) : (
                   <div className="border rounded-lg overflow-hidden">
@@ -607,7 +555,7 @@ const SpacePermissionManagement = () => {
                             </TableCell>
                             <TableCell>
                               <Link
-                                to={`/space/${space.id}/permissions/group/${group.id}`}
+                                to={`/space/${agent.spaceId}/agent/${agent.id}/permissions/group/${group.id}`}
                               >
                                 <Button variant="outline" size="sm">
                                   <Settings className="h-4 w-4 mr-1" />
@@ -626,7 +574,7 @@ const SpacePermissionManagement = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 
@@ -634,7 +582,7 @@ export default SpacePermissionManagement;
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
-    { title: `${data?.space?.name} - Permission Management | OAK Dashboard` },
+    { title: `${data?.agent?.name} - Permission Management | OAK Dashboard` },
     {
       name: "description",
       content: "Manage users and permissions for this space",

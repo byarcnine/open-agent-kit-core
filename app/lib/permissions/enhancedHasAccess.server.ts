@@ -18,9 +18,14 @@ export type UserGrantedPermissions = {
 export const resolvePermissionReferences = async (
   permissions: Partial<Permission>[],
 ) => {
-  const allAgents = await prisma.agent.findMany({
-    select: { id: true, spaceId: true },
-  });
+  const [allAgents, allSpaces] = await Promise.all([
+    prisma.agent.findMany({
+      select: { id: true, spaceId: true },
+    }),
+    prisma.space.findMany({
+      select: { id: true },
+    }),
+  ]);
 
   const userGrantedPermissions: UserGrantedPermissions = [];
   for (const permission of permissions) {
@@ -42,9 +47,7 @@ export const resolvePermissionReferences = async (
               });
             });
         } else if (inheritedPermission.startsWith("space.")) {
-          const spaceIds = new Set([
-            ...allAgents.map((agent) => agent.spaceId),
-          ]);
+          const spaceIds = allSpaces.map((space) => space.id);
           spaceIds.forEach((spaceId) => {
             userGrantedPermissions.push({
               scope: inheritedScope,
@@ -180,6 +183,32 @@ export const allowedAgentsToViewForUser = async (user: SessionUser) => {
   return userGrantedPermissions
     .filter((p) => p.scope === "agent.chat")
     .map((p) => p.referenceId);
+};
+
+export const allowedSpacesToViewForUser = async (user: SessionUser) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  const spacesAccess = userGrantedPermissions
+    .filter((p) => p.scope === "space.view_space_settings")
+    .map((p) => p.referenceId);
+  const agentsWhereUserHasAccess = userGrantedPermissions
+    .filter((p) => p.scope === "agent.chat")
+    .map((p) => p.referenceId);
+  const spacesWhereUserHasAccess = await prisma.space.findMany({
+    where: {
+      OR: [
+        {
+          id: { in: spacesAccess },
+        },
+        {
+          agents: { some: { id: { in: agentsWhereUserHasAccess } } },
+        },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
+  return spacesWhereUserHasAccess.map((s) => s.id);
 };
 
 export const updatePermissionGroupPermissions = async (

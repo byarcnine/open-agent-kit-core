@@ -1,4 +1,4 @@
-import type { EmbeddingModel, LanguageModel, LanguageModelV1 } from "ai";
+import type { EmbeddingModel, LanguageModelV1 } from "ai";
 
 export type OAKConfig = {
   name: string;
