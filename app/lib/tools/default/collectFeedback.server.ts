@@ -57,7 +57,7 @@ const collectFeedback = ({ conversationId, agentId }: ToolParams) =>
         ? JSON.parse(agent.agentSettings as string)
         : null;
 
-      if (agentSettings && !agentSettings.captureFeedback) {
+      if (agentSettings && !agentSettings?.captureFeedback) {
         return {
           success: false,
         };

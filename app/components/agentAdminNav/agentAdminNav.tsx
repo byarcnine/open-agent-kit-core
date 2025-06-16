@@ -8,7 +8,7 @@ import {
   Settings,
   Star,
   Tool,
-  Users,
+  User,
 } from "react-feather";
 import { cn } from "../../lib/utils";
 import { Link, useLocation, useParams } from "react-router";
@@ -160,7 +160,7 @@ export const AgentAdminNav = ({
         </div>
         <Bubble
           className="ml-auto"
-          isActive={agentSettingsConfig.captureFeedback}
+          isActive={agentSettingsConfig?.captureFeedback}
         />
       </Link>
 
@@ -304,6 +304,37 @@ export const AgentAdminNav = ({
       </a>
 
       <div className="mt-auto mb-4 border-t border-white pt-4 flex flex-col gap-0.5">
+        <Link
+          to={`space/${spaceId}/agent/${agentId}/permissions`}
+          prefetch="intent"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
+            {
+              "bg-white text-primary": location.pathname.includes(
+                `space/${spaceId}/agent/${agentId}/permissions`,
+              ),
+            },
+            {
+              "hover:bg-white/50": !location.pathname.includes(
+                `space/${spaceId}/agent/${agentId}/permissions`,
+              ),
+            },
+          )}
+        >
+          <User
+            className={cn("h-4 w-4", {
+              "text-primary": location.pathname.includes(
+                `space/${spaceId}/agent/${agentId}/permissions`,
+              ),
+            })}
+          />
+          <div className="flex flex-col">
+            <span className="">User & Permissions</span>
+            <span className="text-xs">
+              Manage user and permissions for this agent
+            </span>
+          </div>
+        </Link>
         <Link
           to={`space/${spaceId}/agent/${agentId}/settings`}
           prefetch="intent"

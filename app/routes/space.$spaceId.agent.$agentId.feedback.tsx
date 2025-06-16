@@ -49,7 +49,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 const Conversations = () => {
   const { feedback, agentSettings } = useLoaderData<typeof loader>();
-  const { captureFeedback } = agentSettings;
+  const { captureFeedback } = agentSettings || {};
   const { agentId, spaceId } = useParams();
   return (
     <div className="py-8 px-4 md:p-8 w-full">
