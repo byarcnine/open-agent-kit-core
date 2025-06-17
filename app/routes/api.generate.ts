@@ -2,7 +2,12 @@ import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { verifyChatSessionTokenForPublicAgent } from "~/lib/auth/hasAccess.server";
 import { getSession } from "~/lib/auth/auth.server";
 import { streamConversation } from "~/lib/llm/streamConversation.server";
-import { getCorsHeaderForAgent, CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, CORS_EXPOSE_HEADERS } from "./utils";
+import {
+  getCorsHeaderForAgent,
+  CORS_ALLOW_HEADERS,
+  CORS_ALLOW_METHODS,
+  CORS_EXPOSE_HEADERS,
+} from "./utils";
 import jwt from "jsonwebtoken";
 import { getChatSettings } from "~/lib/llm/chat.server";
 // import { checkPermissionHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
@@ -55,7 +60,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       headers: corsHeaders,
     });
   }
-  if (agent.isPublic) {
+  if (userId) {
+    await hasAccessHierarchical(request, PERMISSION["agent.chat"], agentId);
+  } else if (agent.isPublic) {
     const chatSessionAllowed = await verifyChatSessionTokenForPublicAgent(
       request,
       agentId,
@@ -67,7 +74,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
     }
   } else {
-    await hasAccessHierarchical(request, PERMISSION["agent.chat"], agentId);
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 403,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -84,7 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const maintainConversationSession =
       chatSettings?.embedSettings?.maintainConversationSession;
 
-    let oakConversationToken = session?.user.id
+    const oakConversationToken = session?.user.id
       ? undefined
       : jwt.sign({ conversationId }, process.env.APP_SECRET || ("" as string), {
           expiresIn: (maintainConversationSession || 0) * 60,
