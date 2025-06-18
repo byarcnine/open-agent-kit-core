@@ -59,6 +59,22 @@ export const OverviewNav = ({
             Agent Tools
           </Link>
         )}
+        <Link
+          to="/cost_control"
+          prefetch="intent"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  truncate",
+            {
+              "bg-white text-primary": location.pathname === "/cost_control",
+            },
+            {
+              "hover:bg-white/50": location.pathname !== "/cost_control",
+            },
+          )}
+        >
+          <DollarSign className="h-4 w-4" />
+          Cost Control
+        </Link>
         <div
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  pointer-events-none truncate",
@@ -103,16 +119,7 @@ export const OverviewNav = ({
             coming soon
           </div>
         </div>
-        <Link
-          to="/cost_control"
-          prefetch="intent"
-          className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all truncate",
-          )}
-        >
-          <DollarSign className="h-4 w-4" />
-          Cost Control
-        </Link>
+
         {userScopes.some((p) => p.scope === "global.edit_global_users") && (
           <Link
             to="/permissions"

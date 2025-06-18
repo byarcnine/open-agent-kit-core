@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { ChevronRight, Home, MoreVertical, User } from "react-feather";
+import { ChevronRight, Home, User } from "react-feather";
 import { Badge } from "~/components/ui/badge";
 import Warning from "~/components/ui/warning";
 import { Card } from "~/components/ui/card";
@@ -350,15 +350,15 @@ const CostControl = () => {
                           {space.name}
                         </div>
                       </TableCell>
-                      <TableCell className="max-md:hidden">
+                      <TableCell className="max-md:hidden w-25">
                         <Badge reduced disabled>
                           Space
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground max-md:hidden">
+                      <TableCell className="text-muted-foreground max-md:hidden w-40">
                         {space.allowedAgents.length} Agents
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="w-100">
                         {space.totalTokens ? (
                           <TokenProgressBar
                             limit={500000}
@@ -368,7 +368,7 @@ const CostControl = () => {
                           "n/a"
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="w-10">
                         <div className="text-right">
                           <Button
                             className="ml-auto"
