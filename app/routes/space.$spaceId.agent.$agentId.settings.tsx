@@ -30,6 +30,7 @@ import {
   AlertTriangle,
   Book,
   Code,
+  Globe,
   Link,
   Lock,
   MessageCircle,
@@ -80,6 +81,7 @@ const AgentSettingsUpdateSchema = z.object({
     hasKnowledgeBase: z.boolean(),
     captureFeedback: z.boolean(),
     trackingEnabled: z.boolean(),
+    accessWeb: z.boolean(),
   }),
 });
 
@@ -253,6 +255,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         hasKnowledgeBase: !!formData.get("hasKnowledgeBase"),
         captureFeedback: !!formData.get("captureFeedback"),
         trackingEnabled: !!formData.get("trackingEnabled"),
+        accessWeb: !!formData.get("accessWeb"),
       },
     };
 
@@ -269,6 +272,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
             hasKnowledgeBase: validatedData.agentSettings?.hasKnowledgeBase,
             captureFeedback: validatedData.agentSettings?.captureFeedback,
             trackingEnabled: validatedData.agentSettings?.trackingEnabled,
+            accessWeb: validatedData.agentSettings?.accessWeb,
           }),
         },
       });
@@ -656,6 +660,23 @@ const AgentSettings = () => {
                       id="captureFeedback"
                       name="captureFeedback"
                       defaultChecked={agentSettings.captureFeedback}
+                    />
+                  </div>
+                  <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
+                    <div className="bg-white rounded-xl aspect-square p-3">
+                      <Globe size={20} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label htmlFor="accessWeb">Access Web</Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled the agent will be able to access websites.
+                      </p>
+                    </div>
+                    <Switch
+                      className="ml-auto"
+                      id="accessWeb"
+                      name="accessWeb"
+                      defaultChecked={agentSettings.accessWeb}
                     />
                   </div>
                   <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">

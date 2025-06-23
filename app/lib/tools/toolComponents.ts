@@ -2,13 +2,14 @@ import type { FC } from "react";
 import { DateTimeAndDayTool } from "~/components/dateAndTimeTool/dateAndTimeTool";
 import FeedbackTool from "~/components/feedbackTool/feedbackTool";
 import KnowledgeTool from "~/components/knowledgeTool/knowledgeTool";
+import AccessWebTool from "~/components/accessWeb/accessWeb";
 import type { PluginPackageJson } from "~/types/plugins";
 
 const toolComponentFiles: Record<string, { default: FC }> = import.meta.glob(
   "/node_modules/oak-*/toolComponents/*.tsx",
   {
     eager: true,
-  }
+  },
 );
 
 const modulePackageJsons: Record<string, { default: PluginPackageJson }> =
@@ -28,10 +29,11 @@ export const toolComponents: Record<string, React.FC<any>> = {
         : undefined;
       const componentName = `${packageInfo?.name}__${fileName}`;
       return [componentName, value.default];
-    })
+    }),
   ),
   // default tools
   default__dateTimeAndDay: DateTimeAndDayTool,
   default__accessKnowledgeBase: KnowledgeTool,
   default__collectFeedback: FeedbackTool,
+  default__accessWeb: AccessWebTool,
 };

@@ -1,6 +1,7 @@
 import { getPluginsForAgent } from "../plugins/availability.server";
 import { getTools } from "../plugins/plugins.server";
 import accessKnowledgebase from "./default/accessKnowledgebase.server";
+import accessWeb from "./default/accessWeb.server";
 import collectFeedback from "./default/collectFeedback.server";
 import dateTimeAndDay from "./default/dateTimeAndDay.server";
 import type { DefaultTools } from "~/types/tools";
@@ -11,6 +12,7 @@ const getDefaultTools = (defaultTools?: DefaultTools) => {
     dateTimeAndDay,
     defaultTools?.captureFeedback ? collectFeedback : undefined,
     defaultTools?.knowledgeBase ? accessKnowledgebase : undefined,
+    defaultTools?.accessWeb ? accessWeb : undefined,
   ]
     .filter((t) => !!t)
     .map((t) => ({
@@ -43,7 +45,14 @@ export const toolNameIdentifierList = async () => {
     return toolNamesCache;
   }
   const pluginTools = await getTools();
-  const tools = [...pluginTools, ...getDefaultTools()];
+  const tools = [
+    ...pluginTools,
+    ...getDefaultTools({
+      captureFeedback: true,
+      knowledgeBase: true,
+      accessWeb: true,
+    }),
+  ];
   const toolNames = Object.fromEntries(
     tools.map((t) => [t.identifier, t.name]),
   ) as Record<string, string>;

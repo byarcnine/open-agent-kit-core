@@ -2,9 +2,8 @@ import { z } from "zod";
 import { tool } from "ai";
 import { prisma } from "@db/db.server";
 import type { ToolConfig, ToolParams } from "~/types/tools";
-import type { AgentSettings } from "~/types/agentSetting";
 
-const collectFeedback = ({ conversationId, agentId }: ToolParams) =>
+const collectFeedback = ({ conversationId }: ToolParams) =>
   tool({
     description: `Use this tool to collect user feedback. Call this tool when you notice:
     1. ANY feedback about your performance or behavior
@@ -49,19 +48,6 @@ const collectFeedback = ({ conversationId, agentId }: ToolParams) =>
         .optional(),
     }),
     execute: async (params) => {
-      const agent = await prisma.agent.findUnique({
-        where: { id: agentId },
-      });
-      // get Agent settings
-      const agentSettings: AgentSettings = agent?.agentSettings
-        ? JSON.parse(agent.agentSettings as string)
-        : null;
-
-      if (agentSettings && !agentSettings?.captureFeedback) {
-        return {
-          success: false,
-        };
-      }
       await prisma.feedback.create({
         data: {
           feedback: params.feedback,
@@ -77,7 +63,7 @@ const collectFeedback = ({ conversationId, agentId }: ToolParams) =>
   });
 
 export default {
-  identifier: "default__collectFeedback",
+  identifier: "collectFeedback",
   name: "Collect Feedback",
   description: "Collect user feedback",
   tool: collectFeedback,

@@ -60,6 +60,7 @@
     "ai": "^4.3.16",
     "altcha-lib": "^1.2.0",
     "better-auth": "^1.2.3",
+    "cheerio": "^1.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "css": "^3.0.0",
@@ -90,6 +91,7 @@
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "tiktoken": "^1.0.21",
+    "turndown": "^7.2.0",
     "use-stick-to-bottom": "^1.1.0",
     "xml2js": "^0.6.2",
     "zod": "^3.24.2"
@@ -106,6 +108,7 @@
     "@types/prismjs": "^1.26.5",
     "@types/react": "19.0.1",
     "@types/react-dom": "19.0.1",
+    "@types/turndown": "^5.0.5",
     "@types/xml2js": "^0.4.14",
     "@vitejs/plugin-react": "^4.3.4",
     "dotenv-cli": "^8.0.0",
