@@ -60,6 +60,7 @@ export const streamConversation = async (
     trackingEnabled = true,
     captureFeedback = true,
     hasKnowledgeBase = true,
+    accessWeb = true,
   } = agentSettings;
 
   const conversation = conversationId
@@ -143,6 +144,7 @@ export const streamConversation = async (
     {
       captureFeedback,
       knowledgeBase: hasKnowledgeBase,
+      accessWeb,
     },
   );
   const [systemPrompt, tools, model] = await Promise.all([

@@ -10,23 +10,32 @@ const accessKnowledgeBase = async ({ agentId }: ToolParams) => {
     select: { name: true },
   });
 
-  const availableTagNames = availableTags.map(tag => tag.name) as [string, ...string[]];
+  const availableTagNames = availableTags.map((tag) => tag.name) as [
+    string,
+    ...string[],
+  ];
 
   return tool({
     description: `Get information from your knowledge base to answer questions.`,
     parameters: z.object({
       question: z.string().describe("The user's question"),
-      tags: z.array(z.string()).optional().describe(`An optional array of tag names to filter the search. It can only be one of these: ${availableTagNames.join(", ")}`),
+      tags: z
+        .array(z.string())
+        .optional()
+        .describe(
+          `An optional array of tag names to filter the search. It can only be one of these: ${availableTagNames.join(", ")}`,
+        ),
     }),
     execute: async ({ question, tags }) => {
-      const validTags = tags?.filter(tag => availableTagNames.includes(tag)) ?? [];
+      const validTags =
+        tags?.filter((tag) => availableTagNames.includes(tag)) ?? [];
       return await vectorSearch(question, agentId, validTags);
     },
   });
 };
 
 export default {
-  identifier: "default__accessKnowledgeBase",
+  identifier: "accessKnowledgeBase",
   name: "Access Knowledge Base",
   description: "Access the knowledge base",
   tool: accessKnowledgeBase,

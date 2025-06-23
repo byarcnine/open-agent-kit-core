@@ -28,4 +28,5 @@ export type DateTimeToolResult = {
 export type DefaultTools = {
   captureFeedback?: boolean;
   knowledgeBase?: boolean;
+  accessWeb?: boolean;
 };

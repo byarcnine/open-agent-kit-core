@@ -4,4 +4,5 @@ export const initialAgentSettings: AgentSettings = {
   hasKnowledgeBase: true,
   captureFeedback: true,
   trackingEnabled: true,
+  accessWeb: true,
 };
