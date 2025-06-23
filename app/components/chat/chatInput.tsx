@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { FileText, XCircle, Plus, ArrowUp } from "react-feather";
 import { Textarea } from "../ui/textarea";
-import type { ChatSettings } from "~/types/chat";
+import type { ChatSettings } from "../../types/chat";
 
 interface ChatInputProps {
   input: string;

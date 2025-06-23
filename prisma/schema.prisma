@@ -41,6 +41,12 @@ enum InvitationType {
   GLOBAL
 }
 
+enum PermissionGroupLevel {
+  GLOBAL
+  SPACE
+  AGENT
+}
+
 model Message {
   id             String        @id @default(cuid())
   content        Json?
@@ -66,28 +72,32 @@ enum KnowledgeSourceStatus {
 }
 
 model Agent {
-  id                 String               @id @default(cuid())
-  name               String
-  description        String?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  isPublic           Boolean              @default(false)
-  allowedUrls        String[]             @default([])
-  chatSettings       Json?
-  modelSettings      Json?
-  conversations      Conversation[]
-  systemPrompts      SystemPrompt[]
-  knowledgeDocuments KnowledgeDocument[]
-  usage              Usage[]
-  agentUsers         AgentUser[]
-  invitation         Invitation[]
-  pluginAvailability PluginAvailability[]
-  PluginConfig       PluginConfig[]
-  AgentPluginData    AgentPluginData[]
-  MCPs               MCPs[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  description           String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  isActive              Boolean                @default(true)
+  isPublic              Boolean                @default(false)
+  agentSettings         Json?
+  allowedUrls           String[]               @default([])
+  chatSettings          Json?
+  modelSettings         Json?
+  conversations         Conversation[]
+  systemPrompts         SystemPrompt[]
+  knowledgeDocuments    KnowledgeDocument[]
+  usage                 Usage[]
+  agentUsers            AgentUser[]
+  pluginAvailability    PluginAvailability[]
+  pluginConfig          PluginConfig[]
+  agentPluginData       AgentPluginData[]
+  mcps                  MCPs[]
+  knowledgeDocumentTags KnowledgeDocumentTag[]
+  space                 Space                  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  spaceId               String
+  permissionGroup       PermissionGroup[]
 
   @@map("agent")
-  KnowledgeDocumentTag KnowledgeDocumentTag[]
 }
 
 model Conversation {
@@ -105,6 +115,7 @@ model Conversation {
   user             User?      @relation(fields: [userId], references: [id])
   customIdentifier String?
   archived         Boolean    @default(false)
+  private          Boolean    @default(false)
 
   @@map("conversation")
 }
@@ -135,16 +146,16 @@ model Feedback {
 }
 
 model KnowledgeDocument {
-  id         String                @id @default(cuid())
+  id         String                 @id @default(cuid())
   agentId    String
-  agent      Agent                 @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent      Agent                  @relation(fields: [agentId], references: [id], onDelete: Cascade)
   name       String
   metadata   Json?
-  provider   String                @default("")
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @updatedAt
+  provider   String                 @default("")
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
   embeddings Embedding[]
-  status     KnowledgeSourceStatus @default(PENDING)
+  status     KnowledgeSourceStatus  @default(PENDING)
   tags       KnowledgeDocumentTag[] @relation("KnowledgeDocumentToTag")
 
   @@unique([agentId, name, provider])
@@ -153,14 +164,14 @@ model KnowledgeDocument {
 }
 
 model KnowledgeDocumentTag {
-  id                 String           @id @default(cuid())
-  agentId           String
-  agent             Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  name              String
-  color             String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  documents         KnowledgeDocument[] @relation("KnowledgeDocumentToTag")
+  id        String              @id @default(cuid())
+  agentId   String
+  agent     Agent               @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  name      String
+  color     String
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  documents KnowledgeDocument[] @relation("KnowledgeDocumentToTag")
 
   @@unique([agentId, name])
   @@map("knowledge_document_tag")
@@ -180,18 +191,23 @@ model Embedding {
 }
 
 model Usage {
-  id        String   @id @default(cuid())
-  agentId   String
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  year      Int
-  month     Int
-  day       Int
-  tokens    BigInt
-  modelId   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year         Int
+  month        Int
+  day          Int
+  invocations  BigInt   @default(0) // number of times the agent was invoked
+  inputTokens  BigInt   @default(0) // number of input tokens
+  outputTokens BigInt   @default(0) // number of output tokens
+  initiator    String   @default("core") // user, plugin, tool ...
+  modelId      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@unique([agentId, year, month, day, modelId])
+  @@unique([agentId, year, month, day, modelId, initiator])
   @@map("usage")
 }
 
@@ -207,21 +223,64 @@ model AgentUser {
   @@map("agent_user")
 }
 
+model Permission {
+  id                String           @id @default(cuid())
+  scope             String
+  referenceId       String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  permissionGroupId String?
+  permissionGroup   PermissionGroup? @relation(fields: [permissionGroupId], references: [id])
+  user              User?            @relation(fields: [userId], references: [id])
+  userId            String?
+
+  @@unique([scope, referenceId, permissionGroupId])
+  @@map("permission")
+}
+
+model PermissionGroup {
+  id                   String                @id @default(cuid())
+  name                 String
+  description          String?
+  level                PermissionGroupLevel  @default(GLOBAL)
+  spaceId              String? // null for GLOBAL, required for SPACE and AGENT levels
+  agentId              String? // null for GLOBAL and SPACE, required for AGENT level
+  space                Space?                @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  agent                Agent?                @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  userPermissionGroups UserPermissionGroup[]
+  permissions          Permission[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  invitation           Invitation[]
+
+  @@unique([name, level, spaceId, agentId])
+  @@map("permission_group")
+}
+
+model UserPermissionGroup {
+  id                String          @id @default(cuid())
+  userId            String
+  permissionGroupId String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionGroup   PermissionGroup @relation(fields: [permissionGroupId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([userId, permissionGroupId])
+  @@map("user_permission_group")
+}
+
 model Invitation {
   id    String @id @default(cuid())
   email String
 
-  type InvitationType @default(AGENT)
+  permissionGroupId String
+  permissionGroup   PermissionGroup @relation(fields: [permissionGroupId], references: [id], onDelete: Cascade)
 
-  agentRole  AgentUserRole?  @default(VIEWER)
-  globalRole GlobalUserRole? @default(VIEW_EDIT_ASSIGNED_AGENTS)
-
-  agentId   String?
-  agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([email, agentId])
+  @@unique([email, permissionGroupId])
   @@map("invitation")
 }
 
@@ -275,20 +334,35 @@ model QueueJob {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  userAgents    AgentUser[]
-  role          GlobalUserRole @default(VIEW_EDIT_ASSIGNED_AGENTS)
-  conversations Conversation[]
-  name          String
-  emailVerified Boolean
-  image         String?
-  sessions      Session[]
-  accounts      Account[]
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  userAgents           AgentUser[]
+  conversations        Conversation[]
+  name                 String
+  emailVerified        Boolean
+  image                String?
+  role                 GlobalUserRole        @default(VIEW_EDIT_ASSIGNED_AGENTS)
+  sessions             Session[]
+  accounts             Account[]
+  usage                Usage[]
+  permission           Permission[]
+  userPermissionGroups UserPermissionGroup[]
 
   @@map("user")
+}
+
+model Space {
+  id              String            @id @default(cuid())
+  name            String
+  description     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  agents          Agent[]
+  permissionGroup PermissionGroup[]
+
+  @@map("space")
 }
 
 model Session {

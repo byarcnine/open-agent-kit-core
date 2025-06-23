@@ -1,14 +1,9 @@
 import type { Agent } from "@prisma/client";
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
-import { Switch } from "~/components/ui/switch";
-import { cn } from "~/lib/utils";
-import type { PluginWithAvailability } from "~/types/plugins";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Switch } from "../ui/switch";
+import { cn } from "../../lib/utils";
+import type { PluginWithAvailability } from "../../types/plugins";
 
 const AgentAvailabilitySelector = ({
   selectedPlugin,
@@ -23,13 +18,13 @@ const AgentAvailabilitySelector = ({
 }) => {
   const isGlobalEnabled = !!selectedPlugin?.isGlobal;
   const [selectedAgents, setSelectedAgents] = useState<string[]>(
-    selectedPlugin?.agents.map((a) => a.id) || []
+    selectedPlugin?.agents.map((a) => a.id) || [],
   );
 
   const onGlobalToggle = (checked: boolean) => {
     onSetAvailability(
       checked,
-      checked ? agents.map((a) => a.id) : selectedAgents
+      checked ? agents.map((a) => a.id) : selectedAgents,
     );
   };
 
@@ -67,7 +62,7 @@ const AgentAvailabilitySelector = ({
                 "flex flex-row items-center justify-between mb-4 pb-4",
                 {
                   "border-b border-border": !isGlobalEnabled,
-                }
+                },
               )}
             >
               <span className="text-base font-medium">
@@ -93,16 +88,16 @@ const AgentAvailabilitySelector = ({
                   <div
                     key={agent.id}
                     className={cn(
-                      "py-2 rounded-md flex items-center justify-between",
+                      "py-2 rounded-xl flex items-center justify-between",
                       {
                         "border-b": index !== agents.length - 1,
-                      }
+                      },
                     )}
                   >
                     <span className="">{agent.name}</span>
                     <Switch
                       defaultChecked={selectedPlugin?.agents.some(
-                        (a) => a.id === agent.id
+                        (a) => a.id === agent.id,
                       )}
                       onCheckedChange={(value) =>
                         onAgentToggle(agent.id, value)

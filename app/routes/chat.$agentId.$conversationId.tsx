@@ -1,22 +1,26 @@
 import { Await, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import Chat from "~/components/chat/chat.client";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { prisma } from "@db/db.server";
 import type { Message } from "ai";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
-import { PERMISSIONS } from "~/types/auth";
 import { toolNameIdentifierList } from "~/lib/tools/tools.server";
 import { getChatSettings } from "~/lib/llm/chat.server";
 import { Suspense } from "react";
 import { Loader } from "react-feather";
+import { PERMISSION } from "~/lib/permissions/permissions";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const agentId = params.agentId as string;
-  await hasAccess(request, PERMISSIONS.VIEW_AGENT, agentId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.chat"],
+    agentId,
+  );
   const { conversationId } = params;
   const initialMessagesPromise = prisma.conversation
     .findUnique({
-      where: { id: conversationId, agentId },
+      where: { id: conversationId, agentId, userId: user.id },
       include: {
         messages: {
           orderBy: {

@@ -15,6 +15,8 @@ import {
   calculateTokensForMessages,
   calculateTokensString,
 } from "./tokenCounter.server";
+import { trackUsageForMessageResponse } from "./usage.server";
+import type { AgentSettings } from "~/types/agentSetting";
 
 const limitMessagesByTokens = (
   messages: Message[],
@@ -47,10 +49,28 @@ export const streamConversation = async (
   messages: Message[],
   meta: Record<string, any>,
 ) => {
+  // check if agent has conversation tracking enabled
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : {};
+  const {
+    trackingEnabled = true,
+    captureFeedback = true,
+    hasKnowledgeBase = true,
+  } = agentSettings;
+
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({
-        data: { agentId, userId, customIdentifier },
+        data: {
+          agentId,
+          userId,
+          customIdentifier,
+          private: !trackingEnabled,
+        },
       });
 
   if (!conversation) {
@@ -60,7 +80,7 @@ export const streamConversation = async (
 
   const [modelForAgent, user] = await Promise.all([
     getModelForAgent(agentId, config),
-    prisma.user.findUnique({ where: { id: userId } }),
+    userId ? prisma.user.findUnique({ where: { id: userId } }) : undefined,
   ]);
   const TOKEN_LIMIT = getModelContextLimit(modelForAgent.model.modelId) * 0.8;
 
@@ -99,6 +119,8 @@ export const streamConversation = async (
       {
         disableTools: true,
       },
+      "core_conversation_tagline",
+      user ?? undefined,
     )
       .then(async (r) => {
         await prisma.conversation.update({
@@ -118,8 +140,11 @@ export const streamConversation = async (
     meta,
     messages,
     user,
+    {
+      captureFeedback,
+      knowledgeBase: hasKnowledgeBase,
+    },
   );
-
   const [systemPrompt, tools, model] = await Promise.all([
     systemPromptPromise,
     toolsPromise,
@@ -127,7 +152,6 @@ export const streamConversation = async (
     createMessagePromise,
   ]);
   const { tools: toolsArray, closeMCPs } = tools;
-
   return {
     stream: streamText({
       model: model.model,
@@ -142,38 +166,6 @@ export const streamConversation = async (
       },
       experimental_transform: smoothStream({ chunking: "word" }),
       onFinish: async (completion) => {
-        let usage = Number(completion.usage?.totalTokens ?? 0);
-        if (isNaN(usage)) {
-          usage = 0;
-        }
-        await prisma.usage.upsert({
-          where: {
-            agentId_year_month_day_modelId: {
-              agentId: agentId,
-              year: new Date().getFullYear(),
-              month: new Date().getMonth() + 1,
-              day: new Date().getDate(),
-              modelId: model.model.modelId,
-            },
-          },
-          create: {
-            year: new Date().getFullYear(),
-            month: new Date().getMonth() + 1,
-            day: new Date().getDate(),
-            tokens: usage,
-            modelId: model.model.modelId,
-            agent: {
-              connect: {
-                id: agentId,
-              },
-            },
-          },
-          update: {
-            tokens: {
-              increment: usage,
-            },
-          },
-        });
         const messagesToStore = appendResponseMessages({
           responseMessages: completion.response.messages,
           messages: messagesInScope,
@@ -181,6 +173,13 @@ export const streamConversation = async (
         // close the tools
         await Promise.all([
           closeMCPs,
+          trackUsageForMessageResponse(
+            completion,
+            agentId,
+            model.model.modelId,
+            "core",
+            userId,
+          ),
           prisma.message.create({
             data: {
               content: JSON.parse(

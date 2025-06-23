@@ -1,6 +1,6 @@
 import Markdown from "react-markdown";
 import { CopyBlock, atomOneLight } from "react-code-blocks";
-import type { ChatSettings } from "~/types/chat";
+import type { ChatSettings } from "../../types/chat";
 import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
 import type { DetailedHTMLProps } from "react";
 import { useContext } from "react";
@@ -147,13 +147,11 @@ const MarkdownViewer = ({ text }: { text: string }) => {
         li: CustomLI,
         a: (props) => renderMarkdownLink({ ...props, chatSettings }),
         code({
-          node,
           inline,
           className,
           children,
           ...props
         }: {
-          node?: any;
           inline?: boolean;
           className?: string;
           children?: React.ReactNode;

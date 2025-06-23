@@ -59,12 +59,14 @@ export async function getTools(
         return plugin.tools().then((tools) =>
           tools.map((tool) => ({
             ...tool,
+            identifier: `${plugin.name}__${tool.identifier}`,
             pluginName: plugin.name,
           })),
         );
       }
       return plugin.tools?.map((tool) => ({
         ...tool,
+        identifier: `${plugin.name}__${tool.identifier}`,
         pluginName: plugin.name,
       }));
     });
@@ -74,5 +76,9 @@ export async function getTools(
 }
 
 export const getPluginNameForSlug = (slug: string) => {
+  if (importedPlugins.some((plugin) => plugin.name === slug)) {
+    // this is the actual plugin identifier
+    return slug;
+  }
   return importedPlugins.find((plugin) => plugin.slug === slug)?.name;
 };

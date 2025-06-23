@@ -7,6 +7,7 @@ import { sessionStorage } from "../sessions.server";
 import { handleInvite } from "./handleInvite.server";
 import type { SessionUser } from "~/types/auth";
 import { APP_URL } from "../config/config";
+import { scaffoldInitialGroup } from "../permissions/scaffoldInitialGroup";
 
 export const oakDefaultAuthPlugin = () =>
   ({
@@ -23,7 +24,7 @@ export const oakDefaultAuthPlugin = () =>
         },
       },
     },
-  } satisfies BetterAuthPlugin);
+  }) satisfies BetterAuthPlugin;
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -51,29 +52,21 @@ export const auth = betterAuth({
   trustedOrigins: [APP_URL()],
   plugins: [oakDefaultAuthPlugin()],
   hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      // Remove role from any user data being sent from client
-      if (ctx.body?.role) {
-        throw new Error("Role is not allowed to be set");
-      }
-    }),
     after: createAuthMiddleware(async (ctx) => {
       if (!ctx.request) return;
 
       const userCount = await prisma.user.count();
       if (userCount === 1) {
-        const userId = ctx.context.newSession?.user.id;
-        if (userId) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: { role: GlobalUserRole.SUPER_ADMIN },
-          });
+        const user = ctx.context.newSession?.user;
+        if (user) {
+          // scaffold the initial group for the user and make them a super admin
+          await scaffoldInitialGroup(user);
         }
       }
 
       // 1. Check if the invite is in the session
       const session = await sessionStorage.getSession(
-        ctx.request.headers.get("Cookie")
+        ctx.request.headers.get("Cookie"),
       );
       const user = ctx.context.newSession?.user;
       const invite = session.get("invite");

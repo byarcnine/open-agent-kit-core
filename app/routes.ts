@@ -26,24 +26,61 @@ export const routes = (
     layout(`${corePrefix}/admin.layout.tsx`, [
       index(`${corePrefix}/_index.tsx`),
       route("settings", `${corePrefix}/settings.tsx`),
+      //  route("insights", `${corePrefix}/insights.tsx`),
+      route("cost_control", `${corePrefix}/cost_control.tsx`),
       route("plugins", `${corePrefix}/plugins.tsx`),
-
+      route("permissions", `${corePrefix}/permission._index.tsx`),
+      route(
+        "permissions/group/:groupId",
+        `${corePrefix}/permission.group.$groupId.tsx`,
+      ),
+      layout(`${corePrefix}/space.$spaceId.tsx`, [
+        ...prefix("/space/:spaceId/", [
+          index(`${corePrefix}/space.$spaceId._index.tsx`),
+          route("permissions", `${corePrefix}/space.$spaceId.permissions.tsx`),
+          route(
+            "permissions/group/:groupId",
+            `${corePrefix}/space.$spaceId.permissions.group.$groupId.tsx`,
+          ),
+          route("settings", `${corePrefix}/space.$spaceId.settings.tsx`),
+        ]),
+      ]),
       // Agent-specific routes
-      layout(`${corePrefix}/agent.$agentId.tsx`, [
-        ...prefix("/agent/:agentId/", [
-          index(`${corePrefix}/agent.$agentId._index.tsx`),
-          route("feedback", `${corePrefix}/agent.$agentId.feedback.tsx`),
-          route("plugins", `${corePrefix}/agent.$agentId.plugins._index.tsx`),
-          route("prompts", `${corePrefix}/agent.$agentId.prompts._index.tsx`),
-          route("settings", `${corePrefix}/agent.$agentId.settings.tsx`),
-          route("users", `${corePrefix}/agent.$agentId.users.tsx`),
+      layout(`${corePrefix}/space.$spaceId.agent.$agentId.tsx`, [
+        ...prefix("/space/:spaceId/agent/:agentId/", [
+          index(`${corePrefix}/space.$spaceId.agent.$agentId._index.tsx`),
+          route(
+            "feedback",
+            `${corePrefix}/space.$spaceId.agent.$agentId.feedback.tsx`,
+          ),
+          route(
+            "plugins",
+            `${corePrefix}/space.$spaceId.agent.$agentId.plugins._index.tsx`,
+          ),
+          route(
+            "prompts",
+            `${corePrefix}/space.$spaceId.agent.$agentId.prompts._index.tsx`,
+          ),
+          route(
+            "settings",
+            `${corePrefix}/space.$spaceId.agent.$agentId.settings.tsx`,
+          ),
+          // route("users", `${corePrefix}/space.$spaceId.agent.$agentId.users.tsx`),
           route(
             "conversations",
-            `${corePrefix}/agent.$agentId.conversations._index.tsx`,
+            `${corePrefix}/space.$spaceId.agent.$agentId.conversations._index.tsx`,
           ),
           route(
             "conversations/:id",
-            `${corePrefix}/agent.$agentId.conversations.$id.tsx`,
+            `${corePrefix}/space.$spaceId.agent.$agentId.conversations.$id.tsx`,
+          ),
+          route(
+            "permissions",
+            `${corePrefix}/space.$spaceId.agent.$agentId.permissions.tsx`,
+          ),
+          route(
+            "permissions/group/:groupId",
+            `${corePrefix}/space.$spaceId.agent.$agentId.permissions.group.$groupId.tsx`,
           ),
           // ...routeArray.map((r) => route(r.routePath, r.relativePath)),
           ...plugins
@@ -51,21 +88,31 @@ export const routes = (
             .flatMap((p) =>
               prefix(
                 `plugins/${p.slug}`,
-                (p.adminRoutes ?? p.routes)?.map((r) => {
-                  if (r.index) {
-                    return index(`${routesDirPrefix}${p.name}/${r.file}`);
-                  }
-                  return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
-                }) || [],
+                (p.adminRoutes ?? p.routes)
+                  ?.map((r) => {
+                    if (r.index) {
+                      return index(`${routesDirPrefix}${p.name}/${r.file}`);
+                    }
+                    if (r.path?.startsWith("//")) {
+                      return undefined;
+                    }
+                    return route(
+                      r.path,
+                      `${routesDirPrefix}${p.name}/${r.file}`,
+                    );
+                  })
+                  .filter((r) => r !== undefined) || [],
               ),
             ),
           // Knowledge Routes
-          layout(`${corePrefix}/agent.$agentId.knowledge.tsx`, [
+          layout(`${corePrefix}/space.$spaceId.agent.$agentId.knowledge.tsx`, [
             ...prefix("knowledge/", [
-              index(`${corePrefix}/agent.$agentId.knowledge.documents.tsx`),
+              index(
+                `${corePrefix}/space.$spaceId.agent.$agentId.knowledge.documents.tsx`,
+              ),
               route(
                 "settings",
-                `${corePrefix}/agent.$agentId.knowledge.settings.tsx`,
+                `${corePrefix}/space.$spaceId.agent.$agentId.knowledge.settings.tsx`,
               ),
             ]),
           ]),
@@ -80,12 +127,17 @@ export const routes = (
         .flatMap((p) =>
           prefix(
             `chat/:agentId/plugins/${p.slug}`,
-            p.userRoutes?.map((r) => {
-              if (r.index) {
-                return index(`${routesDirPrefix}${p.name}/${r.file}`);
-              }
-              return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
-            }) || [],
+            p.userRoutes
+              ?.map((r) => {
+                if (r.index) {
+                  return index(`${routesDirPrefix}${p.name}/${r.file}`);
+                }
+                if (r.path?.startsWith("//")) {
+                  return undefined;
+                }
+                return route(r.path, `${routesDirPrefix}${p.name}/${r.file}`);
+              })
+              .filter((r) => r !== undefined) || [],
           ),
         ),
       route(
@@ -110,6 +162,25 @@ export const routes = (
       "api/agentChatSettings/:agentId",
       `${corePrefix}/api.agentChatSettings.$agentId.ts`,
     ),
+    route(
+      "api/agentSettings/:agentId",
+      `${corePrefix}/api.agentSettings.$agentId.ts`,
+    ),
+    ...(plugins.flatMap((p) => {
+      const combinedRoutes = [
+        ...(p.userRoutes ?? []),
+        ...(p.adminRoutes ?? []),
+      ];
+      return combinedRoutes
+        .filter((r) => r.path?.startsWith("//"))
+        .map((r) =>
+          route(
+            `${p.name}/${r.path?.replace("//", "")}`,
+            `${routesDirPrefix}${p.name}/${r.file}`,
+          ),
+        );
+    }) || []),
+    route("api/feedback", `${corePrefix}/api.feedback.ts`),
   ] satisfies RouteConfig;
 };
 

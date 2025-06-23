@@ -1,10 +1,10 @@
 import React from "react";
 import { type Message as MessageType } from "ai";
 import Message from "./message";
-import { mergeRefs, useScrollPadding } from "~/hooks/useScrollPadding";
+import { mergeRefs, useScrollPadding } from "../../hooks/useScrollPadding";
 import { ArrowDown } from "react-feather";
 import { type UseChatHelpers } from "@ai-sdk/react";
-import { cn } from "~/lib/utils";
+import { cn } from "../../lib/utils";
 import { useStickToBottom } from "use-stick-to-bottom";
 
 interface MessagesProps {

@@ -9,6 +9,7 @@ import {
   type Tool,
 } from "ai";
 import { Experimental_StdioMCPTransport as StdioMCPTransport } from "ai/mcp-stdio";
+import type { DefaultTools } from "~/types/tools";
 
 const getMCPTools = async (agentId: string) => {
   const mcpConnections = await prisma.mCPs.findMany({
@@ -82,25 +83,28 @@ export const prepareToolsForAgent = async (
   meta: Record<string, any>,
   messages: Message[],
   user?: User | SessionUser | null,
+  defaultTools?: DefaultTools,
 ) => {
-  const pluginToolsPromise = getToolsForAgent(agentId).then(async (r) => {
-    // get tools ready
-    return Promise.all(
-      r.map(async (t) => {
-        return [
-          t.identifier,
-          await t.tool({
-            conversationId: conversationId,
-            agentId,
-            meta,
-            config: getConfig(),
-            provider: OAKProvider(getConfig(), t.pluginName as string, user),
-            messages,
-          }),
-        ];
-      }),
-    );
-  });
+  const pluginToolsPromise = getToolsForAgent(agentId, defaultTools).then(
+    async (r) => {
+      // get tools ready
+      return Promise.all(
+        r.map(async (t) => {
+          return [
+            t.identifier,
+            await t.tool({
+              conversationId: conversationId,
+              agentId,
+              meta,
+              config: getConfig(),
+              provider: OAKProvider(getConfig(), t.pluginName as string, user),
+              messages,
+            }),
+          ];
+        }),
+      );
+    },
+  );
   const mcpPromise = await Promise.all(await getMCPTools(agentId));
   const [pluginTools, mcps] = await Promise.all([
     pluginToolsPromise,

@@ -1,18 +1,38 @@
-import React, { useState, useEffect } from "react";
-import Chat from "../app/components/chat/chat.client";
+import React, { useState, useEffect, useRef } from "react";
+import Chat, { type ChatRef } from "../app/components/chat/chat.client";
 import { type ChatComponentType } from "../chat_module";
 import "./chatWidget.scss";
 import { createRoot } from "react-dom/client";
 import type { ChatSettings } from "~/types/chat";
+import { type Message } from "@ai-sdk/react";
 import ChatIcon from "./chatIcon";
 import ArrowDownIcon from "./arrowDown";
-const FloatingChatWidget = (props: ChatComponentType) => {
+
+interface ChatWidgetProps extends ChatComponentType {
+  floatingInitMessage?: string;
+}
+
+interface ChatWidgetAPI {
+  setInput: (input: string) => void;
+}
+
+const FloatingChatWidget = React.forwardRef<ChatRef, ChatWidgetProps>((props, forwardedRef) => {
   const [open, setOpen] = useState(false);
   const initialMessageShown = sessionStorage.getItem("initialMessageShown");
   const [chatInitialized, setChatInitialized] = useState(false);
   const [title, setTitle] = useState<string>("");
   const [initialMessage, setInitialMessage] = useState<string>("");
   const [showPopup, setShowPopup] = useState(false);
+  const chatRef = useRef<ChatRef>(null);
+
+  // Forward the ref to expose setInput
+  React.useImperativeHandle(forwardedRef, () => ({
+    setInput: (input: string) => {
+      if (chatRef.current) {
+        chatRef.current.setInput(input);
+      }
+    }
+  }), []);
 
   useEffect(() => {
     if (!initialMessageShown && initialMessage) {
@@ -36,7 +56,7 @@ const FloatingChatWidget = (props: ChatComponentType) => {
   const onEmbedInit = (chatSettings: ChatSettings) => {
     setChatInitialized(true);
     if (!initialMessageShown) {
-      setInitialMessage(chatSettings.initialMessage || "");
+      setInitialMessage(props.floatingInitMessage || chatSettings.initialMessage || "");
     }
     setTitle(chatSettings.embedSettings?.embedWidgetTitle || "");
   };
@@ -112,10 +132,12 @@ const FloatingChatWidget = (props: ChatComponentType) => {
           </div>
           <div className="oak-chat-widget__window-content">
             <Chat
+              ref={chatRef}
               {...props}
               isEmbed
               anchorToBottom={true}
               onEmbedInit={onEmbedInit}
+              onMessage={props.onMessage}
             />
           </div>
           <div className="oak-chat-widget__window-footer">
@@ -133,15 +155,27 @@ const FloatingChatWidget = (props: ChatComponentType) => {
       </div>
     </div>
   );
-};
+});
 
-export const renderChatWidget = (divId: string, config: ChatComponentType) => {
+export const renderChatWidget = (divId: string, config: ChatWidgetProps): ChatWidgetAPI | null => {
   let container = document.getElementById(divId);
   if (!container) {
     container = document.createElement("div");
     container.id = divId;
     document.body.appendChild(container);
   }
+
+  const widgetRef = React.createRef<ChatRef>();
   const root = createRoot(container);
-  root.render(<FloatingChatWidget {...config} />);
+  root.render(<FloatingChatWidget ref={widgetRef} {...config} />);
+
+  const api: ChatWidgetAPI = {
+    setInput: (input: string) => {
+      if (widgetRef.current) {
+        widgetRef.current.setInput(input);
+      }
+    }
+  };
+
+  return api;
 };

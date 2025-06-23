@@ -11,7 +11,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     return redirect("/");
   }
   const session = await sessionStorage.getSession(
-    request.headers.get("Cookie")
+    request.headers.get("Cookie"),
   );
   const user = (await getSession(request))?.user;
   if (user) {
@@ -21,7 +21,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       return redirect("/");
     }
     await handleInvite(dbUser, id);
-    return redirect(`/agent/${invitation.agentId}`);
+    return redirect(`/`);
   }
   // if there is no user store the invite code for post signup
   session.set("invite", { code: invitation.id, email: invitation.email });
