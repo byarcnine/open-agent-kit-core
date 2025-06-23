@@ -49,7 +49,7 @@ const CreateAgentDialog = ({
       </DialogTrigger>
       <DialogContent maxWidth="3xl">
         <DialogHeader>
-          <DialogTitle>Create new Agent</DialogTitle>
+          <DialogTitle>Configure your new Agent</DialogTitle>
         </DialogHeader>
         <InventAgent />
 
