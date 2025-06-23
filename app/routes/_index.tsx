@@ -86,7 +86,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccessHierarchical(request);
   const allowedSpaces = await allowedSpacesToViewForUser(user);
   const spaces = await prisma.space.findMany({
@@ -107,15 +107,20 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   });
   const userScopes = await getUserScopes(user);
+  const canCreateSpace = userScopes.some(
+    (scope) => scope.scope === PERMISSION["global.edit_spaces"],
+  );
   return {
     spaces,
     user: user as SessionUser,
     userScopes,
+    canCreateSpace,
   };
 };
 
 const Index = () => {
-  const { spaces, user, userScopes } = useLoaderData<typeof loader>();
+  const { spaces, user, userScopes, canCreateSpace } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const [search, setSearch] = useState("");
@@ -131,9 +136,9 @@ const Index = () => {
   };
 
   const navigate = useNavigate();
-  const handleTableRowClick = (agentId: string) => {
-    if (agentId) {
-      navigate(`/agent/${agentId}`);
+  const handleTableRowClick = (spaceId: string) => {
+    if (spaceId) {
+      navigate(`/space/${spaceId}`);
     }
   };
 
@@ -195,7 +200,7 @@ const Index = () => {
           <div className="border-t mt-4 mb-8" />
         </div>
         <div className="flex-1 flex flex-col pb-8 overflow-auto scrollbar-none">
-          {filteredSpaces && filteredSpaces.length === 0 ? (
+          {filteredSpaces && filteredSpaces.length === 0 && canCreateSpace ? (
             <NoDataCard
               className="my-auto"
               headline={search ? "No agents found" : "No spaces created"}

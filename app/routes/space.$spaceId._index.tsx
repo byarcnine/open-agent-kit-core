@@ -135,16 +135,22 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!space) {
     throw data({ error: "Space not found" }, { status: 404 });
   }
+  const userCanCreateAgent = userScopes.some(
+    (scope) =>
+      scope.scope === "space.create_agent" && scope.referenceId === spaceId,
+  );
   return {
     agents,
     space: space ?? null,
     user: user as SessionUser,
     userScopes,
+    userCanCreateAgent,
   };
 };
 
 const Index = () => {
-  const { agents, user, space, userScopes } = useLoaderData<typeof loader>();
+  const { agents, space, userScopes, userCanCreateAgent } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const [search, setSearch] = useState("");
@@ -188,7 +194,9 @@ const Index = () => {
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
             <h1 className="text-3xl font-medium">{space?.name} Agents</h1>
-            <CreateAgentDialog errors={actionData?.errors} />
+            {userCanCreateAgent && (
+              <CreateAgentDialog errors={actionData?.errors} />
+            )}
           </div>
           <div className="flex flex-row items-center gap-2">
             <div className="relative flex-1">
@@ -323,14 +331,20 @@ const Index = () => {
                               {agent.description || "No description"}
                             </TableCell>
 
-                            <TableCell>
+                            <TableCell className="flex flex-row gap-2">
                               <Link to={`/chat/${agent.id}`}>
                                 <Button variant="default" size="sm">
                                   Chat
                                 </Button>
                               </Link>
-                              {/* {userCanEdit(agent) && (
-                                <Link to={`/agent/${agent.id}`}>
+                              {userScopes.some(
+                                (scope) =>
+                                  scope.scope === "agent.edit_agent" &&
+                                  scope.referenceId === agent.id,
+                              ) && (
+                                <Link
+                                  to={`/space/${space.id}/agent/${agent.id}`}
+                                >
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -339,7 +353,7 @@ const Index = () => {
                                     Manage
                                   </Button>
                                 </Link>
-                              )} */}
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
