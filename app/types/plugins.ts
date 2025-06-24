@@ -1,4 +1,4 @@
-import type { Agent } from "@prisma/client";
+import type { Agent, Space } from "@prisma/client";
 import type {
   SyncKnowledgeFunctionParams,
   SyncKnowledgeFunctionReturnParams,
@@ -39,6 +39,7 @@ export type PluginConfig = Omit<PluginType, "name">;
 export type PluginWithAvailability = Omit<PluginType, "tools"> & {
   isGlobal: boolean;
   agents: Agent[];
+  spaces: Space[];
 };
 
 export type PluginPackageJson = {

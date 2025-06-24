@@ -45,6 +45,10 @@ import { createInvitation } from "~/lib/auth/handleInvite.server";
 import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
 import { CreatePermissionGroupDialog } from "~/components/createPermissionGroupDialog/createPermissionGroupDialog";
 import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 const createPermissionGroupSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -79,8 +83,8 @@ type ActionData = {
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { spaceId, agentId } = params;
 
-  if (!spaceId) {
-    return { errors: { general: ["Space ID is required"] } };
+  if (!spaceId || !agentId) {
+    return { errors: { general: ["Space ID and Agent ID are required"] } };
   }
 
   const user = await hasAccessHierarchical(
@@ -306,6 +310,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     permissionGroupsPromise,
   ]);
 
+  // Get invites for agent-scoped permission groups
+  const invites = await prisma.invitation.findMany({
+    where: {
+      permissionGroupId: {
+        in: permissionGroups.map((pg) => pg.id),
+      },
+    },
+    include: {
+      permissionGroup: true,
+    },
+  });
+
   // Filter users to only show those with space-scoped groups
   const filteredUsers = users.filter(
     (user) => user.userPermissionGroups.length > 0,
@@ -328,11 +344,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     permissionGroups,
     userScopes,
     agentPermissions,
+    invites,
   };
 };
 
 const SpacePermissionManagement = () => {
-  const { agent, users, permissionGroups } = useLoaderData<typeof loader>();
+  const { agent, users, permissionGroups, invites } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   useEffect(() => {
@@ -376,7 +394,7 @@ const SpacePermissionManagement = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Users Table */}
           <div>
             <Card>
@@ -537,6 +555,52 @@ const SpacePermissionManagement = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Invites Table */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Invites ({invites.length})
+              </CardTitle>
+              <CardDescription>
+                View all active invites for this agent
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {invites.length === 0 ? (
+                <NoDataCard
+                  headline="No invites"
+                  description="No active invites for this agent."
+                />
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Permission Group</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invites.map((invite) => (
+                        <TableRow key={invite.id}>
+                          <TableCell>{invite.email}</TableCell>
+                          <TableCell>{invite.permissionGroup.name}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {dayjs(invite.createdAt).fromNow()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </>

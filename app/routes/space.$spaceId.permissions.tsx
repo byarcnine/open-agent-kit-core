@@ -35,7 +35,6 @@ import {
   AVAILABLE_PERMISSIONS,
 } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
-import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 import {
   Card,
   CardContent,
@@ -49,6 +48,10 @@ import { createInvitation } from "~/lib/auth/handleInvite.server";
 import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
 import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
 import { CreatePermissionGroupDialog } from "~/components/createPermissionGroupDialog/createPermissionGroupDialog";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 const createPermissionGroupSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -310,6 +313,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     permissionGroupsPromise,
   ]);
 
+  // Get invites for space-scoped permission groups
+  const invites = await prisma.invitation.findMany({
+    where: {
+      permissionGroupId: {
+        in: permissionGroups.map((pg) => pg.id),
+      },
+    },
+    include: {
+      permissionGroup: true,
+    },
+  });
+
   const userScopes = await getUserScopes(user);
 
   // Get available space permissions
@@ -327,11 +342,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     permissionGroups,
     userScopes,
     spacePermissions,
+    invites,
   };
 };
 
 const SpacePermissionManagement = () => {
-  const { space, users, permissionGroups } = useLoaderData<typeof loader>();
+  const { space, users, permissionGroups, invites } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   useEffect(() => {
@@ -369,7 +386,7 @@ const SpacePermissionManagement = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Users Table */}
           <div>
             <Card>
@@ -526,6 +543,52 @@ const SpacePermissionManagement = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Invites Table */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Invites ({invites.length})
+              </CardTitle>
+              <CardDescription>
+                View all active invites for this space
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {invites.length === 0 ? (
+                <NoDataCard
+                  headline="No invites"
+                  description="No active invites for this space."
+                />
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Permission Group</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invites.map((invite) => (
+                        <TableRow key={invite.id}>
+                          <TableCell>{invite.email}</TableCell>
+                          <TableCell>{invite.permissionGroup.name}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {dayjs(invite.createdAt).fromNow()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </>
