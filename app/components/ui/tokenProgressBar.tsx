@@ -29,7 +29,7 @@ const TokenProgressBar = ({ used, limit }: { used: number; limit: number }) => {
           </span>
           <span>{percentage.toFixed(1)}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-neutral-300 rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(
               percentage,

@@ -26,6 +26,7 @@ import type {
   SpaceWithAgents,
   Usage,
 } from "~/types/costControl";
+import Checkbox from "~/components/ui/checkbox";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccessHierarchical(
@@ -342,9 +343,7 @@ const CostControl = () => {
             />
             <Warning description="Red indicators show usage > 75% of monthly token limit." />
           </div>
-          <Card className="px-0 py-1">
-            <CostControlTable usage={usage} />
-          </Card>
+          <CostControlTable usage={usage} />
         </div>
       </div>
     </Layout>

@@ -5,7 +5,7 @@ import { Check } from "react-feather";
 interface CheckboxProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
-  label: string;
+  label?: string;
 }
 
 const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
@@ -22,7 +22,7 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
             <Check className="w-4 h-4" />
           </RadixCheckbox.Indicator>
         </RadixCheckbox.Root>
-        <label>{label}</label>
+        {label && <label>{label}</label>}
       </div>
     );
   },
