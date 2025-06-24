@@ -28,6 +28,7 @@ export const routes = (
       route("settings", `${corePrefix}/settings.tsx`),
       //  route("insights", `${corePrefix}/insights.tsx`),
       route("cost_control", `${corePrefix}/cost_control.tsx`),
+      route("invent_agent", `${corePrefix}/invent.agent.tsx`),
       route("plugins", `${corePrefix}/plugins.tsx`),
       route("permissions", `${corePrefix}/permission._index.tsx`),
       route(

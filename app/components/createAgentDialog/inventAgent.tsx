@@ -1,11 +1,25 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { useNavigate } from "react-router";
 
 const InventAgent = ({}) => {
   const [prompt, setPrompt] = useState("");
+  const navigate = useNavigate();
 
-  console.log("InventAgent component", prompt);
+  const handleInventAgent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim()) {
+      console.error("Prompt cannot be empty");
+      return;
+    }
+    console.log("Agent creation logic goes here with prompt:", prompt);
+    // push to new route
+    navigate(`/invent_agent?prompt=${encodeURIComponent(prompt)}`, {
+      replace: true,
+    });
+  };
+
   return (
     <form>
       <h3>Invent your Agent</h3>
@@ -26,10 +40,7 @@ const InventAgent = ({}) => {
           className="mt-4 ml-auto"
           variant="default"
           disabled={!prompt.trim()}
-          onClick={() => {
-            // Logic to handle agent creation based on the description
-            console.log("Agent creation logic goes here");
-          }}
+          onClick={handleInventAgent}
         >
           Invent Agent
         </Button>
