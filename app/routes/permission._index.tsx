@@ -263,6 +263,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     usersPromise,
     permissionGroupsPromise,
   ]);
+  const invites = await prisma.invitation.findMany({
+    where: {
+      permissionGroupId: {
+        in: permissionGroups.map((pg) => pg.id),
+      },
+    },
+    include: {
+      permissionGroup: true,
+    },
+  });
   const userScopes = await getUserScopes(user);
 
   return {
@@ -270,11 +280,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     users,
     permissionGroups,
     userScopes,
+    invites,
   };
 };
 
 const PermissionManagement = () => {
-  const { user, users, permissionGroups, userScopes } =
+  const { user, users, permissionGroups, userScopes, invites } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
@@ -373,7 +384,7 @@ const PermissionManagement = () => {
         </div>
 
         {/* Permission Groups Table */}
-        <div>
+        <div className="mb-12">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-medium">Permission Groups</h2>
             <CreatePermissionGroupDialog error={actionData?.error} />
@@ -463,6 +474,37 @@ const PermissionManagement = () => {
             </div>
           )}
         </div>
+        {/** Invites Table */}
+        {invites.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-medium mb-4">Invites</h2>
+            <p className="text-muted-foreground text-sm mb-6 max-w-lg">
+              View all active invites.
+            </p>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Permission Group</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invites.map((invite) => (
+                    <TableRow key={invite.id}>
+                      <TableCell>{invite.email}</TableCell>
+                      <TableCell>{invite.permissionGroup.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {dayjs(invite.createdAt).fromNow()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
       </div>
       <Toaster />
     </Layout>
