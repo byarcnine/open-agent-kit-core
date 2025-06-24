@@ -45,11 +45,11 @@ const InventAgent: React.FC = () => {
           />
         </div>
         <div className="flex-1 overflow-auto">
-          <div className="grid grid-cols-2 gap-2 h-full">
-            <Card className="h-full overflow-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 h-full">
+            <Card className="h-full lg:overflow-auto">
               <Chat />
             </Card>
-            <Card className="h-full overflow-auto">
+            <Card className="h-full lg:overflow-auto">
               <div>
                 <h3 className="font-medium text-xl mb-4">
                   Generated Instruction for Agent
