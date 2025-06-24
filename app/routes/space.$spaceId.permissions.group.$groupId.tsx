@@ -8,7 +8,6 @@ import {
   useFetcher,
 } from "react-router";
 import { prisma, type Permission } from "@db/db.server";
-import Layout from "~/components/layout/layout";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ArrowLeft, Shield, ChevronDown, ChevronRight } from "react-feather";
@@ -30,7 +29,6 @@ import {
   updatePermissionGroupPermissions,
   type UserGrantedPermissions,
 } from "~/lib/permissions/enhancedHasAccess.server";
-import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 
 type ActionData = {
   success: boolean;
