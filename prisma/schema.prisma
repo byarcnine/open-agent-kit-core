@@ -289,6 +289,8 @@ model PluginAvailability {
   pluginIdentifier String
   agentId          String?
   agent            Agent?  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  spaceId          String?
+  space            Space?  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   isEnabled        Boolean @default(false)
   isGlobal         Boolean @default(false)
 
@@ -354,13 +356,14 @@ model User {
 }
 
 model Space {
-  id              String            @id @default(cuid())
-  name            String
-  description     String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  agents          Agent[]
-  permissionGroup PermissionGroup[]
+  id                 String               @id @default(cuid())
+  name               String
+  description        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  agents             Agent[]
+  permissionGroup    PermissionGroup[]
+  PluginAvailability PluginAvailability[]
 
   @@map("space")
 }

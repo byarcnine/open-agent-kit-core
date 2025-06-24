@@ -104,7 +104,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     request,
     PERMISSION["global.view_plugins"],
   );
-  const agentsPromise = prisma.agent.findMany({ orderBy: { name: "asc" } });
+
+  // Fetch spaces and agents separately
+  const spacesPromise = prisma.space.findMany({
+    include: {
+      agents: {
+        orderBy: { name: "asc" },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
   const pluginsWithAvailabilityPromise = getPluginsWithAvailability();
 
   // Get NPM plugins from database
@@ -129,8 +139,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-  const [agents, plugins, npmPluginsConfig] = await Promise.all([
-    agentsPromise,
+  const [spaces, plugins, npmPluginsConfig] = await Promise.all([
+    spacesPromise,
     pluginsWithAvailabilityPromise,
     npmPluginsConfigPromise,
   ]);
@@ -170,7 +180,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userScopes = await getUserScopes(user);
 
   return {
-    agents,
+    spaces,
     plugins,
     npmPlugins,
     storePluginsPromise,
@@ -333,8 +343,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const pluginIdentifier = formData.get("pluginIdentifier") as string;
   const isGlobal = formData.get("isGlobal") === "true";
   const agentIds = JSON.parse(formData.get("agentIds") as string);
+  const spaceIds = JSON.parse((formData.get("spaceIds") as string) || "[]");
 
-  await setPluginAvailability(pluginIdentifier, isGlobal, agentIds);
+  await setPluginAvailability(pluginIdentifier, isGlobal, agentIds, spaceIds);
   return { success: true };
 };
 
@@ -342,7 +353,7 @@ export default function Plugins() {
   const {
     plugins,
     user,
-    agents,
+    spaces,
     npmPlugins,
     storePluginsPromise,
     hasPendingPlugins,
@@ -439,13 +450,18 @@ export default function Plugins() {
     }
   }, [actionData]);
 
-  const onSetAvailability = async (isGlobal: boolean, agentIds: string[]) => {
+  const onSetAvailability = async (
+    isGlobal: boolean,
+    agentIds: string[],
+    spaceIds: string[],
+  ) => {
     if (!selectedPluginIdentifier) return;
     fetcher.submit(
       {
         pluginIdentifier: selectedPluginIdentifier,
         isGlobal: isGlobal.toString(),
         agentIds: JSON.stringify(agentIds),
+        spaceIds: JSON.stringify(spaceIds),
       },
       { method: "POST" },
     );
@@ -609,23 +625,41 @@ export default function Plugins() {
                                 Available for all agents
                               </Badge>
                             )}
-                            {!plugin.isGlobal &&
-                              plugin.agents &&
-                              plugin.agents.length > 0 && (
-                                <h3 className="text-xs mb-2 text-muted-foreground font-medium">
-                                  Available for Agents:
-                                </h3>
-                              )}
                             {!plugin.isGlobal && (
-                              <div className="text-sm text-muted-foreground flex flex-wrap gap-2 max-w-full">
-                                {plugin.agents.map((agent) => (
-                                  <div key={agent.id}>
-                                    <Badge variant="outline">
-                                      {agent.name}
-                                    </Badge>
-                                  </div>
-                                ))}
-                              </div>
+                              <>
+                                {plugin.spaces && plugin.spaces.length > 0 && (
+                                  <>
+                                    <h3 className="text-xs mb-2 text-muted-foreground font-medium">
+                                      Available for Spaces:
+                                    </h3>
+                                    <div className="text-sm text-muted-foreground flex flex-wrap gap-2 max-w-full mb-2">
+                                      {plugin.spaces.map((space) => (
+                                        <div key={space.id}>
+                                          <Badge variant="outline">
+                                            {space.name}
+                                          </Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                                {plugin.agents && plugin.agents.length > 0 && (
+                                  <>
+                                    <h3 className="text-xs mb-2 text-muted-foreground font-medium">
+                                      Available for Agents:
+                                    </h3>
+                                    <div className="text-sm text-muted-foreground flex flex-wrap gap-2 max-w-full">
+                                      {plugin.agents.map((agent) => (
+                                        <div key={agent.id}>
+                                          <Badge variant="outline">
+                                            {agent.name}
+                                          </Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </>
                             )}
                           </div>
                         </CardContent>
@@ -866,7 +900,7 @@ export default function Plugins() {
           </Suspense>
         </div>
         <AgentAvailabilitySelector
-          agents={agents}
+          spaces={spaces}
           selectedPlugin={
             plugins.find(
               (t: PluginWithAvailability) =>

@@ -9,7 +9,7 @@ import {
   useNavigate,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { CardHeader, CardTitle } from "~/components/ui/card";
 import {
   allowedSpacesToViewForUser,
   getUserScopes,

@@ -5,7 +5,6 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -87,7 +86,9 @@ export default function Screen() {
                 className="w-12"
               />
             </div>
-            <span className="text-4xl ml-4 fade-in delay-150">Welcome to OAK</span>
+            <span className="text-4xl ml-4 fade-in delay-150">
+              Welcome to OAK
+            </span>
           </div>
           <div className="relative z-20 mt-auto text-xl max-w-lg fade-in delay-300">
             The Enterprise Platform for Building and Deploying Custom AI Agents
