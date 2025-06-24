@@ -35,7 +35,6 @@ import {
 } from "~/components/ui/table";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import { AgentCard, AgentCardContent } from "~/components/ui/agent-card";
-import { oakContext } from "~/lib/middleware/oakMiddleware.server";
 
 const CreateSpaceSchema = z.object({
   name: z.string().min(1, "Space name is required"),
