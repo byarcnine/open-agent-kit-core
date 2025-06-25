@@ -116,6 +116,7 @@ const ChatSettingsUpdateSchema = z.object({
     })
     .nullable(),
   textAreaInitialRows: z.number().min(1).max(5),
+  chatInputPlaceholder: z.string().nullable(),
   footerNote: z.string().nullable(),
 });
 
@@ -302,6 +303,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         formData.get("textAreaInitialRows") as string,
         10,
       ),
+      chatInputPlaceholder: formData.get("chatInputPlaceholder")?.toString() || "",
       footerNote: formData.get("footerNote")?.toString() || "",
       showMessageToolBar: !!formData.get("showMessageToolBar"),
       showDefaultToolsDebugMessages: !!formData.get(
@@ -811,7 +813,21 @@ const AgentSettings = () => {
                       onCheckedChange={setEnableFileUpload}
                     />
                   </div>
-
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="chatInputPlaceholder">
+                      Chat Input Placeholder
+                    </Label>
+                    <Input
+                      id="chatInputPlaceholder"
+                      name="chatInputPlaceholder"
+                      className="border"
+                      defaultValue={chatSettings?.chatInputPlaceholder || ""}
+                      placeholder="Enter chat input placeholder"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This is the placeholder text for the chat input.
+                    </p>
+                  </div>
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="textAreaInitialRows">Text Area Rows</Label>
                     <Input
@@ -838,6 +854,11 @@ const AgentSettings = () => {
                     />
                     <p className="text-sm text-muted-foreground">
                       Enter a note that will be displayed below the chat input.
+                      You can use markdown-style links: [text](url) or plain URLs.
+                      <br />
+                      <span className="text-xs">
+                        Examples: "Visit [OAK](https://open-agent-kit.com/)" or "Go to https://open-agent-kit.com/"
+                      </span>
                     </p>
                   </div>
                 </CardContentSection>

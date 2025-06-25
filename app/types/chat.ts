@@ -1,9 +1,13 @@
+import { type Message } from "@ai-sdk/react";
+import type { AgentSettings } from "./agentSetting";
+
 export interface ChatSettings {
   intro?: {
     title?: string;
     subTitle?: string;
   };
   initialMessage?: string;
+  chatInputPlaceholder?: string;
   suggestedQuestions?: string[];
   textAreaInitialRows?: number;
   footerNote?: string;
@@ -27,4 +31,24 @@ export enum MessageRole {
   System = "system",
   User = "user",
   Data = "data",
+}
+
+export interface ChatProps {
+  onConversationStart?: (conversationId: string) => void;
+  onMessage?: (messages: Message[]) => void;
+  resetConversation?: () => void;
+  onFormSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
+  initialMessages?: Message[];
+  initialConversationId?: string;
+  disableInput?: boolean;
+  agentId: string;
+  apiUrl?: string;
+  meta?: object;
+  isEmbed?: boolean;
+  agentChatSettings?: ChatSettings | null;
+  agentSettings?: AgentSettings | null;
+  toolNamesList?: Record<string, string>;
+  avatarImageURL?: string;
+  anchorToBottom?: boolean;
+  onEmbedInit?: (chatSettings: ChatSettings) => void;
 }
