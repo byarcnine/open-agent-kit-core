@@ -338,6 +338,19 @@
       white-space: pre-wrap;
     }
 
+    &__footer-link {
+      color: var(--oak-color-muted-foreground);
+      text-decoration: underline;
+      text-decoration-color: var(--oak-color-muted-foreground);
+      text-underline-offset: 2px;
+      transition: color 0.2s ease, text-decoration-color 0.2s ease;
+
+      &:hover {
+        color: var(--oak-color-muted-foreground);
+        text-decoration-color: var(--oak-color-muted-foreground);
+      }
+    }
+
     &__messages {
       flex: 1;
       padding: 16px;
@@ -416,7 +429,7 @@
         font-size: 12.8px;
         font-weight: 600;
         margin: 0;
-        color: var(--text-primary);
+        color: var(--oak-text-color-primary);
       }
     }
 
@@ -744,7 +757,7 @@
         padding: 10px;
         text-align: left;
         font-weight: 400;
-        color: var(--text-primary);
+        color: var(--oak-text-color-primary);
       }
     }
 
