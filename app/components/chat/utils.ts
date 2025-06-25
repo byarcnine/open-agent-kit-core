@@ -5,6 +5,26 @@ export const getApiUrl = (isEmbed: boolean, apiUrl?: string): string => {
 };
 
 /**
+ * Checks if a URL is safe to render as a link (http/https only)
+ */
+const isSafeUrl = (url: string): boolean => {
+  return url.startsWith('http://') || url.startsWith('https://');
+};
+
+/**
+ * Creates a safe link element
+ */
+const createSafeLink = (url: string, text: string, key: number): React.ReactElement => {
+  return React.createElement('a', {
+    key,
+    href: url,
+    target: '_blank',
+    rel: 'noopener noreferrer',
+    className: 'oak-chat__footer-link'
+  }, text);
+};
+
+/**
  * Safely renders text with clickable URLs while preventing XSS attacks
  * Supports markdown-style links: [text](url)
  * @param text - The text that may contain URLs or markdown links
@@ -26,14 +46,8 @@ export const renderTextWithSecureLinks = (text: string): (string | React.ReactEl
     const linkText = match[1];
     const url = match[2];
 
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      result.push(React.createElement('a', {
-        key: result.length,
-        href: url,
-        target: '_blank',
-        rel: 'noopener noreferrer',
-        className: 'oak-chat__footer-link'
-      }, linkText));
+    if (isSafeUrl(url)) {
+      result.push(createSafeLink(url, linkText, result.length));
     } else {
       // If URL is not safe, just add the text
       result.push(match[0]);
@@ -52,14 +66,8 @@ export const renderTextWithSecureLinks = (text: string): (string | React.ReactEl
 
     parts.forEach((part, index) => {
       if (urlRegex.test(part)) {
-        if (part.startsWith('http://') || part.startsWith('https://')) {
-          result.push(React.createElement('a', {
-            key: result.length,
-            href: part,
-            target: '_blank',
-            rel: 'noopener noreferrer',
-            className: 'oak-chat__footer-link'
-          }, part));
+        if (isSafeUrl(part)) {
+          result.push(createSafeLink(part, part, result.length));
         } else {
           result.push(part);
         }
