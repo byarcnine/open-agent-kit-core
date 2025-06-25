@@ -79,8 +79,8 @@ const Layout = ({
                   )}
                   {!agentName && (
                     <div className="flex flex-col flex-1 overflow-hidden text-white">
-                      <span className="truncate font-bold">OAK</span>
-                      <span className="text-xs font-medium">
+                      <span className="truncate font-medium">OAK</span>
+                      <span className="text-xs">
                         Enterprise GenAI Platform
                       </span>
                     </div>
@@ -156,8 +156,8 @@ const Layout = ({
 
               {!agentName && (
                 <div className="flex flex-col flex-1 overflow-hidden text-white">
-                  <span className="truncate font-bold">OAK</span>
-                  <span className="text-xs font-medium">
+                  <span className="truncate font-medium">OAK</span>
+                  <span className="text-xs">
                     Enterprise GenAI Platform
                   </span>
                 </div>
