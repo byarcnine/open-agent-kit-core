@@ -10,6 +10,7 @@ import { useStickToBottom } from "use-stick-to-bottom";
 interface MessagesProps {
   messages: MessageType[];
   toolNames: Record<string, string>;
+  toolComponents?: Record<string, React.ComponentType<any>>;
   error?: string;
   showMessageToolBar?: boolean;
   avatarURL: string;
@@ -21,6 +22,7 @@ interface MessagesProps {
 const Messages: React.FC<MessagesProps> = ({
   messages,
   toolNames,
+  toolComponents,
   error,
   avatarURL,
   status,
@@ -59,6 +61,7 @@ const Messages: React.FC<MessagesProps> = ({
               message={message}
               toolNames={toolNames}
               avatarURL={avatarURL}
+              toolComponents={toolComponents}
               requiresScrollPadding={
                 !anchorToBottom &&
                 index === messages.length - 1 &&

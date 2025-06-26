@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { type Message as MessageType } from "ai";
 import { Avatar } from "./avatar";
-import { toolComponents } from "../../lib/tools/toolComponents";
+import { toolComponents as defaultToolComponents } from "../../lib/tools/toolComponents";
 import { openBase64Pdf } from "../../lib/utils";
 import {
   FileText,
@@ -49,10 +49,18 @@ interface MessageProps {
   avatarURL: string;
   requiresScrollPadding?: boolean;
   scrollPadding?: number;
+  toolComponents?: Record<string, React.ComponentType<any>>;
 }
 
 const Message: React.FC<MessageProps> = React.memo(
-  ({ message, toolNames, avatarURL, requiresScrollPadding, scrollPadding }) => {
+  ({
+    message,
+    toolNames,
+    avatarURL,
+    requiresScrollPadding,
+    scrollPadding,
+    toolComponents,
+  }) => {
     const [copied, setCopied] = useState(false);
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
     const { chatSettings, agentSettings, conversationId, isEmbed, apiUrl } =
@@ -155,7 +163,8 @@ const Message: React.FC<MessageProps> = React.memo(
           {message.parts?.map((part, index) => {
             if (part.type === "tool-invocation") {
               const ToolComponent =
-                toolComponents[part.toolInvocation.toolName];
+                defaultToolComponents[part.toolInvocation.toolName] ||
+                toolComponents?.[part.toolInvocation.toolName];
               const isDefaultTool =
                 part.toolInvocation.toolName.startsWith("default__");
               const isMCPTool = !part.toolInvocation.toolName.includes("__");

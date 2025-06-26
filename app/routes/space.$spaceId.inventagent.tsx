@@ -1,14 +1,9 @@
 import { Label } from "@radix-ui/react-label";
 import React from "react";
-import {
-  Activity,
-  Book,
-  ChevronRight,
-  Lock,
-  MessageCircle,
-} from "react-feather";
+import { Activity, Book, ChevronRight, MessageCircle } from "react-feather";
 import { useLoaderData, type LoaderFunctionArgs } from "react-router";
-import Chat from "~/components/chat/chat.client";
+import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
+import InventAgentChat from "~/components/inventAgent/inventAgentChat.client";
 
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
@@ -97,9 +92,10 @@ const InventAgent: React.FC = () => {
           </div>
 
           <div className="relative flex gap-8 flex-1 overflow-hidden">
-            <Card className="overflow-auto flex-1/2">
-              Hello!
-              {false && <Chat />}
+            <Card className="overflow-auto flex-1/2 p-0">
+              <ClientOnlyComponent>
+                <InventAgentChat />
+              </ClientOnlyComponent>
             </Card>
 
             <Card className="overflow-auto flex-1/2">

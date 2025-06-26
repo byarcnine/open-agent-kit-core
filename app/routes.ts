@@ -39,10 +39,7 @@ export const routes = (
         ...prefix("/space/:spaceId/", [
           index(`${corePrefix}/space.$spaceId._index.tsx`),
           route("permissions", `${corePrefix}/space.$spaceId.permissions.tsx`),
-          route(
-            "invent_agent",
-            `${corePrefix}/space.$spaceId.inventagent.tsx`,
-          ),
+          route("invent_agent", `${corePrefix}/space.$spaceId.inventagent.tsx`),
           route(
             "permissions/group/:groupId",
             `${corePrefix}/space.$spaceId.permissions.group.$groupId.tsx`,
@@ -162,6 +159,7 @@ export const routes = (
 
     // API routes
     route("api/generate", `${corePrefix}/api.generate.ts`),
+    route("api/invent", `${corePrefix}/api.invent.ts`),
     route("api/generate/token", `${corePrefix}/api.generate.token.ts`),
     route(
       "api/agentChatSettings/:agentId",
