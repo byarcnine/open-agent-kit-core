@@ -5,7 +5,7 @@ import {
   CORS_EXPOSE_HEADERS,
 } from "./utils";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
-import { streamText, tool } from "ai";
+import { generateObject, streamText, tool } from "ai";
 import { getConfig } from "~/lib/config/config";
 import { z } from "zod";
 
@@ -32,9 +32,23 @@ const inventionTool = tool({
     specification: z.string(),
   }),
   execute: async ({ specification }) => {
-    console.log("Executing invention tool with specification:", specification);
+    const config = getConfig();
+    const res = await generateObject({
+      model: config.models[0],
+      schema: z.object({
+        name: z.string(),
+        description: z.string(),
+        systemPrompt: z.string(),
+      }),
+      prompt: `You are an agentic agent that is used to invent agents.
+      You are given a specification and you need to generate an agent based on that specification.
+      Generate a name, a description and a system prompt for the agent.
+
+      The specification is: ${specification}
+      `,
+    });
     return {
-      name: "Agent Inventor",
+      ...res.object,
     };
   },
 });
@@ -52,6 +66,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       system: `You goal is it to define an agentic agent for a user. A agent consists of a name, a description and a system prompt.
  You'll need to find out what the user wants and then generate an agent based on that.
  Once you have collected enough information you can call the 'agentInventor' tool to generate the agent.
+ The name should be human, like a colleague or a friend.
+ The description should be a short description of the agent.
+ The system prompt should be a system prompt for the agent to is precise and explicit. Use markdown to format the system prompt.
 
  The agentInventor tool will return a JSON object with the following properties:
  - name: The name of the agent

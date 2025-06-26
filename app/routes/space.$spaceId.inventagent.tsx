@@ -1,39 +1,37 @@
 import { Label } from "@radix-ui/react-label";
-import React from "react";
+import React, { useState } from "react";
 import { Activity, Book, ChevronRight, MessageCircle } from "react-feather";
-import { useLoaderData, type LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs } from "react-router";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
-import InventAgentChat from "~/components/inventAgent/inventAgentChat.client";
+import InventAgentChat, {
+  type AgentInventorToolResult,
+} from "~/components/inventAgent/inventAgentChat.client";
+import MarkdownEdit from "~/components/markdownedit/markdownedit.client";
 
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Switch } from "~/components/ui/switch";
 import Warning from "~/components/ui/warning";
-import {
-  getUserScopes,
-  hasAccessHierarchical,
-} from "~/lib/permissions/enhancedHasAccess.server";
-import { PERMISSION } from "~/lib/permissions/permissions";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 import type { AgentSettings } from "~/types/agentSetting";
-import type { SessionUser } from "~/types/auth";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccessHierarchical(
-    request,
-    PERMISSION["global.super_admin"],
-  );
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const spaceId = params.spaceId;
+  await hasAccessHierarchical(request, "space.create_agent", spaceId);
 
-  const userScopes = await getUserScopes(user);
+  // const userScopes = await getUserScopes(user);
 
-  return {
-    user: user as SessionUser,
-    userScopes,
-  };
+  // return {
+  //   user: user as SessionUser,
+  //   userScopes,
+  // };
 };
 
 const InventAgent: React.FC = () => {
-  const { user, userScopes } = useLoaderData<typeof loader>();
-
+  // const { user, userScopes } = useLoaderData<typeof loader>();
+  const [agentInventorResult, setAgentInventorResult] =
+    useState<AgentInventorToolResult | null>(null);
+  const [systemPromptKey, setSystemPromptKey] = useState(0);
   const [showToolSelection, setShowToolSelection] = React.useState(false);
 
   const [agentData, setAgentData] = React.useState<AgentSettings>({
@@ -94,56 +92,50 @@ const InventAgent: React.FC = () => {
           <div className="relative flex gap-8 flex-1 overflow-hidden">
             <Card className="overflow-auto flex-1/2 p-0">
               <ClientOnlyComponent>
-                <InventAgentChat />
+                <InventAgentChat
+                  onAgentInventorResult={(result) => {
+                    setSystemPromptKey((prev) => prev + 1);
+                    setAgentInventorResult(result);
+                  }}
+                />
               </ClientOnlyComponent>
             </Card>
 
             <Card className="overflow-auto flex-1/2">
-              <span>
-                Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-                accusantium doloremque laudantium, totam rem aperiam, eaque ipsa
-                quae ab illo inventore veritatis et quasi architecto beatae
-                vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia
-                voluptas sit aspernatur aut odit aut fugit, sed quia
-                consequuntur magni dolores eos qui ratione voluptatem sequi
-                nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor
-                sit amet, consectetur, adipisci velit, sed quia non numquam eius
-                modi tempora incidunt ut labore et dolore magnam aliquam quaerat
-                voluptatem. Ut enim ad minima veniam, quis nostrum
-                exercitationem ullam corporis suscipit laboriosam, nisi ut
-                aliquid ex ea commodi consequatur? Quis autem vel eum iure
-                reprehenderit qui in ea voluptate velit esse quam nihil
-                molestiae consequatur, vel illum qui dolorem eum fugiat quo
-                voluptas nulla pariatur? Sed ut perspiciatis unde omnis iste
-                natus error sit voluptatem accusantium doloremque laudantium,
-                totam rem aperiam, eaque ipsa quae ab illo inventore veritatis
-                et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim
-                ipsam voluptatem quia voluptas sit aspernatur aut odit aut
-                fugit, sed quia consequuntur magni dolores eos qui ratione
-                voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem
-                ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia
-                non numquam eius modi tempora incidunt ut labore et dolore
-                magnam aliquam quaerat voluptatem. Ut enim ad minima veniam,
-                quis nostrum exercitationem ullam corporis suscipit laboriosam,
-                nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum
-                iure reprehenderit qui in ea voluptate velit esse quam nihil
-                molestiae consequatur, vel illum qui dolorem eum fugiat quo
-                voluptas nulla pariatur?Sed ut perspiciatis unde omnis iste
-                natus error sit voluptatem accusantium doloremque laudantium,
-                totam rem aperiam, eaque ipsa quae ab illo inventore veritatis
-                et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim
-                ipsam voluptatem quia voluptas sit aspernatur aut odit aut
-                fugit, sed quia consequuntur magni dolores eos qui ratione
-                voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem
-                ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia
-                non numquam eius modi tempora incidunt ut labore et dolore
-                magnam aliquam quaerat voluptatem. Ut enim ad minima veniam,
-                quis nostrum exercitationem ullam corporis suscipit laboriosam,
-                nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum
-                iure reprehenderit qui in ea voluptate velit esse quam nihil
-                molestiae consequatur, vel illum qui dolorem eum fugiat quo
-                voluptas nulla pariatur?
-              </span>
+              {agentInventorResult && (
+                <>
+                  <h2 className="font-medium text-xl">
+                    <span className="font-medium">Name:</span>{" "}
+                    {agentInventorResult.name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium">Description:</span>{" "}
+                    {agentInventorResult.description}
+                  </p>
+                  <ClientOnlyComponent>
+                    <MarkdownEdit
+                      prompt={agentInventorResult?.systemPrompt || ""}
+                      key={systemPromptKey}
+                      onChange={(markdown) => {
+                        setAgentInventorResult((prev) => {
+                          if (!prev) return null;
+                          return {
+                            ...prev,
+                            systemPrompt: markdown,
+                          };
+                        });
+                      }}
+                    />
+                  </ClientOnlyComponent>
+                </>
+              )}
+              {!agentInventorResult && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Waiting for agent inventor...
+                  </p>
+                </div>
+              )}
             </Card>
           </div>
         </div>

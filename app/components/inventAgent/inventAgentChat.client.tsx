@@ -1,5 +1,5 @@
 import "../chat/chat.scss";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useChat, type Message } from "@ai-sdk/react";
 import Messages from "../chat/messages";
 import { type ChatSettings } from "../../types/chat";
@@ -23,13 +23,20 @@ interface ChatProps {
   avatarImageURL?: string;
   anchorToBottom?: boolean;
   onEmbedInit?: (chatSettings: ChatSettings) => void;
+  onAgentInventorResult?: (result: AgentInventorToolResult) => void;
 }
+
+export type AgentInventorToolResult = {
+  name: string;
+  description: string;
+  systemPrompt: string;
+};
 
 const AgentInventorToolComponent = (
   props: ToolResult<
     "__agentInventor",
     { specification: string },
-    { name: string; description: string; systemPrompt: string }
+    AgentInventorToolResult
   >,
 ) => {
   return (
@@ -57,6 +64,34 @@ const InventAgentChat = (props: ChatProps) => {
     handleSubmit(e);
     setInput("");
   };
+
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (
+      lastMessage &&
+      props.onAgentInventorResult &&
+      lastMessage.role === "assistant" &&
+      lastMessage.parts?.some(
+        (part) =>
+          part.type === "tool-invocation" &&
+          part.toolInvocation.toolName === "__agentInventor",
+      )
+    ) {
+      const toolResult = lastMessage.parts?.find(
+        (p) =>
+          p.type === "tool-invocation" &&
+          p.toolInvocation.toolName === "__agentInventor",
+      );
+      if (!toolResult) return;
+      if (toolResult.type !== "tool-invocation") return;
+      if (toolResult.toolInvocation.state !== "result") return;
+      const result = toolResult.toolInvocation
+        .result as AgentInventorToolResult;
+
+      props.onAgentInventorResult(result);
+    }
+  }, [messages]);
+
   return (
     <div id="oak-chat-container" className={`oak-chat`}>
       <>
