@@ -125,9 +125,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       tools: {
         __agentInventor: inventionTool(spaceId),
       },
-      onFinish: async (completion) => {
-        console.log(completion);
-      },
+      // onFinish: async (completion) => {
+      //   console.log(completion);
+      // },
     });
 
     return stream.toDataStreamResponse({
