@@ -1,0 +1,139 @@
+.oak-chat__message-content {
+  div,
+  span,
+  p,
+  ol,
+  li,
+  ul {
+    margin: 0;
+    &:not(:last-child) {
+      padding-bottom: 12.8px;
+    }
+  }
+
+  div,
+  span,
+  p {
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  a {
+    text-decoration: underline;
+    color: var(--oak-text-color-primary);
+  }
+  hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    padding-bottom: 20px;
+
+    thead {
+      background: var(--oak-color-bg);
+      border: 1px solid #ddd;
+
+      th {
+        padding: 10px;
+        text-align: left;
+        font-weight: 400;
+        color: var(--text-primary);
+      }
+    }
+
+    tbody {
+      tr {
+        border: 1px solid #ddd;
+
+        td {
+          padding: 10px;
+          color: #333;
+
+          &:last-child {
+            text-align: right;
+          }
+        }
+      }
+    }
+  }
+
+  ul,
+  ol {
+    list-style: initial;
+    padding: 0;
+    padding-bottom: 4.8px;
+
+    li {
+      // padding: 1rem;
+      margin-left: 32px;
+      padding-left: 8px;
+      // border-bottom: 1px solid $oak-border-color;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      // &::marker {
+      //   color: transparent;
+      // }
+    }
+  }
+  ul {
+    list-style: circle;
+  }
+  ol {
+    list-style: decimal;
+  }
+
+  pre {
+    margin: 15px 0;
+    span {
+      overflow: hidden;
+    }
+  }
+
+  code {
+    white-space: break-words !important;
+    span {
+      font-size: 12px;
+      white-space: pre;
+    }
+  }
+
+  @mixin heading-style($color, $font-weight, $padding-top, $font-size) {
+    color: $color;
+    font-weight: $font-weight;
+    padding-top: $padding-top;
+    font-size: $font-size;
+  }
+
+  h1 {
+    @include heading-style(var(--oak-text-color-primary), 500, 8px, 20.8px);
+    padding-bottom: 4.8px;
+  }
+
+  h2 {
+    @include heading-style(var(--oak-text-color-primary), 500, 8px, 19.2px);
+    padding-bottom: 4.8px;
+  }
+
+  h3 {
+    @include heading-style(var(--oak-text-color-primary), 500, 8px, 17.6px);
+    padding-bottom: 4.8px;
+  }
+
+  h4 {
+    @include heading-style(var(--oak-text-color-primary), 500, 4.8px, 16px);
+  }
+
+  h5 {
+    @include heading-style(var(--oak-text-color-primary), 500, 3.2px, 16px);
+  }
+
+  h6 {
+    @include heading-style(var(--oak-text-color-primary), 500, 3.2px, 16px);
+  }
+}

@@ -42,7 +42,7 @@ const inventionTool = tool({
       }),
       prompt: `You are an agentic agent that is used to invent agents.
       You are given a specification and you need to generate an agent based on that specification.
-      Generate a cool and concise name, a description and a detailed system prompt for the agent. The system prompt should be precise and explicit, include DOs and DON'Ts, 
+      Generate a cool and concise name, a description and a detailed system prompt for the agent. The system prompt should be precise and explicit, include DOs and DON'Ts,
       and be at least 100 words long.
 
       The specification is: ${specification}
@@ -65,11 +65,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       model: config.models[0],
       messages: body.messages,
       system: `You goal is it to define an agentic agent for a user. A agent consists of a name, a description and a system prompt.
- You'll need to find out what the user wants and then generate an agent based on that.
+ You'll need to find out what the user wants and then generate an agent based on that. The user shall not be asked to provide any direct information.
  Once you have collected enough information you can call the 'agentInventor' tool to generate the agent.
  The name should be human, like a colleague or a friend.
  The description should be a short description of the agent.
- The system prompt should be a system prompt for the agent to is precise and explicit. Use markdown to format the system prompt.
+ The system prompt should be a system prompt for the agent to is precise and explicit. Use markdown to format the system prompt in a way that is easy to read and understand.
+ Do not tell the user that you are using tools.
 
  The agentInventor tool will return a JSON object with the following properties:
  - name: The name of the agent

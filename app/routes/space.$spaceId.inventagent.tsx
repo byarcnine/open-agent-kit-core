@@ -2,7 +2,6 @@ import { Label } from "@radix-ui/react-label";
 import React, { useState } from "react";
 import { prisma } from "@db/db.server";
 import { Activity, Book, MessageCircle, User } from "react-feather";
-import Markdown from "react-markdown";
 import {
   redirect,
   type ActionFunctionArgs,
@@ -22,6 +21,8 @@ import { Switch } from "~/components/ui/switch";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import type { AgentSettings } from "~/types/agentSetting";
+import MarkdownViewer from "~/components/chat/markdownViewer";
+import "~/components/chat/markdown.scss";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -206,17 +207,16 @@ const InventAgent: React.FC = () => {
                     Generated Instructions
                   </Badge>
                   <ClientOnlyComponent>
-                    <Markdown
-                      className="prose prose-sm"
-                      children={agentInventorResult.systemPrompt}
-                    />
+                    <div className="oak-chat__message-content oak-chat__message-content--assistant">
+                      <MarkdownViewer text={agentInventorResult.systemPrompt} />
+                    </div>
                   </ClientOnlyComponent>
                 </>
               )}
 
               {!agentInventorResult && (
                 <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-                  <Loading />
+                  Waiting on your instructions ...
                 </div>
               )}
             </Card>
@@ -327,14 +327,15 @@ const InventAgent: React.FC = () => {
             </Card>
             <h3 className="text-2xl font-medium mb-4">Instructions</h3>
             <Card className="mb-8">
-              <Markdown
-                className="prose prose-sm"
-                children={
-                  agentInventorResult
-                    ? agentInventorResult.systemPrompt
-                    : "No instructions provided yet."
-                }
-              />
+              <div className="oak-chat__message-content oak-chat__message-content--assistant">
+                <MarkdownViewer
+                  text={
+                    agentInventorResult
+                      ? agentInventorResult.systemPrompt
+                      : "No instructions provided yet."
+                  }
+                />
+              </div>
             </Card>
             <h3 className="text-2xl font-medium mb-4">
               Activated Tools and Settings

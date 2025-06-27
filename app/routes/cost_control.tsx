@@ -304,7 +304,6 @@ const CostControl = () => {
     }
   }, [fetcher.data, spacesWithAgents]);
 
-  console.log(usage);
   return (
     <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">

@@ -22,7 +22,6 @@ export const refreshKnowledgeSources = async (
   if (!plugin) {
     throw new Error(`Plugin ${pluginName} not found`);
   }
-  console.log("plugin", plugin);
   if (!plugin.syncKnowledge || typeof plugin.syncKnowledge !== "function") {
     // This plugin does not have a syncKnowledge function implemented
     console.log(
@@ -36,7 +35,6 @@ export const refreshKnowledgeSources = async (
       existingDocuments,
       provider: OAKProvider(getConfig(), pluginName, null),
     });
-    console.log("syncJobs", syncJobs);
     for (const syncJob of syncJobs) {
       if (syncJob.action === "ADD") {
         let upsertDocumentId: string | undefined = undefined;

@@ -9,6 +9,7 @@ const google = createGoogleGenerativeAI();
 export default {
   name: "ARC9 Agents",
   models: [
+    google("gemini-2.0-flash-lite"),
     openai("gpt-4o"),
     openai("gpt-4o-mini"),
     google("gemini-1.5-pro"),

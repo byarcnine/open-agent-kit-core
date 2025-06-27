@@ -8,6 +8,7 @@ import { ChatContext } from "./chat.client";
 import React from "react";
 import { decode } from "html-entities";
 import remarkGfm from "remark-gfm";
+import "./markdown.scss";
 
 const getYoutubeVideoId = (url: string) => {
   const videoId = url.includes("youtube.com")
