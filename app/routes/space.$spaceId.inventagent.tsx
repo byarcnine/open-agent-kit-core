@@ -502,45 +502,37 @@ const InventAgent: React.FC = () => {
                 <span>Conversation Tracking</span>
               </div>
             </Card>
-            <h3 className="text-2xl font-medium mb-4">Activated Plugins</h3>
-            <div className="flex flex-col gap-2">
-              {agentInventorResult?.plugins.map((plugin) => (
-                <Card key={plugin.name} className="flex flex-col">
-                  <CardHeader className="flex flex-col">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-base">
-                          {plugin.displayName}
-                        </CardTitle>
-                        <Badge variant="outline" className="text-xs px-2 py-1">
-                          Built-in
-                        </Badge>
-                      </div>
-                    </div>
-                    {plugin.description && (
-                      <div className="text-sm text-muted-foreground mb-4">
-                        {plugin.description}
-                      </div>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <Switch
-                      checked={agentData.plugins.some(
-                        (p) => p.name === plugin.name,
-                      )}
-                      onCheckedChange={(checked) => {
-                        setAgentData((prev) => ({
-                          ...prev,
-                          plugins: checked
-                            ? [...prev.plugins, plugin]
-                            : prev.plugins.filter((p) => p !== plugin),
-                        }));
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {agentData.plugins.length > 0 && (
+              <>
+                <h3 className="text-2xl font-medium mb-4">Activated Plugins</h3>
+                <div className="flex flex-col gap-2">
+                  {agentData.plugins.map((plugin) => (
+                    <Card key={plugin.name} className="flex flex-col">
+                      <CardHeader className="flex flex-col">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-base">
+                              {plugin.displayName}
+                            </CardTitle>
+                            <Badge
+                              variant="outline"
+                              className="text-xs px-2 py-1"
+                            >
+                              Built-in
+                            </Badge>
+                          </div>
+                        </div>
+                        {plugin.description && (
+                          <div className="text-sm text-muted-foreground mb-4">
+                            {plugin.description}
+                          </div>
+                        )}
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
