@@ -37,8 +37,11 @@ const CreateAgentSchema = z.object({
 });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const spaceId = params.spaceId;
+  const { spaceId } = params;
   await hasAccessHierarchical(request, "space.create_agent", spaceId);
+  return {
+    spaceId,
+  };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {

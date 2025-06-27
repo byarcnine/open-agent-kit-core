@@ -9,6 +9,7 @@ import React from "react";
 import { decode } from "html-entities";
 import remarkGfm from "remark-gfm";
 import "./markdown.scss";
+import ClientOnlyComponent from "../clientOnlyComponent/clientOnlyComponent";
 
 const getYoutubeVideoId = (url: string) => {
   const videoId = url.includes("youtube.com")
@@ -141,51 +142,53 @@ const renderMarkdownLink = ({
 const MarkdownViewer = ({ text }: { text: string }) => {
   const { chatSettings } = useContext(ChatContext);
   return (
-    <Markdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        p: CustomP,
-        li: CustomLI,
-        a: (props) => renderMarkdownLink({ ...props, chatSettings }),
-        code({
-          inline,
-          className,
-          children,
-          ...props
-        }: {
-          inline?: boolean;
-          className?: string;
-          children?: React.ReactNode;
-        } & React.HTMLAttributes<HTMLElement>) {
-          const match = /language-(\w+)/.exec(className || "");
-          return !inline && match ? (
-            <CopyBlock
-              text={decode(String(children).replace(/\n$/, ""))}
-              language={match[1]}
-              showLineNumbers={false}
-              theme={atomOneLight}
-              customStyle={{
-                display: "flex",
-                padding: "10px",
-              }}
-            />
-          ) : (
-            <code
-              className={className}
-              style={{
-                whiteSpace: "pre-wrap",
-                wordWrap: "break-word",
-              }}
-              {...props}
-            >
-              {children}
-            </code>
-          );
-        },
-      }}
-    >
-      {text}
-    </Markdown>
+    <ClientOnlyComponent>
+      <Markdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          p: CustomP,
+          li: CustomLI,
+          a: (props) => renderMarkdownLink({ ...props, chatSettings }),
+          code({
+            inline,
+            className,
+            children,
+            ...props
+          }: {
+            inline?: boolean;
+            className?: string;
+            children?: React.ReactNode;
+          } & React.HTMLAttributes<HTMLElement>) {
+            const match = /language-(\w+)/.exec(className || "");
+            return !inline && match ? (
+              <CopyBlock
+                text={decode(String(children).replace(/\n$/, ""))}
+                language={match[1]}
+                showLineNumbers={false}
+                theme={atomOneLight}
+                customStyle={{
+                  display: "flex",
+                  padding: "10px",
+                }}
+              />
+            ) : (
+              <code
+                className={className}
+                style={{
+                  whiteSpace: "pre-wrap",
+                  wordWrap: "break-word",
+                }}
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
+        }}
+      >
+        {text}
+      </Markdown>
+    </ClientOnlyComponent>
   );
 };
 

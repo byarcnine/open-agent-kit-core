@@ -39,7 +39,7 @@ export const routes = (
         ...prefix("/space/:spaceId/", [
           index(`${corePrefix}/space.$spaceId._index.tsx`),
           route("permissions", `${corePrefix}/space.$spaceId.permissions.tsx`),
-          route("invent_agent", `${corePrefix}/space.$spaceId.inventagent.tsx`),
+          route("invent-agent", `${corePrefix}/space.$spaceId.inventagent.tsx`),
           route(
             "permissions/group/:groupId",
             `${corePrefix}/space.$spaceId.permissions.group.$groupId.tsx`,

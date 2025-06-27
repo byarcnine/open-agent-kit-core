@@ -15,7 +15,7 @@ const InventAgent = ({}) => {
     }
     console.log("Agent creation logic goes here with prompt:", prompt);
     // push to new route
-    navigate(`/space/arc9/invent_agent?prompt=${encodeURIComponent(prompt)}`, {
+    navigate(`/space/arc9/invent-agent?prompt=${encodeURIComponent(prompt)}`, {
       replace: true,
     });
   };
