@@ -7,6 +7,7 @@ import ChatInput from "../chat/chatInput";
 import { initialChatSettings } from "../../constants/chat";
 import type { AgentSettings } from "~/types/agentSetting";
 import type { ToolResult } from "ai";
+import "./inventAgent.scss" 
 
 interface ChatProps {
   onConversationStart?: (conversationId: string) => void;
@@ -49,10 +50,12 @@ const AgentInventorToolComponent = (
   );
 };
 
-const InventAgentChat = (props: ChatProps) => {
+const InventAgentChat = (props: ChatProps & { initialPrompt?: string }) => {
   const { messages, status, error, handleInputChange, handleSubmit } = useChat({
     api: `/api/invent`,
   });
+  const { initialPrompt } = props;
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState("");
@@ -64,6 +67,22 @@ const InventAgentChat = (props: ChatProps) => {
     handleSubmit(e);
     setInput("");
   };
+
+  useEffect(() => {
+    console.log("initialPrompt");
+    if (initialPrompt) {
+      console.log("Initial prompt provided:", initialPrompt, messages);
+      if (messages.length === 0) {
+        // If there are no messages, we can add the initial prompt
+        handleInputChange({
+          target: { value: initialPrompt },
+        } as React.ChangeEvent<HTMLTextAreaElement>);
+        handleSubmit(
+          new Event("submit") as unknown as React.FormEvent<HTMLFormElement>,
+        );
+      }
+    }
+  }, [initialPrompt, handleInputChange, handleSubmit, messages]);
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
@@ -93,7 +112,7 @@ const InventAgentChat = (props: ChatProps) => {
   }, [messages]);
 
   return (
-    <div id="oak-chat-container" className={`oak-chat`}>
+    <div id="oak-chat-container" className={`oak-chat max-w-full`}>
       <>
         <Messages
           messages={messages}

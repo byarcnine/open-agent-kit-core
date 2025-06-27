@@ -42,7 +42,8 @@ const inventionTool = tool({
       }),
       prompt: `You are an agentic agent that is used to invent agents.
       You are given a specification and you need to generate an agent based on that specification.
-      Generate a name, a description and a system prompt for the agent.
+      Generate a cool and concise name, a description and a detailed system prompt for the agent. The system prompt should be precise and explicit, include DOs and DON'Ts, 
+      and be at least 100 words long.
 
       The specification is: ${specification}
       `,
