@@ -26,6 +26,7 @@ interface ChatProps {
   anchorToBottom?: boolean;
   onEmbedInit?: (chatSettings: ChatSettings) => void;
   onAgentInventorResult?: (result: AgentInventorToolResult) => void;
+  onInventorRunning?: (running: boolean) => void;
 }
 
 export type AgentInventorToolResult = {
@@ -109,6 +110,7 @@ const InventAgentChat = (props: ChatProps & { initialPrompt?: string }) => {
       );
       if (!toolResult) return;
       if (toolResult.type !== "tool-invocation") return;
+      props.onInventorRunning?.(toolResult.toolInvocation.state !== "result");
       if (toolResult.toolInvocation.state !== "result") return;
       const result = toolResult.toolInvocation
         .result as AgentInventorToolResult;

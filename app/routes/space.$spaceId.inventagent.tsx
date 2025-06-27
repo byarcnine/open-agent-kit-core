@@ -97,9 +97,9 @@ enum StepTypes {
 const InventAgent: React.FC = () => {
   const [agentInventorResult, setAgentInventorResult] =
     useState<AgentInventorToolResult | null>(null);
-  const [systemPromptKey, setSystemPromptKey] = useState(0);
 
   const [step, setStep] = React.useState(StepTypes.INSTRUCT_AGENT);
+  const [inventorRunning, setInventorRunning] = useState(false);
 
   const stepItems = [
     {
@@ -176,7 +176,6 @@ const InventAgent: React.FC = () => {
                     "I want a wiki. Company Wiki for new employees that join us. Explain policies, no specific tools needed but need to upload documents. Friendly tone. Generate"
                   }
                   onAgentInventorResult={(result) => {
-                    setSystemPromptKey((prev) => prev + 1);
                     setAgentInventorResult(result);
                     console.log(
                       "settings agent",
@@ -191,6 +190,7 @@ const InventAgent: React.FC = () => {
                       ),
                     }));
                   }}
+                  onInventorRunning={setInventorRunning}
                 />
               </ClientOnlyComponent>
             </Card>
@@ -229,7 +229,11 @@ const InventAgent: React.FC = () => {
 
               {!agentInventorResult && (
                 <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-                  Waiting on your instructions ...
+                  {inventorRunning ? (
+                    <Loading />
+                  ) : (
+                    <span>Waiting on your instructions ...</span>
+                  )}
                 </div>
               )}
             </Card>
