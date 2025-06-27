@@ -42,6 +42,7 @@ const CreateAgentSchema = z.object({
   captureFeedback: z.boolean().default(true),
   trackingEnabled: z.boolean().default(true),
   systemPrompt: z.string(),
+  needsDocumentUpload: z.boolean().default(false),
 });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -70,6 +71,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     captureFeedback: formData.get("captureFeedback") === "true",
     trackingEnabled: formData.get("trackingEnabled") === "true",
     systemPrompt: formData.get("systemPrompt"),
+    needsDocumentUpload: formData.get("needsDocumentUpload") === "true",
   });
   if (!validation.success) {
     return {
@@ -86,6 +88,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     captureFeedback,
     trackingEnabled,
     systemPrompt,
+    needsDocumentUpload,
   } = validation.data;
 
   try {
@@ -119,6 +122,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         },
       },
     });
+    if (needsDocumentUpload) {
+      return redirect(`/space/${spaceId}/agent/${agent.id}/knowledge`);
+    }
     return redirect(`/space/${spaceId}/agent/${agent.id}`);
   } catch (error) {
     console.error(error);
@@ -169,6 +175,7 @@ const InventAgent: React.FC = () => {
       systemPrompt: string;
       name: string;
       description: string;
+      needsDocumentUpload: boolean;
     } & AgentSettings
   >({
     hasKnowledgeBase: true,
@@ -178,6 +185,7 @@ const InventAgent: React.FC = () => {
     systemPrompt: "",
     name: "",
     description: "",
+    needsDocumentUpload: false,
   });
 
   const goToNextStep = () => {
@@ -197,6 +205,7 @@ const InventAgent: React.FC = () => {
           captureFeedback: agentData.captureFeedback,
           trackingEnabled: agentData.trackingEnabled,
           systemPrompt: agentData.systemPrompt,
+          needsDocumentUpload: agentData.needsDocumentUpload,
         },
         {
           method: "post",

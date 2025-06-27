@@ -47,6 +47,7 @@ const inventionTool = (spaceId: string) =>
           needsKnowledgeBase: z.boolean(),
           shouldCaptureFeedback: z.boolean(),
           shouldTrackConversation: z.boolean(),
+          needsDocumentUpload: z.boolean(),
         }),
         prompt: `You are an agentic agent that is used to invent agents.
       You are given a specification and you need to generate an agent based on that specification.
@@ -56,6 +57,7 @@ const inventionTool = (spaceId: string) =>
       - needsKnowledgeBase: Whether the agent needs a knowledge base
       - shouldCaptureFeedback: Whether the agent should capture feedback
       - shouldTrackConversation: Whether the agent should track the conversation
+      - needsDocumentUpload: Whether the agent needs to upload documents to fulfill its task
 
       The specification is: ${specification}
       `,
