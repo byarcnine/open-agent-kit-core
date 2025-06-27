@@ -1,34 +1,104 @@
 import { Label } from "@radix-ui/react-label";
 import React, { useState } from "react";
+import { prisma } from "@db/db.server";
 import { Activity, Book, MessageCircle, User } from "react-feather";
 import Markdown from "react-markdown";
-import { type LoaderFunctionArgs } from "react-router";
+import {
+  redirect,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
+import { z } from "zod";
 import ClientOnlyComponent from "~/components/clientOnlyComponent/clientOnlyComponent";
 import InventAgentChat, {
   type AgentInventorToolResult,
 } from "~/components/inventAgent/inventAgentChat.client";
 import Loading from "~/components/loading/loading";
-import MarkdownEdit from "~/components/markdownedit/markdownedit.client";
 import Steps from "~/components/steps/steps";
 import { Badge } from "~/components/ui/badge";
-
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Switch } from "~/components/ui/switch";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
 import type { AgentSettings } from "~/types/agentSetting";
+
+const CreateAgentSchema = z.object({
+  name: z.string().min(1, "Agent name is required"),
+  slug: z
+    .string()
+    .min(3, "Agent slug is required and must be at least 3 characters")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must contain only lowercase letters, numbers, and hyphens",
+    ),
+  description: z.string().optional(),
+});
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const spaceId = params.spaceId;
   await hasAccessHierarchical(request, "space.create_agent", spaceId);
 };
 
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { spaceId } = params;
+  await hasAccessHierarchical(
+    request,
+    PERMISSION["space.create_agent"],
+    spaceId,
+  );
+  const formData = await request.formData();
+
+  const validation = CreateAgentSchema.safeParse({
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    description: formData.get("description"),
+  });
+
+  if (!validation.success) {
+    return {
+      errors: validation.error.flatten().fieldErrors,
+    };
+  }
+
+  const { name, slug } = validation.data;
+
+  try {
+    const agent = await prisma.agent.create({
+      data: {
+        id: slug,
+        name,
+        description: validation.data.description || null,
+        space: {
+          connect: {
+            id: spaceId,
+          },
+        },
+      },
+    });
+    return redirect(`/space/${spaceId}/agent/${agent.id}`);
+  } catch (error) {
+    return {
+      errors: {
+        slug: ["Space with this slug already exists"],
+      },
+    };
+  }
+};
+
+enum StepTypes {
+  INSTRUCT_AGENT = 0,
+  CHOOSE_TOOLS = 1,
+  ACTIVATE_PLUGINS = 2,
+  REVIEW_CREATE = 3,
+}
+
 const InventAgent: React.FC = () => {
   const [agentInventorResult, setAgentInventorResult] =
     useState<AgentInventorToolResult | null>(null);
   const [systemPromptKey, setSystemPromptKey] = useState(0);
 
-  const [step, setStep] = React.useState(0);
+  const [step, setStep] = React.useState(StepTypes.INSTRUCT_AGENT);
 
   const stepItems = [
     {
@@ -42,7 +112,6 @@ const InventAgent: React.FC = () => {
         "Select the tools you want to use for your agent. You can choose from the available tools in your space. We have already preselected some tools that are commonly used for agents. You can also add custom tools later.",
     },
     { title: "Activate plugins" },
-    { title: "Give agent knowledge" },
     { title: "Review and create agent" },
   ];
 
@@ -75,6 +144,7 @@ const InventAgent: React.FC = () => {
     // You can navigate back or reset the state as needed
   };
 
+  console.log(systemPromptKey);
   console.log(agentData);
 
   return (
@@ -95,7 +165,7 @@ const InventAgent: React.FC = () => {
       </div>
 
       <div className="relative flex flex-col flex-1 shrink-1 overflow-hidden">
-        {step === 0 && (
+        {step === StepTypes.INSTRUCT_AGENT && (
           <div className="relative flex gap-8 flex-1 overflow-hidden">
             <Card className="overflow-auto flex-1/2 p-0">
               <ClientOnlyComponent>
@@ -152,7 +222,7 @@ const InventAgent: React.FC = () => {
             </Card>
           </div>
         )}
-        {step === 1 && (
+        {step === StepTypes.CHOOSE_TOOLS && (
           <>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
               <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
@@ -233,6 +303,86 @@ const InventAgent: React.FC = () => {
             </div>
           </>
         )}
+        {step === StepTypes.REVIEW_CREATE && (
+          <div className="w-full flex flex-col overflow-auto">
+            <h3 className="text-2xl font-medium mb-4">
+              General Agent Information
+            </h3>
+            <Card className="mb-8">
+              <div className="flex items-center gap-2">
+                <div className="w-12 h-12 rounded-md bg-blue-200 flex items-center justify-center mb-2 shrink-0">
+                  <User size={20} className="text-primary" />
+                </div>
+                {agentInventorResult && (
+                  <div className="flex flex-col gap-2">
+                    <h2 className="font-medium text-xl">
+                      {agentInventorResult.name}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {agentInventorResult.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Card>
+            <h3 className="text-2xl font-medium mb-4">Instructions</h3>
+            <Card className="mb-8">
+              <Markdown
+                className="prose prose-sm"
+                children={
+                  agentInventorResult
+                    ? agentInventorResult.systemPrompt
+                    : "No instructions provided yet."
+                }
+              />
+            </Card>
+            <h3 className="text-2xl font-medium mb-4">
+              Activated Tools and Settings
+            </h3>
+            <Card className="mb-8 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={agentData.hasKnowledgeBase}
+                  onCheckedChange={(checked) => {
+                    setAgentData((prev) => ({
+                      ...prev,
+                      hasKnowledgeBase: checked,
+                    }));
+                  }}
+                />
+                <span>Knowledge Base</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={agentData.captureFeedback}
+                  onCheckedChange={(checked) => {
+                    setAgentData((prev) => ({
+                      ...prev,
+                      captureFeedback: checked,
+                    }));
+                  }}
+                />
+                <span>Capture Feedback</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={agentData.trackingEnabled}
+                  onCheckedChange={(checked) => {
+                    setAgentData((prev) => ({
+                      ...prev,
+                      trackingEnabled: checked,
+                    }));
+                  }}
+                />
+                <span>Conversation Tracking</span>
+              </div>
+            </Card>
+            <h3 className="text-2xl font-medium mb-4">Activated Plugins</h3>
+            <Card></Card>
+          </div>
+        )}
       </div>
 
       <div className="h-18 border-t mt-8 flex items-center shrink-0">
@@ -249,7 +399,7 @@ const InventAgent: React.FC = () => {
           </Button>
 
           <Button className="ml-auto" variant="default" onClick={goToNextStep}>
-            Continue
+            {step === StepTypes.REVIEW_CREATE ? "Create Agent" : "Next Step"}
           </Button>
         </div>
       </div>

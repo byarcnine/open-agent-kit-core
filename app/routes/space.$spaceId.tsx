@@ -4,30 +4,14 @@ import {
   type MetaFunction,
   redirect,
   useLoaderData,
-  Link,
-  useActionData,
-  useNavigate,
   data,
   Outlet,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { MessageCircle, Search, Sliders, Users } from "react-feather";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
+
 import { z } from "zod";
 import Layout from "~/components/layout/layout";
-import NoDataCard from "~/components/ui/no-data-card";
-import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
-import { useEffect, useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
+
 import {
   allowedAgentsToViewForUser,
   getUserScopes,
@@ -35,15 +19,8 @@ import {
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
-import {
-  AgentCard,
-  AgentCardContent,
-  AgentCardDescription,
-  AgentCardHeader,
-  AgentCardTitle,
-} from "~/components/ui/agent-card";
+
 import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
-import Bubble from "~/components/ui/bubble";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),

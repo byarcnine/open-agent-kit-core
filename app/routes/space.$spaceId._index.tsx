@@ -10,11 +10,10 @@ import {
   data,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { MessageCircle, Search, Sliders, Users } from "react-feather";
+import { MessageCircle, Search, Sliders } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
-import Layout from "~/components/layout/layout";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateAgentDialog from "~/components/createAgentDialog/createAgentDialog";
 import { useEffect, useState } from "react";
@@ -41,7 +40,6 @@ import {
   AgentCardHeader,
   AgentCardTitle,
 } from "~/components/ui/agent-card";
-import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 import Bubble from "~/components/ui/bubble";
 
 const CreateAgentSchema = z.object({
