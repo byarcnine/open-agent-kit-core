@@ -77,9 +77,7 @@ const InventAgentChat = (props: ChatProps & { initialPrompt?: string }) => {
   };
 
   useEffect(() => {
-    console.log("initialPrompt");
     if (initialPrompt) {
-      console.log("Initial prompt provided:", initialPrompt, messages);
       if (messages.length === 0) {
         // If there are no messages, we can add the initial prompt
         handleInputChange({

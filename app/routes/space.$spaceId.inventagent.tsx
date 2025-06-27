@@ -5,6 +5,7 @@ import { Activity, Book, MessageCircle, User } from "react-feather";
 import {
   redirect,
   useFetcher,
+  useSearchParams,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -70,7 +71,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     trackingEnabled: formData.get("trackingEnabled") === "true",
     systemPrompt: formData.get("systemPrompt"),
   });
-  console.log("validation", validation.error?.flatten().fieldErrors);
   if (!validation.success) {
     return {
       errors: validation.error.flatten().fieldErrors,
@@ -143,6 +143,9 @@ const InventAgent: React.FC = () => {
 
   const [step, setStep] = React.useState(StepTypes.INSTRUCT_AGENT);
   const [inventorRunning, setInventorRunning] = useState(false);
+  const [searchParams] = useSearchParams();
+  const starterPrompt = searchParams.get("prompt");
+
   const fetch = useFetcher();
   const stepItems = [
     {
@@ -215,8 +218,6 @@ const InventAgent: React.FC = () => {
     // You can navigate back or reset the state as needed
   };
 
-  console.log(agentData);
-
   return (
     <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
       <div className="sticky top-0 shrink-0">
@@ -240,9 +241,7 @@ const InventAgent: React.FC = () => {
             <Card className="overflow-auto flex-1/2 p-0">
               <ClientOnlyComponent>
                 <InventAgentChat
-                  initialPrompt={
-                    "I want a wiki. Company Wiki for new employees that join us. Explain policies, no specific tools needed but need to upload documents. Friendly tone. Generate"
-                  }
+                  initialPrompt={starterPrompt as string}
                   onAgentInventorResult={(result) => {
                     setAgentInventorResult(result);
                     setAgentData((prev) => ({

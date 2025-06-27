@@ -13,11 +13,8 @@ const InventAgent = ({}) => {
       console.error("Prompt cannot be empty");
       return;
     }
-    console.log("Agent creation logic goes here with prompt:", prompt);
     // push to new route
-    navigate(`/space/arc9/invent-agent?prompt=${encodeURIComponent(prompt)}`, {
-      replace: true,
-    });
+    navigate(`/space/arc9/invent-agent?prompt=${encodeURIComponent(prompt)}`);
   };
 
   return (
