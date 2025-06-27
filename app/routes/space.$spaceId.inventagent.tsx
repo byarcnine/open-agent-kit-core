@@ -4,6 +4,7 @@ import { prisma } from "@db/db.server";
 import { Activity, Book, MessageCircle, User } from "react-feather";
 import {
   redirect,
+  useFetcher,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
@@ -23,6 +24,7 @@ import { PERMISSION } from "~/lib/permissions/permissions";
 import type { AgentSettings } from "~/types/agentSetting";
 import MarkdownViewer from "~/components/chat/markdownViewer";
 import "~/components/chat/markdown.scss";
+import type { PluginType } from "~/types/plugins";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -33,7 +35,12 @@ const CreateAgentSchema = z.object({
       /^[a-z0-9-]+$/,
       "Slug must contain only lowercase letters, numbers, and hyphens",
     ),
-  description: z.string().optional(),
+  description: z.string(),
+  plugins: z.array(z.string()).default([]),
+  hasKnowledgeBase: z.boolean().default(true),
+  captureFeedback: z.boolean().default(true),
+  trackingEnabled: z.boolean().default(true),
+  systemPrompt: z.string(),
 });
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -57,31 +64,64 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     name: formData.get("name"),
     slug: formData.get("slug"),
     description: formData.get("description"),
+    plugins: formData.getAll("plugins"),
+    hasKnowledgeBase: formData.get("hasKnowledgeBase") === "true",
+    captureFeedback: formData.get("captureFeedback") === "true",
+    trackingEnabled: formData.get("trackingEnabled") === "true",
+    systemPrompt: formData.get("systemPrompt"),
   });
-
+  console.log("validation", validation.error?.flatten().fieldErrors);
   if (!validation.success) {
     return {
       errors: validation.error.flatten().fieldErrors,
     };
   }
 
-  const { name, slug } = validation.data;
+  const {
+    name,
+    slug,
+    description,
+    plugins,
+    hasKnowledgeBase,
+    captureFeedback,
+    trackingEnabled,
+    systemPrompt,
+  } = validation.data;
 
   try {
     const agent = await prisma.agent.create({
       data: {
         id: slug,
         name,
-        description: validation.data.description || null,
+        description,
+        pluginAvailability: {
+          create: plugins.map((plugin) => ({
+            isEnabled: true,
+            isGlobal: false,
+            pluginIdentifier: plugin,
+          })),
+        },
         space: {
           connect: {
             id: spaceId,
+          },
+        },
+        agentSettings: JSON.stringify({
+          hasKnowledgeBase,
+          captureFeedback,
+          trackingEnabled,
+        } satisfies AgentSettings),
+        systemPrompts: {
+          create: {
+            prompt: systemPrompt,
+            key: "default",
           },
         },
       },
     });
     return redirect(`/space/${spaceId}/agent/${agent.id}`);
   } catch (error) {
+    console.error(error);
     return {
       errors: {
         slug: ["Space with this slug already exists"],
@@ -103,7 +143,7 @@ const InventAgent: React.FC = () => {
 
   const [step, setStep] = React.useState(StepTypes.INSTRUCT_AGENT);
   const [inventorRunning, setInventorRunning] = useState(false);
-
+  const fetch = useFetcher();
   const stepItems = [
     {
       title: "Instruct your agent",
@@ -120,12 +160,21 @@ const InventAgent: React.FC = () => {
   ];
 
   // Default agent settings
-  const [agentData, setAgentData] = React.useState<AgentSettings>({
+  const [agentData, setAgentData] = React.useState<
+    {
+      plugins: PluginType[];
+      systemPrompt: string;
+      name: string;
+      description: string;
+    } & AgentSettings
+  >({
     hasKnowledgeBase: true,
     captureFeedback: true,
     trackingEnabled: true,
     plugins: [],
     systemPrompt: "",
+    name: "",
+    description: "",
   });
 
   const goToNextStep = () => {
@@ -134,6 +183,22 @@ const InventAgent: React.FC = () => {
     } else {
       // Final step, handle agent creation logic here
       console.log("Agent data ready for creation:", agentData);
+      if (!agentInventorResult) return;
+      fetch.submit(
+        {
+          name: agentData.name,
+          slug: agentInventorResult?.slug,
+          description: agentData.description,
+          plugins: agentData.plugins.map((p) => p.name),
+          hasKnowledgeBase: agentData.hasKnowledgeBase,
+          captureFeedback: agentData.captureFeedback,
+          trackingEnabled: agentData.trackingEnabled,
+          systemPrompt: agentData.systemPrompt,
+        },
+        {
+          method: "post",
+        },
+      );
       // You can add your agent creation logic here
     }
   };
@@ -180,14 +245,9 @@ const InventAgent: React.FC = () => {
                   }
                   onAgentInventorResult={(result) => {
                     setAgentInventorResult(result);
-                    console.log(
-                      "settings agent",
-                      result.plugins.filter((p) =>
-                        result.recommendedActivePlugins.includes(p.name),
-                      ),
-                    );
                     setAgentData((prev) => ({
                       ...prev,
+                      ...result,
                       plugins: result.plugins.filter((p) =>
                         result.recommendedActivePlugins.includes(p.name),
                       ),

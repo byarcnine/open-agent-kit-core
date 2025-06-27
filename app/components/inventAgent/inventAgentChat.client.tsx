@@ -38,6 +38,7 @@ export type AgentInventorToolResult = {
   shouldTrackConversation: boolean;
   plugins: PluginType[];
   recommendedActivePlugins: string[];
+  slug: string;
 };
 
 const AgentInventorToolComponent = (

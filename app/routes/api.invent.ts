@@ -9,6 +9,9 @@ import { generateObject, streamText, tool } from "ai";
 import { getConfig } from "~/lib/config/config";
 import { z } from "zod";
 import { getPluginsForSpace } from "~/lib/plugins/availability.server";
+import type { AgentInventorToolResult } from "~/components/inventAgent/inventAgentChat.client";
+import slugify from "slugify";
+import { prisma } from "@db/db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -72,11 +75,24 @@ const inventionTool = (spaceId: string) =>
       Carefully inspect the description and only recommend plugins that are relevant to the specification.
       `,
       });
+      const recommendedSlug = slugify(res.object.name, { lower: true });
+      const alreadyWithSlug = await prisma.agent.count({
+        where: {
+          id: {
+            startsWith: recommendedSlug,
+          },
+        },
+      });
+      const slug =
+        alreadyWithSlug > 0
+          ? `${recommendedSlug}-${alreadyWithSlug + 1}`
+          : recommendedSlug;
       return {
         ...res.object,
         plugins: availablePlugins,
         recommendedActivePlugins: recommenderResponse.object.plugins,
-      };
+        slug,
+      } satisfies AgentInventorToolResult;
     },
   });
 
