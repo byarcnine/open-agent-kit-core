@@ -164,3 +164,18 @@ export const getUserRoutesForAgent = async (agentId: string) => {
     )
     .filter((i) => !!i);
 };
+
+export const getPluginsForSpace = async (spaceId: string) => {
+  const enabledPlugins = await prisma.pluginAvailability.findMany({
+    where: {
+      OR: [
+        { spaceId: spaceId, isEnabled: true },
+        { isGlobal: true, isEnabled: true },
+      ],
+    },
+  });
+  const plugins = getPlugins().filter((p) =>
+    enabledPlugins.some((ep) => ep.pluginIdentifier === p.name),
+  );
+  return plugins;
+};

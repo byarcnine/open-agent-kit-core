@@ -16,7 +16,7 @@ import Loading from "~/components/loading/loading";
 import Steps from "~/components/steps/steps";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Switch } from "~/components/ui/switch";
 import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
@@ -121,6 +121,8 @@ const InventAgent: React.FC = () => {
     hasKnowledgeBase: true,
     captureFeedback: true,
     trackingEnabled: true,
+    plugins: [],
+    systemPrompt: "",
   });
 
   const goToNextStep = () => {
@@ -145,7 +147,6 @@ const InventAgent: React.FC = () => {
     // You can navigate back or reset the state as needed
   };
 
-  console.log(systemPromptKey);
   console.log(agentData);
 
   return (
@@ -177,6 +178,18 @@ const InventAgent: React.FC = () => {
                   onAgentInventorResult={(result) => {
                     setSystemPromptKey((prev) => prev + 1);
                     setAgentInventorResult(result);
+                    console.log(
+                      "settings agent",
+                      result.plugins.filter((p) =>
+                        result.recommendedActivePlugins.includes(p.name),
+                      ),
+                    );
+                    setAgentData((prev) => ({
+                      ...prev,
+                      plugins: result.plugins.filter((p) =>
+                        result.recommendedActivePlugins.includes(p.name),
+                      ),
+                    }));
                   }}
                 />
               </ClientOnlyComponent>
@@ -303,6 +316,49 @@ const InventAgent: React.FC = () => {
             </div>
           </>
         )}
+        {step === StepTypes.ACTIVATE_PLUGINS && (
+          <div className="w-full flex flex-col overflow-auto">
+            <h3 className="text-2xl font-medium mb-4">Activate Plugins</h3>
+            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
+              {agentInventorResult?.plugins.map((plugin) => (
+                <Card key={plugin.name} className="flex flex-col">
+                  <CardHeader className="flex flex-col">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-base">
+                          {plugin.displayName}
+                        </CardTitle>
+                        <Badge variant="outline" className="text-xs px-2 py-1">
+                          Built-in
+                        </Badge>
+                      </div>
+                    </div>
+                    {plugin.description && (
+                      <div className="text-sm text-muted-foreground mb-4">
+                        {plugin.description}
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <Switch
+                      checked={agentData.plugins.some(
+                        (p) => p.name === plugin.name,
+                      )}
+                      onCheckedChange={(checked) => {
+                        setAgentData((prev) => ({
+                          ...prev,
+                          plugins: checked
+                            ? [...prev.plugins, plugin]
+                            : prev.plugins.filter((p) => p !== plugin),
+                        }));
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
         {step === StepTypes.REVIEW_CREATE && (
           <div className="w-full flex flex-col overflow-auto">
             <h3 className="text-2xl font-medium mb-4">
@@ -381,7 +437,44 @@ const InventAgent: React.FC = () => {
               </div>
             </Card>
             <h3 className="text-2xl font-medium mb-4">Activated Plugins</h3>
-            <Card></Card>
+            <div className="flex flex-col gap-2">
+              {agentInventorResult?.plugins.map((plugin) => (
+                <Card key={plugin.name} className="flex flex-col">
+                  <CardHeader className="flex flex-col">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-base">
+                          {plugin.displayName}
+                        </CardTitle>
+                        <Badge variant="outline" className="text-xs px-2 py-1">
+                          Built-in
+                        </Badge>
+                      </div>
+                    </div>
+                    {plugin.description && (
+                      <div className="text-sm text-muted-foreground mb-4">
+                        {plugin.description}
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <Switch
+                      checked={agentData.plugins.some(
+                        (p) => p.name === plugin.name,
+                      )}
+                      onCheckedChange={(checked) => {
+                        setAgentData((prev) => ({
+                          ...prev,
+                          plugins: checked
+                            ? [...prev.plugins, plugin]
+                            : prev.plugins.filter((p) => p !== plugin),
+                        }));
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
       </div>

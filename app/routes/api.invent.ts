@@ -8,6 +8,7 @@ import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.serve
 import { generateObject, streamText, tool } from "ai";
 import { getConfig } from "~/lib/config/config";
 import { z } from "zod";
+import { getPluginsForSpace } from "~/lib/plugins/availability.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -25,34 +26,59 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 };
 
-const inventionTool = tool({
-  description:
-    "This tool is used to generate the agent based on the users specification",
-  parameters: z.object({
-    specification: z.string(),
-  }),
-  execute: async ({ specification }) => {
-    const config = getConfig();
-    const res = await generateObject({
-      model: config.models[0],
-      schema: z.object({
-        name: z.string(),
-        description: z.string(),
-        systemPrompt: z.string(),
-      }),
-      prompt: `You are an agentic agent that is used to invent agents.
+const inventionTool = (spaceId: string) =>
+  tool({
+    description:
+      "This tool is used to generate the agent based on the users specification",
+    parameters: z.object({
+      specification: z.string(),
+    }),
+    execute: async ({ specification }) => {
+      const config = getConfig();
+      const res = await generateObject({
+        model: config.models[0],
+        schema: z.object({
+          name: z.string(),
+          description: z.string(),
+          systemPrompt: z.string(),
+          needsKnowledgeBase: z.boolean(),
+          shouldCaptureFeedback: z.boolean(),
+          shouldTrackConversation: z.boolean(),
+        }),
+        prompt: `You are an agentic agent that is used to invent agents.
       You are given a specification and you need to generate an agent based on that specification.
       Generate a cool and concise name, a description and a detailed system prompt for the agent. The system prompt should be precise and explicit, include DOs and DON'Ts,
       and be at least 100 words long.
+      Based on the agent you are inventing also decide if it needs a knowledge base, if it should capture feedback and if it should track the conversation.
+      - needsKnowledgeBase: Whether the agent needs a knowledge base
+      - shouldCaptureFeedback: Whether the agent should capture feedback
+      - shouldTrackConversation: Whether the agent should track the conversation
 
       The specification is: ${specification}
       `,
-    });
-    return {
-      ...res.object,
-    };
-  },
-});
+      });
+      const availablePlugins = await getPluginsForSpace(spaceId);
+      const prompt = res.object.systemPrompt;
+      const recommenderResponse = await generateObject({
+        model: config.models[0],
+        schema: z.object({
+          plugins: z.array(z.string()),
+        }),
+        prompt: `You are an agentic agent that is used to invent agents.
+      You are given a list of plugins and a specification.
+      You need to recommend the best plugins for the agent based on the specification.
+      The specification is: ${prompt}
+      The plugins are: ${availablePlugins.map((p) => `${p.name}: ${p.description}`).join("\n\n")}
+      Carefully inspect the description and only recommend plugins that are relevant to the specification.
+      `,
+      });
+      return {
+        ...res.object,
+        plugins: availablePlugins,
+        recommendedActivePlugins: recommenderResponse.object.plugins,
+      };
+    },
+  });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const body = await request.json();
@@ -60,6 +86,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   await hasAccessHierarchical(request, "space.create_agent", spaceId);
   const config = await getConfig();
+
   try {
     const stream = streamText({
       model: config.models[0],
@@ -69,16 +96,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
  Once you have collected enough information you can call the 'agentInventor' tool to generate the agent.
  The name should be human, like a colleague or a friend.
  The description should be a short description of the agent.
- The system prompt should be a system prompt for the agent to is precise and explicit. Use markdown to format the system prompt in a way that is easy to read and understand.
+ The system prompt should be a system prompt for the agent to is precise and explicit. Use markdown to format the system prompt and structure it in a way that is easy to read and understand (e.g. headings, lists, etc.).
+ Do not use placeholders in the system prompt. If you are unsure ask the user for clarification.
  Do not tell the user that you are using tools.
 
  The agentInventor tool will return a JSON object with the following properties:
  - name: The name of the agent
  - description: The description of the agent
  - systemPrompt: The system prompt of the agent
+
 `,
       tools: {
-        __agentInventor: inventionTool,
+        __agentInventor: inventionTool(spaceId),
       },
       onFinish: async (completion) => {
         console.log(completion);

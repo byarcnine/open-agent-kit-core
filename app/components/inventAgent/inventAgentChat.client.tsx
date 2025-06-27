@@ -7,7 +7,8 @@ import ChatInput from "../chat/chatInput";
 import { initialChatSettings } from "../../constants/chat";
 import type { AgentSettings } from "~/types/agentSetting";
 import type { ToolResult } from "ai";
-import "./inventAgent.scss" 
+import "./inventAgent.scss";
+import type { PluginType } from "~/types/plugins";
 
 interface ChatProps {
   onConversationStart?: (conversationId: string) => void;
@@ -31,6 +32,11 @@ export type AgentInventorToolResult = {
   name: string;
   description: string;
   systemPrompt: string;
+  needsKnowledgeBase: boolean;
+  shouldCaptureFeedback: boolean;
+  shouldTrackConversation: boolean;
+  plugins: PluginType[];
+  recommendedActivePlugins: string[];
 };
 
 const AgentInventorToolComponent = (
