@@ -50,7 +50,9 @@ function Badge({
 }: BadgeProps) {
   return (
     <div
-      className={cn(badgeVariants({ variant, disabled, reduced }), className)}
+      className={cn(badgeVariants({ variant, disabled, reduced }), className, {
+        "cursor-pointer" : props.onClick && !disabled,
+      })}
       aria-disabled={disabled}
       {...props}
     />

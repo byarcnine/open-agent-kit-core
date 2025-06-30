@@ -50,10 +50,7 @@ const AgentInventorToolComponent = (
 ) => {
   return (
     <div>
-      <h3>Agent Inventor</h3>
-      <p>Name: {props.result?.name}</p>
-      <p>Description: {props.result?.description}</p>
-      <p>System Prompt: {props.result?.systemPrompt}</p>
+      <p>...inventing {props.result?.name}</p>
     </div>
   );
 };

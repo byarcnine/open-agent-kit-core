@@ -49,12 +49,16 @@ const CreateAgentDialog = ({
       </DialogTrigger>
       <DialogContent maxWidth="3xl">
         <DialogHeader>
-          <DialogTitle>New Agent Workflow</DialogTitle>
+          <DialogTitle>Invent Your Agent</DialogTitle>
         </DialogHeader>
         <InventAgent />
 
-        <div className="border-t " />
-        <AgentDefaultOptions />
+        {false && (
+          <>
+            <div className="border-t " />
+            <AgentDefaultOptions />
+          </>
+        )}
         {false && (
           <Form method="post" className="space-y-4">
             <div className="space-y-2">
@@ -69,7 +73,7 @@ const CreateAgentDialog = ({
                 }}
               />
               {errors?.name && (
-                <p className="text-sm text-destructive">{errors.name[0]}</p>
+                <p className="text-sm text-destructive">{errors?.name?.[0] ?? ""}</p>
               )}
             </div>
             <div className="space-y-2">

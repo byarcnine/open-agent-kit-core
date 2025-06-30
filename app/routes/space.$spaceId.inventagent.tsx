@@ -5,6 +5,8 @@ import { Activity, Book, MessageCircle, User } from "react-feather";
 import {
   redirect,
   useFetcher,
+  useLoaderData,
+  useNavigate,
   useSearchParams,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
@@ -26,6 +28,7 @@ import type { AgentSettings } from "~/types/agentSetting";
 import MarkdownViewer from "~/components/chat/markdownViewer";
 import "~/components/chat/markdown.scss";
 import type { PluginType } from "~/types/plugins";
+import { cn } from "~/lib/utils";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -147,25 +150,35 @@ const InventAgent: React.FC = () => {
   const [agentInventorResult, setAgentInventorResult] =
     useState<AgentInventorToolResult | null>(null);
 
+  const { spaceId } = useLoaderData<{ spaceId: string }>();
+
   const [step, setStep] = React.useState(StepTypes.INSTRUCT_AGENT);
   const [inventorRunning, setInventorRunning] = useState(false);
   const [searchParams] = useSearchParams();
   const starterPrompt = searchParams.get("prompt");
 
+  const navigate = useNavigate();
+
   const fetch = useFetcher();
   const stepItems = [
     {
-      title: "Instruct your agent",
+      title: "Instruct Agent",
       description:
         " We will guide you through the process of creating your agent. Be as specific as possible to get the best results.",
     },
     {
-      title: "Choose agent tools",
+      title: "Choose Agent Tools",
       description:
         "Select the tools you want to use for your agent. You can choose from the available tools in your space. We have already preselected some tools that are commonly used for agents. You can also add custom tools later.",
     },
-    { title: "Activate plugins" },
-    { title: "Review and create agent" },
+    {
+      title: "Activate Plugins",
+      description: "Activate the plugins you want to use with your agent.",
+    },
+    {
+      title: "Review & Create",
+      description: "Review your agent settings and create your agent.",
+    },
   ];
 
   // Default agent settings
@@ -211,7 +224,6 @@ const InventAgent: React.FC = () => {
           method: "post",
         },
       );
-      // You can add your agent creation logic here
     }
   };
 
@@ -221,10 +233,27 @@ const InventAgent: React.FC = () => {
     }
   };
 
-  const handleCancel = () => {
-    // Handle cancel logic, e.g., navigate back or reset state
-    console.log("Agent creation cancelled");
-    // You can navigate back or reset the state as needed
+  const handleCancel = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (
+      !confirm("Are you sure you want to cancel? All progress will be lost.")
+    ) {
+      e.preventDefault();
+      return;
+    }
+  };
+
+  const handleAgentInventorResult = (result: AgentInventorToolResult) => {
+    setAgentInventorResult(result);
+    setAgentData((prev) => ({
+      ...prev,
+      ...result,
+      name: result.name,
+      systemPrompt: result.systemPrompt,
+      description: result.description,
+      plugins: result.plugins.filter((p) =>
+        result.recommendedActivePlugins.includes(p.name),
+      ),
+    }));
   };
 
   return (
@@ -245,74 +274,86 @@ const InventAgent: React.FC = () => {
       </div>
 
       <div className="relative flex flex-col flex-1 shrink-1 overflow-hidden">
-        {step === StepTypes.INSTRUCT_AGENT && (
-          <div className="relative flex gap-8 flex-1 overflow-hidden">
-            <Card className="overflow-auto flex-1/2 p-0">
-              <ClientOnlyComponent>
-                <InventAgentChat
-                  initialPrompt={starterPrompt as string}
-                  onAgentInventorResult={(result) => {
-                    setAgentInventorResult(result);
-                    setAgentData((prev) => ({
-                      ...prev,
-                      ...result,
-                      plugins: result.plugins.filter((p) =>
-                        result.recommendedActivePlugins.includes(p.name),
-                      ),
-                    }));
-                  }}
-                  onInventorRunning={setInventorRunning}
-                />
-              </ClientOnlyComponent>
-            </Card>
+        <div
+          className={cn("relative flex gap-8 flex-1 overflow-hidden", {
+            hidden: step !== StepTypes.INSTRUCT_AGENT,
+          })}
+        >
+          <Card className="overflow-auto flex-1/2 p-0">
+            <ClientOnlyComponent>
+              <InventAgentChat
+                initialPrompt={starterPrompt as string}
+                onAgentInventorResult={handleAgentInventorResult}
+                onInventorRunning={setInventorRunning}
+              />
+            </ClientOnlyComponent>
+          </Card>
 
-            <Card className="overflow-auto flex-1/2">
-              {agentInventorResult && (
-                <>
-                  <div>
-                    <Badge className="mb-4" variant="outline">
-                      Agent Inventor Result
-                    </Badge>
-                  </div>
-                  <div className="flex items-start gap-2  border-b pb-4 mb-4">
-                    <div className="w-12 h-12 rounded-md bg-blue-200 flex items-center justify-center mb-2 shrink-0">
-                      <User size={20} className="text-primary" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <h2 className="font-medium text-xl">
-                        {agentInventorResult.name}
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {agentInventorResult.description}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="mb-4" variant="outline">
-                    Generated Instructions
+          <Card className="overflow-auto flex-1/2">
+            {agentInventorResult && (
+              <>
+                <h3 className="mb-4 text-xl font-medium flex">
+                  Agent Information
+                  <Badge className="ml-auto" variant="outline" reduced>
+                    Note: can be updated later
                   </Badge>
-                  <ClientOnlyComponent>
-                    <div className="oak-chat__message-content oak-chat__message-content--assistant">
-                      <MarkdownViewer text={agentInventorResult.systemPrompt} />
-                    </div>
-                  </ClientOnlyComponent>
-                </>
-              )}
+                </h3>
 
-              {!agentInventorResult && (
-                <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-                  {inventorRunning ? (
-                    <Loading />
-                  ) : (
-                    <span>Waiting on your instructions ...</span>
-                  )}
+                <div className="flex items-start gap-2 mb-4">
+                  <div className="flex flex-col gap-4 flex-1">
+                    <div className="flex flex-col">
+                      <Label
+                        htmlFor="agentName"
+                        className="text-muted-foreground text-xs font-medium"
+                      >
+                        Name
+                      </Label>
+                      <span className="text-lg mb-2">{agentData.name}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <Label
+                        htmlFor="agentDescription"
+                        className="text-muted-foreground text-xs font-medium"
+                      >
+                        Description
+                      </Label>
+                      <span className="text-sm">{agentData.description}</span>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </Card>
-          </div>
-        )}
+                {!inventorRunning && (
+                  <>
+                    <Label
+                      htmlFor="agentDescription"
+                      className="text-muted-foreground text-xs font-medium"
+                    >
+                      Instructions
+                    </Label>
+                    <ClientOnlyComponent>
+                      <div className="oak-chat__message-content oak-chat__message-content--assistant text-sm">
+                        <MarkdownViewer text={agentData.systemPrompt} />
+                      </div>
+                    </ClientOnlyComponent>
+                  </>
+                )}
+              </>
+            )}
+
+            {
+              <div className="pointer-events-none absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+                {inventorRunning ? (
+                  <Loading />
+                ) : agentData.systemPrompt ? undefined : (
+                  <span>Waiting on your instructions ...</span>
+                )}
+              </div>
+            }
+          </Card>
+        </div>
+
         {step === StepTypes.CHOOSE_TOOLS && (
           <>
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               <div className="flex gap-3 items-center bg-gray-100 p-4 rounded-2xl">
                 <div className="bg-white rounded-xl aspect-square p-3">
                   <Book size={20} />
@@ -393,8 +434,7 @@ const InventAgent: React.FC = () => {
         )}
         {step === StepTypes.ACTIVATE_PLUGINS && (
           <div className="w-full flex flex-col overflow-auto">
-            <h3 className="text-2xl font-medium mb-4">Activate Plugins</h3>
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-4">
               {agentInventorResult?.plugins.map((plugin) => (
                 <Card key={plugin.name} className="flex flex-col">
                   <CardHeader className="flex flex-col">
@@ -547,13 +587,23 @@ const InventAgent: React.FC = () => {
       </div>
 
       <div className="h-18 border-t mt-8 flex items-center shrink-0">
-        <Button variant="outline" onClick={handleCancel}>
-          Cancel
-        </Button>
+        <form
+          method="post"
+          className="flex items-center gap-2 w-full"
+          onSubmit={(e) => {
+            e.preventDefault();
+            navigate(`/space/${spaceId}`);
+          }}
+        >
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+        </form>
         <div className="flex items-center gap-2 ml-auto">
           <Button
             className="ml-auto"
             variant="outline"
+            disabled={step === StepTypes.INSTRUCT_AGENT}
             onClick={goToPreviousStep}
           >
             Go Back
