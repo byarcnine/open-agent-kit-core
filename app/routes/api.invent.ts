@@ -53,6 +53,9 @@ const inventionTool = (spaceId: string) =>
       You are given a specification and you need to generate an agent based on that specification.
       Generate a cool and concise name, a description and a detailed system prompt for the agent. The system prompt should be precise and explicit, include DOs and DON'Ts,
       and be at least 100 words long.
+
+      Format the system prompt in markdown. Use headings, lists, and other markdown features to make it easy to read and understand.
+
       Based on the agent you are inventing also decide if it needs a knowledge base, if it should capture feedback and if it should track the conversation.
       - needsKnowledgeBase: Whether the agent needs a knowledge base
       - shouldCaptureFeedback: Whether the agent should capture feedback
