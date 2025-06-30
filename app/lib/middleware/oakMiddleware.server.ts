@@ -11,6 +11,8 @@ export const oakContext = unstable_createContext<{
   provider: ReturnType<typeof OAKProvider>;
 }>();
 
+export type OAKProvider = ReturnType<typeof OAKProvider>;
+
 export const OAKMiddleware: unstable_MiddlewareFunction<Response> = async (
   { request, context },
   next,
