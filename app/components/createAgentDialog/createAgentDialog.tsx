@@ -27,6 +27,8 @@ const CreateAgentDialog = ({
   const [name, setName] = useState("");
   const [isSlugDirty, setIsSlugDirty] = useState(false);
 
+  const [showCustomSetup, setShowCustomSetup] = useState(false);
+
   useEffect(() => {
     if (name) {
       setSlugFromName(
@@ -49,17 +51,19 @@ const CreateAgentDialog = ({
       </DialogTrigger>
       <DialogContent maxWidth="3xl">
         <DialogHeader>
-          <DialogTitle>Invent Your Agent</DialogTitle>
+          <DialogTitle>
+            {showCustomSetup ? "Create Custom Agent" : "Invent Your Agent"}
+          </DialogTitle>
         </DialogHeader>
-        <InventAgent />
-
-        {false && (
+        {!showCustomSetup && (
           <>
+            <InventAgent />
+
             <div className="border-t " />
-            <AgentDefaultOptions />
+            <AgentDefaultOptions onSelect={() => setShowCustomSetup(true)} />
           </>
         )}
-        {false && (
+        {showCustomSetup && (
           <Form method="post" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Agent Name*</Label>
@@ -73,7 +77,9 @@ const CreateAgentDialog = ({
                 }}
               />
               {errors?.name && (
-                <p className="text-sm text-destructive">{errors?.name?.[0] ?? ""}</p>
+                <p className="text-sm text-destructive">
+                  {errors?.name?.[0] ?? ""}
+                </p>
               )}
             </div>
             <div className="space-y-2">
@@ -101,8 +107,17 @@ const CreateAgentDialog = ({
                 placeholder="Optional agent description"
               />
             </div>
-            <Button type="submit" variant="default" className="w-full">
-              Create Agent
+            <div className="flex">
+              <Button type="submit" variant="default" className="ml-auto">
+                Create Agent
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              className=""
+              onClick={() => setShowCustomSetup(false)}
+            >
+              Go Back
             </Button>
           </Form>
         )}

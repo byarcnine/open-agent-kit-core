@@ -29,6 +29,7 @@ import MarkdownViewer from "~/components/chat/markdownViewer";
 import "~/components/chat/markdown.scss";
 import type { PluginType } from "~/types/plugins";
 import { cn } from "~/lib/utils";
+import Warning from "~/components/ui/warning";
 
 const CreateAgentSchema = z.object({
   name: z.string().min(1, "Agent name is required"),
@@ -162,9 +163,9 @@ const InventAgent: React.FC = () => {
   const fetch = useFetcher();
   const stepItems = [
     {
-      title: "Instruct Agent",
+      title: "Invent your Agent",
       description:
-        " We will guide you through the process of creating your agent. Be as specific as possible to get the best results.",
+        "We will guide you through the process of creating your agent. Be as specific as possible to get the best results.",
     },
     {
       title: "Choose Agent Tools",
@@ -267,7 +268,7 @@ const InventAgent: React.FC = () => {
           <h2 className="font-medium text-2xl">
             {step + 1}. {stepItems[step].title}
           </h2>
-          <span className="text-sm text-muted-foreground mb-4 max-w-lg">
+          <span className="text-sm text-muted-foreground mb-4 max-w-3xl">
             {stepItems[step].description}
           </span>
         </div>
@@ -292,32 +293,35 @@ const InventAgent: React.FC = () => {
           <Card className="overflow-auto flex-1/2">
             {agentInventorResult && (
               <>
-                <h3 className="mb-4 text-xl font-medium flex">
-                  Agent Information
-                  <Badge className="ml-auto" variant="outline" reduced>
-                    Note: can be updated later
-                  </Badge>
+                <h3 className="mb-4 text-2xl font-medium">
+                  Review Agent Information
                 </h3>
+                <Warning
+                  className="mb-8 max-w-3xl"
+                  description="This is a preview of your agent. You can update the name, description, and all other settings later. Carefully review the purpose and refine by providing your feedback on the left side."
+                />
 
                 <div className="flex items-start gap-2 mb-4">
                   <div className="flex flex-col gap-4 flex-1">
                     <div className="flex flex-col">
                       <Label
                         htmlFor="agentName"
-                        className="text-muted-foreground text-xs font-medium"
+                        className="text-muted-foreground text-sm"
                       >
-                        Name
+                        Agent Name
                       </Label>
                       <span className="text-lg mb-2">{agentData.name}</span>
                     </div>
                     <div className="flex flex-col">
                       <Label
                         htmlFor="agentDescription"
-                        className="text-muted-foreground text-xs font-medium"
+                        className="text-muted-foreground text-sm"
                       >
-                        Description
+                        Agent Description
                       </Label>
-                      <span className="text-sm">{agentData.description}</span>
+                      <span className="text-sm max-w-xl">
+                        {agentData.description}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -325,12 +329,12 @@ const InventAgent: React.FC = () => {
                   <>
                     <Label
                       htmlFor="agentDescription"
-                      className="text-muted-foreground text-xs font-medium"
+                      className="text-muted-foreground text-sm"
                     >
                       Instructions
                     </Label>
                     <ClientOnlyComponent>
-                      <div className="oak-chat__message-content oak-chat__message-content--assistant text-sm">
+                      <div className="text-sm max-w-3xl oak-chat__message-content oak-chat__message-content--inventor">
                         <MarkdownViewer text={agentData.systemPrompt} />
                       </div>
                     </ClientOnlyComponent>
@@ -600,15 +604,15 @@ const InventAgent: React.FC = () => {
           </Button>
         </form>
         <div className="flex items-center gap-2 ml-auto">
-          <Button
-            className="ml-auto"
-            variant="outline"
-            disabled={step === StepTypes.INSTRUCT_AGENT}
-            onClick={goToPreviousStep}
-          >
-            Go Back
-          </Button>
-
+          {step !== StepTypes.INSTRUCT_AGENT && (
+            <Button
+              className="ml-auto"
+              variant="outline"
+              onClick={goToPreviousStep}
+            >
+              Go Back
+            </Button>
+          )}
           <Button className="ml-auto" variant="default" onClick={goToNextStep}>
             {step === StepTypes.REVIEW_CREATE ? "Create Agent" : "Next Step"}
           </Button>

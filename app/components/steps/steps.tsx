@@ -15,7 +15,7 @@ const Steps: React.FC<StepsInterface> = ({ step, currentStep }) => {
         {step.map((s, index) => (
           <div
             key={`step-${s.title}-${index}`}
-            className={cn("flex-1 shrink-0 h-1 rounded-lg overflow-hidden", {
+            className={cn("flex-1 shrink-0 h-2 rounded-lg overflow-hidden", {
               "bg-blue-200": index < currentStep,
               "bg-green-600": index === currentStep,
               "bg-neutral-300": index > currentStep,

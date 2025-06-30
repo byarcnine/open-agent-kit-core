@@ -840,4 +840,11 @@
   h6 {
     @include heading-style(var(--oak-text-color-primary), 500, 3.2px, 16px);
   }
+
+  // handle the inventor system prompt review markdown
+  &--inventor {
+    * {
+      font-size: 14px !important;
+    }
+  }
 }

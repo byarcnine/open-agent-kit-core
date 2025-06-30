@@ -22,7 +22,7 @@ export const SpaceDetailNav = ({
             "flex items-center gap-3 rounded-xl px-3 py-2 transition-all truncate ",
             {
               "bg-white text-primary":
-                location.pathname === `/space/${space.id}`,
+                location.pathname.includes(`/space/${space.id}`),
             },
             {
               "hover:bg-white/50": location.pathname !== `/space/${space.id}`,
