@@ -39,7 +39,7 @@ const InventAgent = ({}) => {
   return (
     <form>
       <h3 className="text-muted-foreground text-md max-w-lg">
-        Invent your own agent. Type into the box below to describe the agent you
+        Type into the box below to describe the agent you
         want to create or choose a preset.
       </h3>
       <div className="flex flex-wrap gap-2 mt-8">
