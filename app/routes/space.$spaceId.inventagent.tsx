@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { prisma } from "@db/db.server";
 import { Activity, Book, MessageCircle } from "react-feather";
 import {
-  redirect,
   useFetcher,
   useLoaderData,
   useNavigate,
@@ -229,27 +228,52 @@ const InventAgent: React.FC = () => {
     needsDocumentUpload: false,
   });
 
+  const [nameInput, setNameInput] = useState(agentData.name);
+  const [slugInput, setSlugInput] = useState(agentData.slug);
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [descriptionInput, setDescriptionInput] = useState(
+    agentData.description,
+  );
+  const [systemPromptInput, setSystemPromptInput] = useState(
+    agentData.systemPrompt,
+  );
+
   const goToNextStep = async () => {
     if (step < stepItems.length - 1) {
       setStep((prev) => prev + 1);
     } else {
       if (!agentInventorResult) return;
+
+      const updatedData = {
+        ...agentData,
+        name: nameInput || agentData.name,
+        slug: slugInput || agentData.slug,
+        description: descriptionInput || agentData.description,
+        systemPrompt: systemPromptInput || agentData.systemPrompt,
+      };
+
+      if (slugError || !/^[a-z0-9-]+$/.test(updatedData.slug)) {
+        alert("Please fix the slug error before proceeding.");
+        return;
+      }
+
       await fetch.submit(
         {
-          name: agentData.name,
-          slug: agentData.slug,
-          description: agentData.description,
-          plugins: agentData.plugins.map((p) => p.name),
-          hasKnowledgeBase: agentData.hasKnowledgeBase,
-          captureFeedback: agentData.captureFeedback,
-          trackingEnabled: agentData.trackingEnabled,
-          systemPrompt: agentData.systemPrompt,
-          needsDocumentUpload: agentData.needsDocumentUpload,
+          name: updatedData.name,
+          slug: updatedData.slug,
+          description: updatedData.description,
+          plugins: updatedData.plugins.map((p) => p.name),
+          hasKnowledgeBase: updatedData.hasKnowledgeBase,
+          captureFeedback: updatedData.captureFeedback,
+          trackingEnabled: updatedData.trackingEnabled,
+          systemPrompt: updatedData.systemPrompt,
+          needsDocumentUpload: updatedData.needsDocumentUpload,
         },
         {
           method: "post",
         },
       );
+      setAgentData(updatedData);
       setStep(StepTypes.CREATE);
     }
   };
@@ -441,8 +465,8 @@ const InventAgent: React.FC = () => {
         )}
         {step === StepTypes.REVIEW_CREATE && (
           <div className="w-full flex flex-col overflow-auto">
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
-              <Card className="mb-8 ">
+            <div className="grid grid-cols-1 2xl:grid-cols-3 gap-4">
+              <Card className="mb-8 h-full">
                 <div className="flex flex-col gap-2 w-full">
                   <h3 className="font-medium text-xl">Agent Information</h3>
                   <div>
@@ -455,12 +479,9 @@ const InventAgent: React.FC = () => {
                     <Input
                       id="agentName"
                       name="agentName"
-                      value={agentData.name}
+                      defaultValue={agentData.name}
                       onChange={(e) => {
-                        setAgentData((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }));
+                        setNameInput(e.target.value);
                       }}
                       placeholder="Enter a unique name for your agent."
                     />
@@ -475,12 +496,9 @@ const InventAgent: React.FC = () => {
                     <Textarea
                       id="agentDescription"
                       name="agentDescription"
-                      value={agentData.description}
+                      defaultValue={agentData.description}
                       onChange={(e) => {
-                        setAgentData((prev) => ({
-                          ...prev,
-                          description: e.target.value,
-                        }));
+                        setDescriptionInput(e.target.value);
                       }}
                       placeholder="Optional agent description"
                       rows={4}
@@ -496,18 +514,45 @@ const InventAgent: React.FC = () => {
                     <Input
                       id="agentSlug"
                       name="agentSlug"
-                      value={agentData.slug}
+                      pattern="^[a-z0-9-]+$"
+                      placeholder="e.g., my-agent-name"
+                      defaultValue={agentData.slug}
                       onChange={(e) => {
-                        setAgentData((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }));
+                        setSlugError(
+                          !/^[a-z0-9-]+$/.test(e.target.value)
+                            ? "Slug must contain only lowercase letters, numbers and hyphens. Separate words with hyphens. Example: my-agent-007"
+                            : null,
+                        );
+
+                        setSlugInput(e.target.value);
                       }}
-                      placeholder="Enter a unique name for your agent."
                     />
+                    {slugError && (
+                      <p className="text-xs mt-2 text-destructive">
+                        {slugError}
+                      </p>
+                    )}
                   </div>
                 </div>
               </Card>
+              <Card className="col-span-2">
+                <h3 className="text-2xl font-medium mb-4">System Prompt</h3>
+                <div className="">
+                  <ClientOnlyComponent>
+                    {MarkdownEdit && (
+                      <MarkdownEdit
+                        key={agentData.systemPrompt}
+                        prompt={agentData.systemPrompt || ""}
+                        onChange={(value) => {
+                          setSystemPromptInput(value);
+                        }}
+                      />
+                    )}
+                  </ClientOnlyComponent>
+                </div>
+              </Card>
+            </div>
+            <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-2 gap-4 mt-4">
               <Card className="mb-8 flex flex-col gap-4">
                 <h3 className="text-xl font-medium">Agent Tools</h3>
                 {availableTools.map((tool) => (
@@ -558,28 +603,6 @@ const InventAgent: React.FC = () => {
                       activate plugins. You an also add plugins later.
                     </span>
                   )}
-                </div>
-              </Card>
-              <Card className="col-span-2">
-                <h3 className="text-2xl font-medium mb-4">System Prompt</h3>
-                <div className="oak-chat__message-content oak-chat__message-content--inventor">
-                  <ClientOnlyComponent>
-                    {MarkdownEdit && (
-                      <MarkdownEdit
-                        prompt={
-                          agentInventorResult
-                            ? agentInventorResult.systemPrompt
-                            : "No instructions provided yet."
-                        }
-                        onChange={(value) => {
-                          setAgentData((prev) => ({
-                            ...prev,
-                            systemPrompt: value,
-                          }));
-                        }}
-                      />
-                    )}
-                  </ClientOnlyComponent>
                 </div>
               </Card>
             </div>
