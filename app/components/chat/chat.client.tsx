@@ -5,15 +5,15 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
-import { type Message } from "@ai-sdk/react";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
-import { type ChatSettings } from "../../types/chat";
+import { type ChatProps, type ChatSettings } from "../../types/chat";
 import useOakChat from "../../hooks/useOakChat";
 import ChatInput from "./chatInput";
 import { initialChatSettings } from "../../constants/chat";
 import type { AgentSettings } from "~/types/agentSetting";
 import { initialAgentSettings } from "~/constants/agentSettings";
+import { renderTextWithSecureLinks } from "./utils";
 
 interface ChatContextType {
   isEmbed: boolean;
@@ -32,25 +32,8 @@ export const ChatContext = React.createContext<ChatContextType>({
 });
 
 export interface ChatRef {
-  setInput: (input: string) => void;
-}
-
-interface ChatProps {
-  onConversationStart?: (conversationId: string) => void;
-  onMessage?: (messages: Message[]) => void;
-  initialMessages?: Message[];
-  initialConversationId?: string;
-  disableInput?: boolean;
-  agentId: string;
-  apiUrl?: string;
-  meta?: object;
-  isEmbed?: boolean;
-  agentChatSettings?: ChatSettings | null;
-  agentSettings?: AgentSettings | null;
-  toolNamesList?: Record<string, string>;
-  avatarImageURL?: string;
-  anchorToBottom?: boolean;
-  onEmbedInit?: (chatSettings: ChatSettings) => void;
+  setInput?: (input: string) => void;
+  resetConversation?: () => void;
 }
 
 const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
@@ -81,13 +64,14 @@ const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
     textareaRef,
     fileInputRef,
     setInput,
+    resetConversation,
   } = useOakChat(props);
 
-  // Expose setInput function through ref
   useImperativeHandle(
     ref,
     () => ({
       setInput: (input: string) => setInput(input),
+      resetConversation: () => resetConversation(),
     }),
     [],
   );
@@ -179,7 +163,7 @@ const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
             />
             {chatSettings?.footerNote && (
               <p className="oak-chat__footer-note">
-                {chatSettings?.footerNote}
+                {renderTextWithSecureLinks(chatSettings.footerNote)}
               </p>
             )}
           </>

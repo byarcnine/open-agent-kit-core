@@ -6,11 +6,12 @@ import {
   Scripts,
   ScrollRestoration,
   type LinksFunction,
-  type LoaderFunctionArgs,
 } from "react-router";
 import "./tailwind.css";
-import { getConfig } from "./lib/config/config";
 import type { Route } from "./+types/root";
+import { OAKMiddleware } from "./lib/middleware/oakMiddleware.server";
+
+export const unstable_middleware = [OAKMiddleware]; // server
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -42,11 +43,6 @@ export const links: LinksFunction = () => [
   },
   { rel: "manifest", href: "/site.webmanifest" },
 ];
-
-export const loader = async ({ context }: LoaderFunctionArgs) => {
-  context.config = getConfig();
-  return {};
-};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

@@ -6,7 +6,6 @@ import {
   useLoaderData,
   Link,
   useActionData,
-  useNavigate,
   data,
 } from "react-router";
 import { prisma } from "@db/db.server";
@@ -163,13 +162,6 @@ const Index = () => {
     setSearch(e.target.value);
   };
 
-  const navigate = useNavigate();
-  const handleTableRowClick = (agentId: string) => {
-    if (agentId) {
-      navigate(`/agent/${agentId}`);
-    }
-  };
-
   const filteredAgents = agents.filter((agent) => {
     return (
       agent.isActive &&
@@ -319,11 +311,7 @@ const Index = () => {
                       </TableHeader>
                       <TableBody>
                         {filteredAgents.map((agent) => (
-                          <TableRow
-                            onClick={() => handleTableRowClick(agent.id)}
-                            className="cursor-pointer"
-                            key={agent.id}
-                          >
+                          <TableRow className="cursor-pointer" key={agent.id}>
                             <TableCell>{agent.name}</TableCell>
                             <TableCell className="max-md:hidden">
                               {agent.description || "No description"}

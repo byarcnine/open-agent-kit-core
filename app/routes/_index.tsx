@@ -6,7 +6,6 @@ import {
   useLoaderData,
   Link,
   useActionData,
-  useNavigate,
 } from "react-router";
 import { prisma } from "@db/db.server";
 import { CardHeader, CardTitle } from "~/components/ui/card";
@@ -134,14 +133,6 @@ const Index = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
-
-  const navigate = useNavigate();
-  const handleTableRowClick = (spaceId: string) => {
-    if (spaceId) {
-      navigate(`/space/${spaceId}`);
-    }
-  };
-
   // Filter agents based on search input
   const filteredSpaces = search
     ? spaces.filter((space) =>
@@ -282,11 +273,7 @@ const Index = () => {
                       </TableHeader>
                       <TableBody>
                         {filteredSpaces.map((space) => (
-                          <TableRow
-                            onClick={() => handleTableRowClick(space.id)}
-                            className="cursor-pointer"
-                            key={space.id}
-                          >
+                          <TableRow className="cursor-pointer" key={space.id}>
                             <TableCell>{space.name}</TableCell>
                             <TableCell className="max-md:hidden">
                               {space.description || "No description"}

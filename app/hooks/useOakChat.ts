@@ -54,6 +54,7 @@ type UseOakChatReturn = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   setInput: (input: string) => void;
+  resetConversation: () => void;
 };
 
 const isJwtExpired = (token: string) => {
@@ -177,7 +178,11 @@ const useOakChat = ({
         headers,
       });
       const data = await res.json();
-      setChatSettings(data.chatSettings || chatSettings);
+      if (!agentChatSettings || Object.keys(agentChatSettings).length === 0) {
+        setChatSettings(data.chatSettings || initialChatSettings);
+      } else {
+        setChatSettings({ ...data.chatSettings, ...agentChatSettings });
+      }
       setToolNames(data.toolNames);
 
       if (!data.conversationValid) {
@@ -444,6 +449,15 @@ const useOakChat = ({
     }
   };
 
+  const resetConversation = () => {
+    setConversationId(undefined);
+    setFiles([]);
+    setMessages([]);
+    clearFileInput();
+    setInput("");
+    sessionStorage.removeItem(OAK_CONVERSATION_TOKEN_KEY);
+  };
+
   return {
     conversationId,
     chatSettings,
@@ -472,6 +486,7 @@ const useOakChat = ({
     textareaRef,
     fileInputRef,
     setInput,
+    resetConversation,
   };
 };
 
