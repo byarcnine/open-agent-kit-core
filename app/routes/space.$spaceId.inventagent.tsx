@@ -341,7 +341,7 @@ const InventAgent: React.FC = () => {
 
       <div className="relative flex flex-col flex-1 shrink-1 overflow-hidden">
         <div
-          className={cn("relative flex gap-8 flex-1 overflow-hidden", {
+          className={cn("relative grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 overflow-hidden", {
             hidden: step !== StepTypes.INSTRUCT_AGENT,
           })}
         >
