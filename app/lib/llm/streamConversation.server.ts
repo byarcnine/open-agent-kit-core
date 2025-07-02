@@ -15,7 +15,10 @@ import {
   calculateTokensForMessages,
   calculateTokensString,
 } from "./tokenCounter.server";
-import { trackUsageForMessageResponse } from "./usage.server";
+import {
+  checkLimitForAgent,
+  trackUsageForMessageResponse,
+} from "./usage.server";
 import type { AgentSettings } from "~/types/agentSetting";
 
 const limitMessagesByTokens = (
@@ -53,6 +56,9 @@ export const streamConversation = async (
   const agent = await prisma.agent.findUnique({
     where: { id: agentId },
   });
+  if (!agent) {
+    throw new Error("Agent not found");
+  }
   const agentSettings: AgentSettings = agent?.agentSettings
     ? JSON.parse(agent.agentSettings as string)
     : {};
@@ -61,7 +67,17 @@ export const streamConversation = async (
     captureFeedback = true,
     hasKnowledgeBase = true,
   } = agentSettings;
-
+  const isOverLimit = await checkLimitForAgent(
+    agentId,
+    agent.spaceId,
+    userId,
+    30,
+  );
+  if (isOverLimit) {
+    throw new Error(
+      "You reached the usage limit configured by your administrator. Please increase your limit to keep using the agent.",
+    );
+  }
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({

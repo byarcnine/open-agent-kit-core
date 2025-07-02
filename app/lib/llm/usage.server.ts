@@ -1,5 +1,7 @@
 import type { StepResult, ToolContent } from "ai";
-import { prisma } from "@db/db.server";
+import { Prisma, prisma } from "@db/db.server";
+import dayjs from "dayjs";
+import type { Limits } from "~/types/llm";
 
 type AICompletionType = Omit<StepResult<any>, "stepType" | "isContinued"> & {
   readonly steps: StepResult<any>[];
@@ -124,32 +126,135 @@ export const trackUsageForMessageResponse = async (
   }
 };
 
-export const timeRangeOptions = [
-  { value: "7", label: "Last 7 days" },
-  { value: "30", label: "Last 30 days" },
-  { value: "90", label: "Last 90 days" },
-];
+// export const timeRangeOptions = [
+//   { value: "7", label: "Last 7 days" },
+//   { value: "30", label: "Last 30 days" },
+//   { value: "90", label: "Last 90 days" },
+// ];
 
-export const getUsageForAgent = async (agentId: string, time: string) => {
-  if (!agentId || !time) return undefined;
+// export const getUsageForAgent = async (agentId: string, time: string) => {
+//   if (!agentId || !time) return undefined;
 
-  const days = parseInt(time, 10);
-  if (isNaN(days)) {
-    throw new Error("Invalid time range provided");
+//   const days = parseInt(time, 10);
+//   if (isNaN(days)) {
+//     throw new Error("Invalid time range provided");
+//   }
+
+//   const startDate = new Date();
+//   startDate.setDate(startDate.getDate() - days);
+
+//   return await prisma.usage.findMany({
+//     where: {
+//       agentId: agentId,
+//       createdAt: {
+//         gte: startDate,
+//       },
+//     },
+//     orderBy: {
+//       createdAt: "desc",
+//     },
+//   });
+// };
+
+export const getUsageForType = async (
+  type: "space" | "agent" | "user",
+  entityId: string,
+  period: number,
+) => {
+  let filter: Prisma.UsageWhereInput = {};
+  if (type === "space") {
+    filter = {
+      agent: {
+        space: {
+          id: entityId,
+        },
+      },
+    };
+  } else if (type === "agent") {
+    filter = {
+      agentId: entityId,
+    };
+  } else if (type === "user") {
+    filter = {
+      userId: entityId,
+    };
   }
 
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  const startDate = dayjs().subtract(period, "day").toDate();
 
-  return await prisma.usage.findMany({
+  return prisma.usage.aggregate({
     where: {
-      agentId: agentId,
-      createdAt: {
-        gte: startDate,
+      ...filter,
+      year: {
+        gte: startDate.getFullYear(),
+      },
+      month: {
+        gte: startDate.getMonth() + 1,
+      },
+      day: {
+        gte: startDate.getDate(),
       },
     },
-    orderBy: {
-      createdAt: "desc",
+    _sum: {
+      inputTokens: true,
+      outputTokens: true,
     },
   });
+};
+
+export const checkLimitForAgent = async (
+  agentId: string,
+  spaceId: string,
+  userId: string,
+  period: number,
+) => {
+  const limits = await prisma.globalConfig.findFirst({
+    where: {
+      key: "activeLimits",
+    },
+  });
+  const activeLimits = (limits?.value as Limits | null) || { activeLimits: [] };
+  const relevantLimits = activeLimits.activeLimits.filter((limit) => {
+    if (limit.type === "agent") {
+      return limit.entityId === agentId;
+    }
+    if (limit.type === "space") {
+      return limit.entityId === spaceId;
+    }
+    if (limit.type === "user") {
+      return limit.entityId === userId;
+    }
+    return false;
+  });
+  const spaceLimit = relevantLimits.reduce((acc, limit) => {
+    if (limit.type === "space") {
+      return Math.min(acc, limit.limit);
+    }
+    return acc;
+  }, Infinity);
+  const agentLimit = relevantLimits.reduce((acc, limit) => {
+    if (limit.type === "agent") {
+      return Math.min(acc, limit.limit);
+    }
+    return acc;
+  }, Infinity);
+  const userLimit = relevantLimits.reduce((acc, limit) => {
+    if (limit.type === "user") {
+      return Math.min(acc, limit.limit);
+    }
+    return acc;
+  }, Infinity);
+
+  const [agentUsage, spaceUsage, userUsage] = await Promise.all([
+    getUsageForType("agent", agentId, period),
+    getUsageForType("space", spaceId, period),
+    getUsageForType("user", userId, period),
+  ]).then((usages) => {
+    return usages.map((usage) => {
+      return Number(usage._sum.inputTokens) + Number(usage._sum.outputTokens);
+    });
+  });
+  return (
+    agentUsage > agentLimit || spaceUsage > spaceLimit || userUsage > userLimit
+  );
 };

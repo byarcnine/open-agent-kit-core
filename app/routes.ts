@@ -24,17 +24,18 @@ export const routes = (
 
     // UI admin routes
     layout(`${corePrefix}/admin.layout.tsx`, [
-      index(`${corePrefix}/_index.tsx`),
-      route("settings", `${corePrefix}/settings.tsx`),
-      //  route("insights", `${corePrefix}/insights.tsx`),
-      route("cost_control", `${corePrefix}/cost_control.tsx`),
-
-      route("plugins", `${corePrefix}/plugins.tsx`),
-      route("permissions", `${corePrefix}/permission._index.tsx`),
-      route(
-        "permissions/group/:groupId",
-        `${corePrefix}/permission.group.$groupId.tsx`,
-      ),
+      layout(`${corePrefix}/_index.layout.tsx`, [
+        index(`${corePrefix}/_index.tsx`),
+        route("settings", `${corePrefix}/settings.tsx`),
+        route("cost-control", `${corePrefix}/costControl.tsx`),
+        route("analytics", `${corePrefix}/analytics.tsx`),
+        route("plugins", `${corePrefix}/plugins.tsx`),
+        route("permissions", `${corePrefix}/permission._index.tsx`),
+        route(
+          "permissions/group/:groupId",
+          `${corePrefix}/permission.group.$groupId.tsx`,
+        ),
+      ]),
       layout(`${corePrefix}/space.$spaceId.tsx`, [
         ...prefix("/space/:spaceId/", [
           index(`${corePrefix}/space.$spaceId._index.tsx`),

@@ -120,7 +120,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({ error: "An error occurred" }), {
+    let message = "An error occurred";
+    if (error instanceof Error) {
+      message = error.message;
+    }
+    return new Response(message, {
       status: 500,
       headers: corsHeaders,
     });

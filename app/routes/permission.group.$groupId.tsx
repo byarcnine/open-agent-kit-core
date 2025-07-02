@@ -352,7 +352,7 @@ const PermissionGroupDetail = () => {
   }, [updateFetcher.state, updateFetcher.data]);
 
   return (
-    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
+    <>
       <div className="py-8 px-4 md:p-8 w-full mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -730,7 +730,7 @@ const PermissionGroupDetail = () => {
       )}
 
       <Toaster />
-    </Layout>
+    </>
   );
 };
 

@@ -471,7 +471,7 @@ export default function Plugins() {
   };
 
   return (
-    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
+    <>
       <div className="w-full py-8 px-4 md:p-8 flex flex-col">
         {hasPendingPlugins && (
           <div className="mb-6 relative overflow-hidden rounded-lg border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 dark:border-orange-800 dark:from-orange-950 dark:to-amber-950">
@@ -913,7 +913,7 @@ export default function Plugins() {
         />
       </div>
       <Toaster />
-    </Layout>
+    </>
   );
 }
 

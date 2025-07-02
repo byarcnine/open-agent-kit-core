@@ -60,15 +60,15 @@ export const OverviewNav = ({
           </Link>
         )}
         <Link
-          to="/cost_control"
+          to="/cost-control"
           prefetch="intent"
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  truncate",
             {
-              "bg-white text-primary": location.pathname === "/cost_control",
+              "bg-white text-primary": location.pathname === "/cost-control",
             },
             {
-              "hover:bg-white/50": location.pathname !== "/cost_control",
+              "hover:bg-white/50": location.pathname !== "/cost-control",
             },
           )}
         >
@@ -108,17 +108,21 @@ export const OverviewNav = ({
             coming soon
           </div>
         </div>
-        <div
+        <Link
+          to="/analytics"
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  pointer-events-none truncate",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all truncate",
+            {
+              "bg-white text-primary": location.pathname === "/analytics",
+            },
+            {
+              "hover:bg-white/50": location.pathname !== "/analytics",
+            },
           )}
         >
           <Activity className="h-4 w-4" />
           Insights & Analytics
-          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-white/75 p-1 truncate">
-            coming soon
-          </div>
-        </div>
+        </Link>
 
         {userScopes.some((p) => p.scope === "global.edit_global_users") && (
           <Link

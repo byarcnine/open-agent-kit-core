@@ -18,9 +18,6 @@ import { Package, Search } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
-import Layout from "~/components/layout/layout";
-import { OverviewNav } from "~/components/overviewNav/overviewNav";
-import { type SessionUser } from "~/types/auth";
 import NoDataCard from "~/components/ui/no-data-card";
 import CreateSpaceDialog from "~/components/createSpaceDialog/createSpaceDialog";
 import { useEffect, useState } from "react";
@@ -111,15 +108,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   );
   return {
     spaces,
-    user: user as SessionUser,
-    userScopes,
     canCreateSpace,
   };
 };
 
 const Index = () => {
-  const { spaces, user, userScopes, canCreateSpace } =
-    useLoaderData<typeof loader>();
+  const { spaces, canCreateSpace } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const [search, setSearch] = useState("");
@@ -150,7 +144,7 @@ const Index = () => {
   }, []);
 
   return (
-    <Layout navComponent={<OverviewNav userScopes={userScopes} />} user={user}>
+    <>
       <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
         <div className="sticky top-0">
           <div className="flex flex-row flex-wrap items-center justify-between pb-4 gap-4">
@@ -308,7 +302,7 @@ const Index = () => {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 

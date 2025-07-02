@@ -6,3 +6,14 @@ export type ModelSettings = {
   frequencyPenalty?: number;
   presencePenalty?: number;
 };
+
+export type Limits = {
+  activeLimits: {
+    entityId: string;
+    type: "space" | "agent" | "user";
+    limit: number;
+    entity?: {
+      name: string;
+    };
+  }[];
+};
