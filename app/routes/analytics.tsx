@@ -199,7 +199,7 @@ const Analytics = () => {
                           <TableRow key={agent.id} className="h-15">
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <ChevronRight size={14} />
+                                {/* <ChevronRight size={14} /> */}
                                 <div className="aspect-square w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center max-md:hidden">
                                   <User size={14} />
                                 </div>
