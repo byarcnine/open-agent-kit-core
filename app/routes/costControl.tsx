@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { prisma } from "@db/db.server";
 import {
   Dialog,
@@ -219,7 +219,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .then((users) => {
       return users.map((user) => ({
         id: user.id,
-        name: user.name,
+        name: `${user.name} (${user.email})`,
       }));
     });
 
@@ -241,15 +241,15 @@ const CostControl = () => {
     return [];
   };
 
-  // Close dialog on successful submission
-  if (actionData && "success" in actionData) {
-    if (dialogOpen) {
+  // Reset form state after successful submission
+  useEffect(() => {
+    if (actionData && "success" in actionData) {
       setDialogOpen(false);
       setEntityId("");
       setLimit("");
       setType("space");
     }
-  }
+  }, [actionData]);
 
   return (
     <div className="max-w-6xl mx-auto py-10 w-full">
@@ -316,7 +316,8 @@ const CostControl = () => {
                     name="limit"
                     type="number"
                     min={0.00001}
-                    step={0.01}
+                    max={1000}
+                    step={0.00001}
                     value={limit}
                     onChange={(e) => setLimit(e.target.value)}
                     placeholder="e.g. 1 for 1,000,000 tokens"
