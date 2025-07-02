@@ -154,7 +154,7 @@ const InventAgent: React.FC = () => {
   const [inventorRunning, setInventorRunning] = useState(false);
 
   const [searchParams] = useSearchParams();
-  const starterPrompt = searchParams.get("prompt");
+  const starterPrompt = searchParams.get("prompt") || 'Help me invent an agent.';
 
   const navigate = useNavigate();
   const fetch = useFetcher();
