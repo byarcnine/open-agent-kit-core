@@ -219,7 +219,7 @@ const ChatOverview = () => {
                     key={p.slug}
                     to={`/chat/${agentId}/plugins/${p.slug}`}
                     className={cn(
-                      "flex items-center gap-2 rounded-xl px-3 py-2 mb-8",
+                      "flex items-center gap-2 rounded-xl px-3 py-2",
                       location.pathname.startsWith(
                         `/chat/${agentId}/plugins/${p.slug}`,
                       )
