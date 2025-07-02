@@ -253,7 +253,7 @@ const CostControl = () => {
   }, [actionData]);
 
   return (
-    <div className="max-w-6xl mx-auto py-10 w-full">
+    <div className="mx-auto py-10 w-full">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold mb-2">Cost Control</h1>
