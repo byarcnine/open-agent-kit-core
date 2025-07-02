@@ -180,6 +180,11 @@ const InventAgent: React.FC = () => {
       description:
         "Review your agent settings and create your agent. You can update the name, description, and all other settings later after creation.",
     },
+    {
+      title: "Agent Assembly",
+      description:
+        "Your agent is being assembled. This may take a few seconds.",
+    },
   ];
 
   // Available Tools
@@ -319,7 +324,7 @@ const InventAgent: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
-      {step !== StepTypes.CREATE && (
+     
         <>
           <div className="sticky top-0 shrink-0">
             <div className="flex flex-col pb-8 gap-4">
@@ -337,8 +342,7 @@ const InventAgent: React.FC = () => {
             </div>
           </div>
         </>
-      )}
-
+      
       <div className="relative flex flex-col flex-1 shrink-1 overflow-hidden">
         <div
           className={cn("relative grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 overflow-hidden", {
@@ -609,7 +613,9 @@ const InventAgent: React.FC = () => {
           </div>
         )}
         {step === StepTypes.CREATE && (
+          <Card className="max-w-xl">
           <AgentAssemblyAnimation onComplete={handleAnimationComplete} />
+          </Card>
         )}
       </div>
 

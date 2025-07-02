@@ -56,6 +56,8 @@ const inventionTool = (spaceId: string) =>
 
       Format the system prompt in markdown. Use headings, lists, and other markdown features to make it easy to read and understand.
 
+      Generate in the same language as the specification.
+
       Based on the agent you are inventing also decide if it needs a knowledge base, if it should capture feedback and if it should track the conversation.
       - needsKnowledgeBase: Whether the agent needs a knowledge base
       - shouldCaptureFeedback: Whether the agent should capture feedback
@@ -120,6 +122,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
  The system prompt should be a system prompt for the agent to is precise and explicit. Use markdown to format the system prompt and structure it in a way that is easy to read and understand (e.g. headings, lists, etc.).
  Do not use placeholders in the system prompt. If you are unsure ask the user for clarification.
  Do not tell the user that you are using tools.
+
+ Use the same language as the user.
 
  The agentInventor tool will return a JSON object with the following properties:
  - name: The name of the agent
