@@ -2,10 +2,8 @@ import {
   useFetcher,
   useLoaderData,
   type LoaderFunctionArgs,
+  type MetaFunction,
 } from "react-router";
-
-import Layout from "~/components/layout/layout";
-import { OverviewNav } from "~/components/overviewNav/overviewNav";
 
 import {
   allowedAgentsToViewForUser,
@@ -428,6 +426,13 @@ const Analytics = () => {
       </div>
     </div>
   );
+};
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Analytics" },
+    { name: "description", content: "Analytics" },
+  ];
 };
 
 export default Analytics;

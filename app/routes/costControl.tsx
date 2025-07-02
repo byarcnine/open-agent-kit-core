@@ -40,6 +40,7 @@ import {
   useActionData,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
+  type MetaFunction,
 } from "react-router";
 import { getUsageForType } from "~/lib/llm/usage.server";
 import type { Limits } from "~/types/llm";
@@ -435,6 +436,13 @@ const CostControl = () => {
       </Card>
     </div>
   );
+};
+
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Cost Control" },
+    { name: "description", content: "Cost Control" },
+  ];
 };
 
 export default CostControl;
