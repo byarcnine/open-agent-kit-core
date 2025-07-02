@@ -1,22 +1,23 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight, Calendar } from "react-feather";
+import { Form } from "react-router";
 
 interface MonthDatepickerProps {
   onMonthSelect?: (date: Date) => void;
   defaultMonth?: Date;
   placeholder?: string;
   className?: string;
+  name?: string;
+  selectedMonth: Date;
 }
 
 const MonthDatepicker = ({
-  onMonthSelect,
   placeholder = "Select month",
   className = "",
+  name,
+  selectedMonth,
 }: MonthDatepickerProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedMonth, setSelectedMonth] = useState<Date | null>(
-    new Date(new Date().getFullYear(), new Date().getMonth()),
-  );
   const [isOpen, setIsOpen] = useState(false);
 
   const months = [
@@ -43,17 +44,6 @@ const MonthDatepicker = ({
 
   const handleNextYear = () => {
     setCurrentDate(new Date(currentYear + 1, currentMonth));
-  };
-
-  const handleMonthSelect = (monthIndex: number) => {
-    const selected = new Date(currentYear, monthIndex);
-    setSelectedMonth(selected);
-    setIsOpen(false);
-
-    // Call parent callback if provided
-    if (onMonthSelect) {
-      onMonthSelect(selected);
-    }
   };
 
   const formatSelectedMonth = () => {
@@ -97,33 +87,37 @@ const MonthDatepicker = ({
           </div>
 
           <div className="p-3">
-            <div className="grid grid-cols-3 gap-1">
-              {months.map((month, index) => {
-                const isSelected =
-                  selectedMonth &&
-                  selectedMonth.getMonth() === index &&
-                  selectedMonth.getFullYear() === currentYear;
-                const isCurrentMonth =
-                  new Date().getMonth() === index &&
-                  new Date().getFullYear() === currentYear;
+            <Form method="get">
+              <div className="grid grid-cols-3 gap-1">
+                {months.map((month, index) => {
+                  const isSelected =
+                    selectedMonth &&
+                    selectedMonth.getMonth() === index &&
+                    selectedMonth.getFullYear() === currentYear;
+                  const isCurrentMonth =
+                    new Date().getMonth() === index &&
+                    new Date().getFullYear() === currentYear;
 
-                return (
-                  <button
-                    key={month}
-                    onClick={() => handleMonthSelect(index)}
-                    className={`p-3 text-xs rounded-lg transition-colors ${
-                      isSelected
-                        ? "bg-black text-white"
-                        : isCurrentMonth
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {month.slice(0, 3)}
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <button
+                      key={month}
+                      name={name}
+                      type="submit"
+                      value={`${currentYear}-${(index + 1).toString().padStart(2, "0")}-15T12:00:00.000Z`}
+                      className={`p-3 text-xs rounded-lg transition-colors ${
+                        isSelected
+                          ? "bg-black text-white"
+                          : isCurrentMonth
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {month.slice(0, 3)}
+                    </button>
+                  );
+                })}
+              </div>
+            </Form>
           </div>
         </div>
       )}
