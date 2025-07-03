@@ -8,7 +8,7 @@ import {
   Link,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { Users, Settings } from "react-feather";
+import { Users, Settings, Link2 } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { z } from "zod";
 import NoDataCard from "~/components/ui/no-data-card";
@@ -186,6 +186,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
+        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -228,6 +229,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           { status: 200 },
         );
       } catch (error) {
+        console.error(error);
         return data<ActionData>(
           {
             success: false,
@@ -273,7 +275,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   // Get all users and their space-scoped permission groups
-  const usersPromise = getUserWithAccessToAgent(agentId);
+  const usersPromise = getUserWithAccessToAgent(agentId as string);
 
   // Get all space-scoped permission groups
   const permissionGroupsPromise = prisma.permissionGroup.findMany({
@@ -283,6 +285,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
     include: {
       userPermissionGroups: {
+        // where: {
+        //   permissionGroup: {
+        //     level: "AGENT",
+        //     agentId,
+        //   },
+        // },
         include: {
           user: true,
         },
@@ -322,10 +330,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
   });
 
-  // Filter users to only show those with space-scoped groups
-  const filteredUsers = users.filter(
-    (user) => user.userPermissionGroups.length > 0,
-  );
+  // // Filter users to only show those with space-scoped groups
+  // const filteredUsers = users.filter(
+  //   (user) => user.userPermissionGroups.length > 0,
+  // );
 
   const userScopes = await getUserScopes(user);
 
@@ -340,7 +348,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   return {
     user: user as SessionUser,
     agent,
-    users: filteredUsers,
+    users,
     permissionGroups,
     userScopes,
     agentPermissions,
@@ -446,15 +454,34 @@ const SpacePermissionManagement = () => {
                             <TableCell>
                               {user.userPermissionGroups.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
-                                  {user.userPermissionGroups.map((upg) => (
-                                    <Badge
-                                      key={upg.id}
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {upg.permissionGroup.name}
-                                    </Badge>
-                                  ))}
+                                  {user.userPermissionGroups.map((upg) => {
+                                    const isDirect =
+                                      upg.permissionGroup.level === "AGENT" &&
+                                      upg.permissionGroup.agentId === agent.id;
+                                    return (
+                                      <Badge
+                                        key={upg.id}
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {!isDirect && (
+                                          <span className="text-xs text-muted-foreground flex items-center gap-1 pr-2">
+                                            <span
+                                              className="relative group cursor-pointer"
+                                              tabIndex={0}
+                                            >
+                                              <Link2 className="h-3 w-3 text-muted-foreground" />
+                                              <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 rounded bg-black text-white text-xs opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none z-10 w-[100px]">
+                                                This group is inherited from a
+                                                higher level
+                                              </span>
+                                            </span>
+                                          </span>
+                                        )}
+                                        {upg.permissionGroup.name}
+                                      </Badge>
+                                    );
+                                  })}
                                 </div>
                               ) : (
                                 <span className="text-muted-foreground text-sm">

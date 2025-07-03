@@ -248,6 +248,7 @@ export const setUserPermissionGroups = async (
   agentId?: string,
 ) => {
   const userGrantedPermissions = await getUserGrantedPermissions(currentUser);
+  const validPermissionGroups: string[] = [];
   // if one fail throw out the whole update
   for (const id of permissionGroupIds) {
     const group = await prisma.permissionGroup.findUnique({
@@ -255,6 +256,13 @@ export const setUserPermissionGroups = async (
     });
     if (!group) {
       throw new Response("Permission group not found", { status: 404 });
+    }
+    if (
+      group.level !== level ||
+      (spaceId && group.spaceId !== spaceId) ||
+      (agentId && group.agentId !== agentId)
+    ) {
+      continue;
     }
     if (group.level === "SPACE") {
       // make sure the user has access to the space
@@ -282,6 +290,7 @@ export const setUserPermissionGroups = async (
         throw new Response("Forbidden - no access to global", { status: 403 });
       }
     }
+    validPermissionGroups.push(id);
   }
   await prisma.$transaction(async (tx) => {
     await tx.userPermissionGroup.deleteMany({
@@ -295,7 +304,7 @@ export const setUserPermissionGroups = async (
       },
     });
     await tx.userPermissionGroup.createMany({
-      data: permissionGroupIds.map((id) => ({
+      data: validPermissionGroups.map((id) => ({
         userId: userId,
         permissionGroupId: id,
       })),
