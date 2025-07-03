@@ -5,33 +5,18 @@ import {
 } from "react-router";
 
 import {
-  allowedAgentsToViewForUser,
   getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { prisma } from "@db/db.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
-import { ChevronRight, Home, User } from "react-feather";
-import { Badge } from "~/components/ui/badge";
-import Warning from "~/components/ui/warning";
 import { Card } from "~/components/ui/card";
-import Bubble from "~/components/ui/bubble";
-import TokenProgressBar from "~/components/ui/tokenProgressBar";
 import MonthDatepicker from "~/components/ui/monthDatepicker";
 import dayjs from "dayjs";
 import ReactECharts, { type EChartsOption } from "echarts-for-react";
-import ClientOnlyComponent, {
-  ClientOnly,
-} from "~/components/clientOnlyComponent/clientOnlyComponent";
+import { ClientOnly } from "~/components/clientOnlyComponent/clientOnlyComponent";
+import CostControlTable from "~/components/costControl/costControlTable";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await hasAccessHierarchical(
@@ -53,7 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     .toDate();
 
   const userScopes = await getUserScopes(user);
-  const allowedAgents = await allowedAgentsToViewForUser(user);
+  // const allowedAgents = await allowedAgentsToViewForUser(user);
 
   const spaces = await prisma.space.findMany({
     include: {
@@ -74,31 +59,34 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
       },
     },
-    where: {
-      agents: {
-        some: {
-          id: {
-            in: allowedAgents,
-          },
-        },
-      },
-    },
     orderBy: {
       name: "asc",
     },
   });
 
-  const usageForAgents = await prisma.usage.groupBy({
-    by: ["agentId", "modelId"],
-    _sum: {
-      inputTokens: true,
-      outputTokens: true,
-    },
-    where: {
-      month: selectedMonth.getMonth() + 1,
-      year: selectedMonth.getFullYear(),
-    },
-  });
+  const usageForAgents = await prisma.usage
+    .groupBy({
+      by: ["agentId", "modelId"],
+      _sum: {
+        inputTokens: true,
+        outputTokens: true,
+      },
+      where: {
+        month: selectedMonth.getMonth() + 1,
+        year: selectedMonth.getFullYear(),
+      },
+    })
+    .then((d) => {
+      return d.map((d) => ({
+        modelId: d.modelId,
+        agent: spaces
+          .find((s) => s.agents.some((a) => a.id === d.agentId))
+          ?.agents.find((a) => a.id === d.agentId),
+        space: spaces.find((s) => s.agents.some((a) => a.id === d.agentId)),
+        inputTokens: Number(d._sum.inputTokens || 0),
+        outputTokens: Number(d._sum.outputTokens || 0),
+      }));
+    });
   // const spaces = await prisma.space.findMany({
   //   include: {
   //     agents: true,
@@ -190,6 +178,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     selectedMonth,
   };
 };
+
+export type AgentUsageData = Awaited<
+  ReturnType<typeof loader>
+>["usageForAgents"];
+export type SpacesData = Awaited<ReturnType<typeof loader>>["spaces"];
 
 const Analytics = () => {
   const {
@@ -356,129 +349,7 @@ const Analytics = () => {
             />
           </Card>
         </div>
-        <Card className="px-0 py-1">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="max-md:hidden">Type</TableHead>
-                <TableHead className="max-md:hidden">Status/Model</TableHead>
-                <TableHead>Token Usage (Monthly)</TableHead>
-                {/* <TableHead>
-                  <div className="pr-2 ml-auto">Manage</div>
-                </TableHead> */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {spaces.map((space) => {
-                const totalTokens = space.agents
-                  .filter((agent) =>
-                    usageForAgents.some((usage) => usage.agentId === agent.id),
-                  )
-                  .reduce((acc, agent) => {
-                    const usages = usageForAgents.filter(
-                      (usage) => usage.agentId === agent.id,
-                    );
-                    return (
-                      acc +
-                      Number(
-                        usages.reduce(
-                          (acc, usage) =>
-                            acc + Number(usage._sum.inputTokens || 0),
-                          0,
-                        ) || 0,
-                      ) +
-                      Number(
-                        usages.reduce(
-                          (acc, usage) =>
-                            acc + Number(usage._sum.outputTokens || 0),
-                          0,
-                        ) || 0,
-                      )
-                    );
-                  }, 0);
-                return (
-                  <>
-                    <TableRow className="bg-blue-100 h-15" key={space.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2 h-full truncate">
-                          <div className="aspect-square w-8 h-8 rounded-md bg-white flex items-center justify-center">
-                            <Home size={14} />
-                          </div>
-                          {space.name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-md:hidden w-25">
-                        <Badge reduced disabled>
-                          Space
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground max-md:hidden w-40">
-                        {space.agents.length} Agents
-                      </TableCell>
-                      <TableCell className="w-100">
-                        {totalTokens ? (
-                          <TokenProgressBar limit={500000} used={totalTokens} />
-                        ) : (
-                          "n/a"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                    {space?.agents?.length > 0 &&
-                      space.agents.map((agent) => {
-                        const agentUsage = usageForAgents.filter(
-                          (usage) => usage.agentId === agent.id,
-                        );
-
-                        const totalTokens = agentUsage.reduce(
-                          (acc, usage) =>
-                            acc +
-                            Number(usage._sum.inputTokens || 0) +
-                            Number(usage._sum.outputTokens || 0),
-                          0,
-                        );
-
-                        return (
-                          <TableRow key={agent.id} className="h-15 ">
-                            <TableCell>
-                              <div className="flex items-center gap-2 pl-4">
-                                {/* <ChevronRight size={14} /> */}
-                                <div className="aspect-square w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center max-md:hidden">
-                                  <User size={14} />
-                                </div>
-                                {agent.id}
-                              </div>
-                            </TableCell>
-                            <TableCell className="max-md:hidden">
-                              <Badge variant="green" reduced disabled>
-                                Agent
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="max-md:hidden">
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Bubble isActive={agent.isActive} />{" "}
-                                {usageForAgents?.[0]?.modelId || "n/a"}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {totalTokens ? (
-                                <TokenProgressBar
-                                  limit={50000}
-                                  used={totalTokens}
-                                />
-                              ) : (
-                                "-"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                  </>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <CostControlTable agentUsage={usageForAgents} spaces={spaces} />
       </div>
     </div>
   );
