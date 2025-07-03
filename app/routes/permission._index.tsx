@@ -34,6 +34,8 @@ import {
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import { createInvitation } from "~/lib/auth/handleInvite.server";
+import { Badge } from "~/components/ui/badge";
+import { Link2 } from "react-feather";
 
 dayjs.extend(relativeTime);
 
@@ -254,6 +256,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
       },
     },
+    where: {
+      level: "GLOBAL",
+    },
     orderBy: {
       name: "asc",
     },
@@ -351,14 +356,33 @@ const PermissionManagement = () => {
                       <TableCell>
                         {user.userPermissionGroups.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {user.userPermissionGroups.map((upg) => (
-                              <span
-                                key={upg.id}
-                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                              >
-                                {upg.permissionGroup.name}
-                              </span>
-                            ))}
+                            {user.userPermissionGroups.map((upg) => {
+                              const isDirect =
+                                upg.permissionGroup.level === "GLOBAL";
+                              return (
+                                <Badge
+                                  key={upg.id}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {!isDirect && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1 pr-2">
+                                      <span
+                                        className="relative group cursor-pointer"
+                                        tabIndex={0}
+                                      >
+                                        <Link2 className="h-3 w-3 text-muted-foreground" />
+                                        <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 rounded bg-black text-white text-xs opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none z-10 w-[100px]">
+                                          This group is inherited from a lower
+                                          level.
+                                        </span>
+                                      </span>
+                                    </span>
+                                  )}
+                                  {upg.permissionGroup.name}
+                                </Badge>
+                              );
+                            })}
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">
