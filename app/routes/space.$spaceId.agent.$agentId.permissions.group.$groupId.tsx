@@ -43,7 +43,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const user = await hasAccessHierarchical(
     request,
-    PERMISSION["global.edit_global_users"],
+    PERMISSION["agent.edit_agent"],
+    params.agentId as string,
   );
 
   const intent = formData.get("intent");
@@ -104,7 +105,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const groupId = params.groupId as string;
   const user = await hasAccessHierarchical(
     request,
-    PERMISSION["global.edit_global_users"],
+    PERMISSION["agent.edit_agent"],
+    params.agentId as string,
   );
   const agent = await prisma.agent.findUnique({
     where: {

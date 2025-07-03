@@ -9,7 +9,7 @@ import {
   Link,
 } from "react-router";
 import { prisma } from "@db/db.server";
-import { Users, Settings, Plus } from "react-feather";
+import { Users, Settings, Plus, Link2 } from "react-feather";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
@@ -263,7 +263,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const user = await hasAccessHierarchical(
     request,
-    PERMISSION["space.view_space_settings"],
+    PERMISSION["space.edit_users"],
     spaceId,
   );
 
@@ -286,6 +286,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
     include: {
       userPermissionGroups: {
+        where: {
+          permissionGroup: {
+            level: "SPACE",
+          },
+        },
         include: {
           user: true,
         },
@@ -312,6 +317,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     usersPromise,
     permissionGroupsPromise,
   ]);
+  console.log(JSON.stringify(users, null, 2));
 
   // Get invites for space-scoped permission groups
   const invites = await prisma.invitation.findMany({
@@ -438,15 +444,34 @@ const SpacePermissionManagement = () => {
                             <TableCell>
                               {user.userPermissionGroups.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
-                                  {user.userPermissionGroups.map((upg) => (
-                                    <Badge
-                                      key={upg.id}
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {upg.permissionGroup.name}
-                                    </Badge>
-                                  ))}
+                                  {user.userPermissionGroups.map((upg) => {
+                                    const isDirect =
+                                      upg.permissionGroup.level === "SPACE" &&
+                                      upg.permissionGroup.spaceId === space.id;
+                                    return (
+                                      <Badge
+                                        key={upg.id}
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {!isDirect && (
+                                          <span className="text-xs text-muted-foreground flex items-center gap-1 pr-2">
+                                            <span
+                                              className="relative group cursor-pointer"
+                                              tabIndex={0}
+                                            >
+                                              <Link2 className="h-3 w-3 text-muted-foreground" />
+                                              <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 rounded bg-black text-white text-xs opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none z-10 w-[100px]">
+                                                This group is inherited from a
+                                                higher or lower level.
+                                              </span>
+                                            </span>
+                                          </span>
+                                        )}
+                                        {upg.permissionGroup.name}
+                                      </Badge>
+                                    );
+                                  })}
                                 </div>
                               ) : (
                                 <span className="text-muted-foreground text-sm">

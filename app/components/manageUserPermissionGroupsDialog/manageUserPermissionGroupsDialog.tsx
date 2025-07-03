@@ -52,7 +52,6 @@ export function ManageUserPermissionGroupsDialog({
       "permissionGroups",
       JSON.stringify(Array.from(selectedGroups)),
     );
-
     fetcher.submit(formData, { method: "post" });
     setOpen(false);
   };

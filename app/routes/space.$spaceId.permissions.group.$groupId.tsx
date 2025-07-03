@@ -30,7 +30,6 @@ import {
   updatePermissionGroupPermissions,
   type UserGrantedPermissions,
 } from "~/lib/permissions/enhancedHasAccess.server";
-import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 
 type ActionData = {
   success: boolean;
@@ -45,7 +44,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const user = await hasAccessHierarchical(
     request,
-    PERMISSION["global.edit_global_users"],
+    PERMISSION["space.edit_users"],
+    params.spaceId as string,
   );
 
   const intent = formData.get("intent");
@@ -106,7 +106,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const groupId = params.groupId as string;
   const user = await hasAccessHierarchical(
     request,
-    PERMISSION["global.edit_global_users"],
+    PERMISSION["space.edit_users"],
+    params.spaceId as string,
   );
   const space = await prisma.space.findUnique({
     where: {
