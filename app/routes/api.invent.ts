@@ -122,6 +122,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
  The system prompt should be a system prompt for the agent to is precise and explicit. Use markdown to format the system prompt and structure it in a way that is easy to read and understand (e.g. headings, lists, etc.).
  Do not use placeholders in the system prompt. If you are unsure ask the user for clarification.
  Do not tell the user that you are using tools.
+ When the user requests changes always call the tool again with an updated specification.
 
  Use the same language as the user.
 
