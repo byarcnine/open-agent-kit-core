@@ -1,53 +1,158 @@
-import { Settings, Tool, User } from "react-feather";
-import { cn } from "~/lib/utils";
+import { cn } from "../../lib/utils";
+import {
+  Activity,
+  BookOpen,
+  Cpu,
+  DollarSign,
+  Settings,
+  Tool,
+  User,
+  Zap,
+} from "react-feather";
 import { Link, useLocation } from "react-router";
-import type { SessionUser } from "~/types/auth";
+import type { UserGrantedPermissions } from "~/lib/permissions/enhancedHasAccess.server";
 
-export const OverviewNav = ({ user }: { user: SessionUser }) => {
+export const OverviewNav = ({
+  userScopes,
+}: {
+  userScopes: UserGrantedPermissions;
+}) => {
   const location = useLocation();
-  const canChangeGlobalSettings = user.role === "SUPER_ADMIN";
   return (
     <div className="flex flex-col justify-between flex-1 h-full">
-      <nav className="grid items-start md:px-2 text-sm">
+      <nav className="grid gap-0.5 items-start md:px-2 text-sm">
         <Link
           to="/"
           prefetch="intent"
           className={cn(
-            "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all truncate ",
             {
-              "bg-stone-900 text-white hover:text-white": location.pathname === "/",
+              "bg-white text-primary":
+                location.pathname === "/" ||
+                location.pathname.includes("/space/"),
+            },
+            {
+              "hover:bg-white/50":
+                location.pathname !== "/" &&
+                !location.pathname.includes("/space/"),
             },
           )}
         >
           <User className="h-4 w-4" />
-          My Agents
+          My Spaces
         </Link>
-
-        {canChangeGlobalSettings && (
+        {userScopes.some((p) => p.scope === "global.edit_plugins") && (
           <Link
             to="/plugins"
             prefetch="intent"
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+              "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  truncate",
               {
-                "bg-stone-900 text-white hover:text-white": location.pathname === "/plugins",
+                "bg-white text-primary": location.pathname === "/plugins",
+              },
+              {
+                "hover:bg-white/50": location.pathname !== "/plugins",
               },
             )}
           >
             <Tool className="h-4 w-4" />
-            Tools & Plugins
+            Agent Tools
+          </Link>
+        )}
+        {userScopes.some((p) => p.scope === "global.super_admin") && (
+          <Link
+            to="/cost_control"
+            prefetch="intent"
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  truncate",
+              {
+                "bg-white text-primary": location.pathname === "/cost_control",
+              },
+              {
+                "hover:bg-white/50": location.pathname !== "/cost_control",
+              },
+            )}
+          >
+            <DollarSign className="h-4 w-4" />
+            Cost Control
+          </Link>
+        )}
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  pointer-events-none truncate",
+          )}
+        >
+          <Cpu className="h-4 w-4" />
+          Agent Templates
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-white/75 p-1 truncate">
+            coming soon
+          </div>
+        </div>
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  pointer-events-none truncate",
+          )}
+        >
+          <BookOpen className="h-4 w-4" />
+          Knowledge
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-white/75 p-1 truncate">
+            coming soon
+          </div>
+        </div>
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  pointer-events-none truncate",
+          )}
+        >
+          <Zap className="h-4 w-4" />
+          Workflows
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-white/75 p-1 truncate">
+            coming soon
+          </div>
+        </div>
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2 transition-all  pointer-events-none truncate",
+          )}
+        >
+          <Activity className="h-4 w-4" />
+          Insights & Analytics
+          <div className="text-xs rounded-xl text-grey-600 overflow-hidden bg-white/75 p-1 truncate">
+            coming soon
+          </div>
+        </div>
+
+        {userScopes.some((p) => p.scope === "global.edit_global_users") && (
+          <Link
+            to="/permissions"
+            prefetch="intent"
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 transition-all truncate",
+              {
+                "bg-white text-primary": location.pathname === "/permissions",
+              },
+              {
+                "hover:bg-white/50": location.pathname !== "/permissions",
+              },
+            )}
+          >
+            <User className="h-4 w-4" />
+            Users & Permissions
           </Link>
         )}
       </nav>
       <nav className="md:px-2 text-sm mb-2">
-        {canChangeGlobalSettings && (
+        {userScopes.some((p) => p.scope === "global.super_admin") && (
           <Link
             to="/settings"
             prefetch="intent"
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 transition-all text-muted-foreground hover:text-primary",
+              "flex items-center gap-3 rounded-xl px-3 py-2 transition-all ",
               {
-                "bg-stone-900 text-white hover:text-white": location.pathname === "/settings",
+                "bg-white text-primary": location.pathname === "/settings",
+              },
+              {
+                "hover:bg-white/50": location.pathname !== "/settings",
               },
             )}
           >

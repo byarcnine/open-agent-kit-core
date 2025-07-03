@@ -1,13 +1,11 @@
 import React from "react";
-import ClientOnlyComponent from "../clientOnlyComponent/clientOnlyComponent";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+} from "../ui/dialog";
 import { Button } from "../ui/button";
 
 // dynamically import react-json-view
@@ -20,7 +18,12 @@ interface JsonEditorProps {
   isOpen: boolean;
 }
 
-const JsonEditor: React.FC<JsonEditorProps> = ({ data, onSave, onClose, isOpen }) => {
+const JsonEditor: React.FC<JsonEditorProps> = ({
+  data,
+  onSave,
+  onClose,
+  isOpen,
+}) => {
   const [localData, setLocalData] = React.useState(data);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -28,7 +31,7 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ data, onSave, onClose, isOpen }
         <DialogHeader>
           <DialogTitle>Edit Metadata</DialogTitle>
         </DialogHeader>
-        <div className="overflow-auto max-h-[70vh] w-full rounded-md">
+        <div className="overflow-auto max-h-[70vh] w-full rounded-xl">
           <ReactJson
             src={localData}
             onEdit={(edit) => setLocalData(edit.updated_src)}

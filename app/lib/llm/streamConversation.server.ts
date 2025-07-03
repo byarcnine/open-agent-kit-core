@@ -16,6 +16,7 @@ import {
   calculateTokensString,
 } from "./tokenCounter.server";
 import { trackUsageForMessageResponse } from "./usage.server";
+import type { AgentSettings } from "~/types/agentSetting";
 
 const limitMessagesByTokens = (
   messages: Message[],
@@ -48,10 +49,28 @@ export const streamConversation = async (
   messages: Message[],
   meta: Record<string, any>,
 ) => {
+  // check if agent has conversation tracking enabled
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+  const agentSettings: AgentSettings = agent?.agentSettings
+    ? JSON.parse(agent.agentSettings as string)
+    : {};
+  const {
+    trackingEnabled = true,
+    captureFeedback = true,
+    hasKnowledgeBase = true,
+  } = agentSettings;
+
   const conversation = conversationId
     ? await prisma.conversation.findUnique({ where: { id: conversationId } })
     : await prisma.conversation.create({
-        data: { agentId, userId, customIdentifier },
+        data: {
+          agentId,
+          userId,
+          customIdentifier,
+          private: !trackingEnabled,
+        },
       });
 
   if (!conversation) {
@@ -121,6 +140,10 @@ export const streamConversation = async (
     meta,
     messages,
     user,
+    {
+      captureFeedback,
+      knowledgeBase: hasKnowledgeBase,
+    },
   );
   const [systemPrompt, tools, model] = await Promise.all([
     systemPromptPromise,
@@ -129,7 +152,6 @@ export const streamConversation = async (
     createMessagePromise,
   ]);
   const { tools: toolsArray, closeMCPs } = tools;
-  console.log(toolsArray);
   return {
     stream: streamText({
       model: model.model,

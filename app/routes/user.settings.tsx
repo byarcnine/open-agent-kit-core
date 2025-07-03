@@ -6,7 +6,6 @@ import {
   useLoaderData,
   useActionData,
 } from "react-router";
-import { hasAccess } from "~/lib/auth/hasAccess.server";
 import { Button } from "~/components/ui/button";
 import { prisma } from "@db/db.server";
 import {
@@ -24,19 +23,25 @@ import { sessionStorage } from "~/lib/sessions.server";
 import { OverviewNav } from "~/components/overviewNav/overviewNav";
 import Layout from "~/components/layout/layout";
 import { authClient } from "~/lib/auth/auth.client";
-import { PERMISSIONS, type SessionUser } from "~/types/auth";
+import {
+  getUserScopes,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
+import type { SessionUser } from "~/types/auth";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
-  return data({ user: user as SessionUser });
+  const user = await hasAccessHierarchical(request);
+  const userScopes = await getUserScopes(user);
+  return data({ user: user as SessionUser, userScopes });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await hasAccess(request, PERMISSIONS.ACCESS_OAK);
+  const user = await hasAccessHierarchical(request);
+
   const formData = await request.formData();
   const intent = formData.get("intent");
   const session = await sessionStorage.getSession(
-    request.headers.get("Cookie")
+    request.headers.get("Cookie"),
   );
 
   if (intent === "updateName") {
@@ -52,13 +57,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return data(
       { success: true, intent },
-      { headers: { "Set-Cookie": await sessionStorage.commitSession(session) } }
+      {
+        headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
+      },
     );
   }
 };
 
 const UserSettings = () => {
-  const { user } = useLoaderData<typeof loader>();
+  const { user, userScopes } = useLoaderData<typeof loader>();
   const actionData = useActionData<{
     success: boolean;
     intent: string;
@@ -84,7 +91,7 @@ const UserSettings = () => {
     e.preventDefault();
     if (
       confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
+        "Are you sure you want to delete your account? This action cannot be undone.",
       )
     ) {
       authClient.deleteUser().then(() => {
@@ -115,7 +122,7 @@ const UserSettings = () => {
   };
 
   return (
-    <Layout user={user} navComponent={<OverviewNav user={user} />}>
+    <Layout user={user} navComponent={<OverviewNav userScopes={userScopes} />}>
       <div className="space-y-6 w-full py-8 px-4 md:p-8 overflow-auto">
         <h1 className="text-3xl font-medium">Personal Settings</h1>
         <Card>

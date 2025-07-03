@@ -19,10 +19,25 @@ export const getPluginsWithAvailability = async (): Promise<
       },
     },
   });
+  const spacePlugins = await prisma.pluginAvailability.findMany({
+    where: {
+      isGlobal: false,
+      spaceId: {
+        not: null,
+      },
+    },
+  });
   const relevantAgents = await prisma.agent.findMany({
     where: {
       id: {
         in: agentPlugins.map((ap) => ap.agentId).filter((id) => id !== null),
+      },
+    },
+  });
+  const relevantSpaces = await prisma.space.findMany({
+    where: {
+      id: {
+        in: spacePlugins.map((sp) => sp.spaceId).filter((id) => id !== null),
       },
     },
   });
@@ -33,10 +48,16 @@ export const getPluginsWithAvailability = async (): Promise<
     const agentsForPlugin = agentPlugins.filter(
       (ap) => ap.pluginIdentifier === p.name,
     );
+    const spacesForPlugin = spacePlugins.filter(
+      (sp) => sp.pluginIdentifier === p.name,
+    );
     const agents = relevantAgents.filter((a) =>
       agentsForPlugin.some((ap) => ap.agentId === a.id),
     );
-    return { ...p, isGlobal: globalPlugin !== undefined, agents };
+    const spaces = relevantSpaces.filter((s) =>
+      spacesForPlugin.some((sp) => sp.spaceId === s.id),
+    );
+    return { ...p, isGlobal: globalPlugin !== undefined, agents, spaces };
   });
 };
 
@@ -44,6 +65,7 @@ export const setPluginAvailability = async (
   pluginIdentifier: string,
   isGlobal: boolean,
   agentIds: string[],
+  spaceIds: string[],
 ) => {
   const plugin = getPlugins().find((p) => p.name === pluginIdentifier);
   if (!plugin) {
@@ -69,13 +91,26 @@ export const setPluginAvailability = async (
       });
     } else {
       // Create individual records for each agent
-      await tx.pluginAvailability.createMany({
-        data: agentIds.map((agentId) => ({
-          pluginIdentifier: pluginIdentifier,
-          isEnabled: true,
-          agentId: agentId,
-        })),
-      });
+      if (agentIds.length > 0) {
+        await tx.pluginAvailability.createMany({
+          data: agentIds.map((agentId) => ({
+            pluginIdentifier: pluginIdentifier,
+            isEnabled: true,
+            agentId: agentId,
+          })),
+        });
+      }
+
+      // Create individual records for each space
+      if (spaceIds.length > 0) {
+        await tx.pluginAvailability.createMany({
+          data: spaceIds.map((spaceId) => ({
+            pluginIdentifier: pluginIdentifier,
+            isEnabled: true,
+            spaceId: spaceId,
+          })),
+        });
+      }
     }
 
     return true;
@@ -83,10 +118,21 @@ export const setPluginAvailability = async (
 };
 
 export const getPluginsForAgent = async (agentId: string) => {
+  // Get the agent to find its space
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    include: { space: true },
+  });
+
+  if (!agent) {
+    return [];
+  }
+
   const enabledPlugins = await prisma.pluginAvailability.findMany({
     where: {
       OR: [
         { agentId, isEnabled: true },
+        { spaceId: agent.spaceId, isEnabled: true },
         { isGlobal: true, isEnabled: true },
       ],
     },
@@ -101,7 +147,7 @@ export const getAgentPluginMenuItems = async (agentId: string) => {
   const plugins = await getPluginsForAgent(agentId);
   return plugins
     .flatMap((p) =>
-      p.menuItems?.map((m) => ({ ...m, href: `${p.slug}${m.href}` })),
+      p.menuItems?.map((item) => ({ ...item, href: `${p.slug}${item.href}` })),
     )
     .filter((i) => !!i);
 };
@@ -111,7 +157,7 @@ export const getUserRoutesForAgent = async (agentId: string) => {
   return plugins
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
     .flatMap((p) =>
-      p.userRoutes?.map((m) => ({
+      p.userRoutes?.map(() => ({
         title: p.displayName,
         slug: p.slug,
       })),

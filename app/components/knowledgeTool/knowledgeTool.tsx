@@ -1,9 +1,9 @@
-import type { VectorSearchResult } from "~/lib/knowledge/vectorSearch.server";
+import type { VectorSearchResult } from "../../lib/knowledge/vectorSearch.server";
 import "./knowledgeTool.scss";
 
 const KnowledgeTool = ({ result }: { result: VectorSearchResult }) => {
   const documents = Array.from(
-    new Set(result?.map((r) => r.knowledgeDocumentName) || [])
+    new Set(result?.map((r) => r.knowledgeDocumentName) || []),
   );
   return (
     <div className="knowledge-tool">

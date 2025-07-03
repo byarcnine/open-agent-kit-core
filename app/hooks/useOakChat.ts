@@ -1,8 +1,11 @@
 import { useChat, type Message } from "@ai-sdk/react";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageRole, type ChatSettings } from "~/types/chat";
-import { initialChatSettings } from "~/constants/chat";
+import { MessageRole, type ChatSettings } from "../types/chat";
+import { initialChatSettings } from "../constants/chat";
 import { solveChallenge } from "altcha-lib";
+import { getApiUrl } from "~/components/chat/utils";
+import type { AgentSettings } from "~/types/agentSetting";
+import { initialAgentSettings } from "~/constants/agentSettings";
 
 type UseOakChatArgs = {
   onConversationStart?: (conversationId: string) => void;
@@ -14,6 +17,7 @@ type UseOakChatArgs = {
   meta?: object;
   isEmbed?: boolean;
   agentChatSettings?: ChatSettings | null;
+  agentDefaultSettings?: AgentSettings | null;
   toolNamesList?: Record<string, string>;
   anchorToBottom?: boolean;
   avatarImageURL?: string;
@@ -22,7 +26,9 @@ type UseOakChatArgs = {
 
 type UseOakChatReturn = {
   conversationId: string | undefined;
+  apiUrl: string | undefined;
   chatSettings: ChatSettings;
+  agentSettings: AgentSettings;
   toolNames: Record<string, string>;
   chatInitialized: boolean;
   sessionToken: string | null;
@@ -48,6 +54,7 @@ type UseOakChatReturn = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   setInput: (input: string) => void;
+  resetConversation: () => void;
 };
 
 const isJwtExpired = (token: string) => {
@@ -71,6 +78,7 @@ const useOakChat = ({
   meta,
   isEmbed = false,
   agentChatSettings = null,
+  agentDefaultSettings = null,
   toolNamesList = {},
   avatarImageURL,
   onEmbedInit,
@@ -82,6 +90,11 @@ const useOakChat = ({
   const [chatSettings, setChatSettings] = useState<ChatSettings>(
     agentChatSettings || initialChatSettings,
   );
+
+  const [agentSettings, setAgentSettings] = useState<AgentSettings>(
+    agentDefaultSettings || initialAgentSettings,
+  );
+
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [sessionTokenIsRefreshing, setSessionTokenIsRefreshing] =
     useState(false);
@@ -99,10 +112,7 @@ const useOakChat = ({
   // const [selectedAction, setSelectedAction] = useState<"default" | "deep-research" | "search-web">("default");
   const supportedFileTypes = chatSettings?.supportedFileTypes || [];
 
-  const API_URL = (isEmbed ? apiUrl : window.location.origin)?.replace(
-    /\/$/,
-    "",
-  );
+  const API_URL = getApiUrl(isEmbed, apiUrl);
 
   const avatar = avatarImageURL || `${API_URL}/assets/oak_leaf.svg`;
 
@@ -168,7 +178,11 @@ const useOakChat = ({
         headers,
       });
       const data = await res.json();
-      setChatSettings(data.chatSettings || chatSettings);
+      if (!agentChatSettings || Object.keys(agentChatSettings).length === 0) {
+        setChatSettings(data.chatSettings || initialChatSettings);
+      } else {
+        setChatSettings({ ...data.chatSettings, ...agentChatSettings });
+      }
       setToolNames(data.toolNames);
 
       if (!data.conversationValid) {
@@ -183,6 +197,29 @@ const useOakChat = ({
       console.error("Error fetching chat settings:", error);
       throw new Error(
         `Failed to fetch chat settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`,
+      );
+    }
+  };
+
+  const getAgentSettings = async () => {
+    const headers: HeadersInit = {};
+    const oakConversationToken = sessionStorage.getItem(
+      OAK_CONVERSATION_TOKEN_KEY,
+    );
+    if (oakConversationToken) {
+      headers["x-oak-conversation-token"] = oakConversationToken;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/agentSettings/${agentId}`, {
+        headers,
+      });
+      const data = await res.json();
+      setAgentSettings(data.agentSettings || agentSettings);
+    } catch (error) {
+      console.error("Error fetching agent settings:", error);
+      throw new Error(
+        `Failed to fetch agent settings from ${API_URL}. Please ensure the API is running and the agentId is correct.`,
       );
     }
   };
@@ -213,6 +250,10 @@ const useOakChat = ({
       initChat();
     }
   }, [isEmbed]);
+
+  useEffect(() => {
+    getAgentSettings();
+  }, [agentId]);
 
   useEffect(() => {
     if (isEmbed && chatInitialized) {
@@ -408,9 +449,19 @@ const useOakChat = ({
     }
   };
 
+  const resetConversation = () => {
+    setConversationId(undefined);
+    setFiles([]);
+    setMessages([]);
+    clearFileInput();
+    setInput("");
+    sessionStorage.removeItem(OAK_CONVERSATION_TOKEN_KEY);
+  };
+
   return {
     conversationId,
     chatSettings,
+    agentSettings,
     toolNames,
     chatInitialized,
     sessionToken,
@@ -418,6 +469,7 @@ const useOakChat = ({
     messages,
     input,
     status,
+    apiUrl,
     error: error || null,
     files,
     handleInputChange,
@@ -434,6 +486,7 @@ const useOakChat = ({
     textareaRef,
     fileInputRef,
     setInput,
+    resetConversation,
   };
 };
 

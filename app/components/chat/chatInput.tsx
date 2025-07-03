@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { FileText, XCircle, Plus, ArrowUp } from "react-feather";
 import { Textarea } from "../ui/textarea";
-import type { ChatSettings } from "~/types/chat";
+import type { ChatSettings } from "../../types/chat";
 
 interface ChatInputProps {
   input: string;
@@ -125,7 +125,9 @@ const ChatInput = ({
             value={input}
             rows={chatSettings?.textAreaInitialRows || 2}
             onChange={handleInputChange}
-            placeholder="Type your message..."
+            placeholder={
+              chatSettings?.chatInputPlaceholder || "Type your message..."
+            }
             className="oak-chat__text-area"
           />
         </div>

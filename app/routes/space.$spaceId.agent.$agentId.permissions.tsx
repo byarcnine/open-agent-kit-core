@@ -1,0 +1,647 @@
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  useLoaderData,
+  useActionData,
+  data,
+  Link,
+} from "react-router";
+import { prisma } from "@db/db.server";
+import { Users, Settings, Link2 } from "react-feather";
+import { Button } from "~/components/ui/button";
+import { z } from "zod";
+import NoDataCard from "~/components/ui/no-data-card";
+import { useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import {
+  getUserScopes,
+  getUserWithAccessToAgent,
+  hasAccessHierarchical,
+  setUserPermissionGroups,
+} from "~/lib/permissions/enhancedHasAccess.server";
+import {
+  PERMISSION,
+  AVAILABLE_PERMISSIONS,
+} from "~/lib/permissions/permissions";
+import type { SessionUser } from "~/types/auth";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { toast, Toaster } from "sonner";
+import { createInvitation } from "~/lib/auth/handleInvite.server";
+import { InviteUserModal } from "~/components/inviteUserModal/inviteUserModal";
+import { CreatePermissionGroupDialog } from "~/components/createPermissionGroupDialog/createPermissionGroupDialog";
+import { ManageUserPermissionGroupsDialog } from "~/components/manageUserPermissionGroupsDialog/manageUserPermissionGroupsDialog";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
+const createPermissionGroupSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+});
+
+const manageUserPermissionGroupsSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  permissionGroups: z.string().transform((val) => {
+    try {
+      return JSON.parse(val) as string[];
+    } catch {
+      throw new Error("Invalid permission groups data");
+    }
+  }),
+});
+
+const inviteUserSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  permissionGroupIds: z
+    .array(z.string())
+    .min(1, "At least one permission group is required"),
+});
+
+type ActionData = {
+  success: boolean;
+  error?: string;
+  message?: string;
+  intent: string;
+};
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { spaceId, agentId } = params;
+
+  if (!spaceId || !agentId) {
+    return { errors: { general: ["Space ID and Agent ID are required"] } };
+  }
+
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.edit_agent"],
+    agentId,
+  );
+
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  switch (intent) {
+    case "createPermissionGroup": {
+      const result = createPermissionGroupSchema.safeParse({
+        name: formData.get("name"),
+        description: formData.get("description"),
+      });
+
+      if (!result.success) {
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: result.error.issues[0].message,
+          },
+          { status: 400 },
+        );
+      }
+
+      const { name, description } = result.data;
+
+      try {
+        // Create space-scoped permission group
+        await prisma.permissionGroup.create({
+          data: {
+            name,
+            description,
+            level: "AGENT",
+            agentId,
+          },
+        });
+
+        return data<ActionData>(
+          {
+            success: true,
+            intent: intent as string,
+            message: "Permission group created successfully",
+          },
+          { status: 200 },
+        );
+      } catch (error) {
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: "Failed to create permission group",
+          },
+          { status: 500 },
+        );
+      }
+    }
+
+    case "manageUserPermissionGroups": {
+      const result = manageUserPermissionGroupsSchema.safeParse({
+        userId: formData.get("userId"),
+        permissionGroups: formData.get("permissionGroups"),
+      });
+
+      if (!result.success) {
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: result.error.issues[0].message,
+          },
+          { status: 400 },
+        );
+      }
+
+      const { userId, permissionGroups } = result.data;
+
+      try {
+        // Remove existing space-scoped permission groups for this user
+        await setUserPermissionGroups(
+          user,
+          userId,
+          permissionGroups,
+          "AGENT",
+          undefined,
+          agentId,
+        );
+
+        return data<ActionData>(
+          {
+            success: true,
+            intent: intent as string,
+            message: "User permission groups updated successfully",
+          },
+          { status: 200 },
+        );
+      } catch (error) {
+        console.error(error);
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: "Failed to update user permission groups",
+          },
+          { status: 500 },
+        );
+      }
+    }
+
+    case "invite": {
+      const result = inviteUserSchema.safeParse({
+        email: formData.get("email"),
+        permissionGroupIds: formData.getAll("permissionGroupIds"),
+      });
+
+      if (!result.success) {
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: result.error.issues[0].message,
+          },
+          { status: 400 },
+        );
+      }
+
+      const { email, permissionGroupIds } = result.data;
+
+      try {
+        await createInvitation(email, permissionGroupIds);
+
+        return data<ActionData>(
+          {
+            success: true,
+            intent: intent as string,
+            message: "User invited successfully",
+          },
+          { status: 200 },
+        );
+      } catch (error) {
+        console.error(error);
+        return data<ActionData>(
+          {
+            success: false,
+            intent: intent as string,
+            error: "Failed to invite user",
+          },
+          { status: 500 },
+        );
+      }
+    }
+
+    default:
+      return data<ActionData>(
+        {
+          success: false,
+          intent: intent as string,
+          error: "Invalid intent",
+        },
+        { status: 400 },
+      );
+  }
+};
+
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { spaceId, agentId } = params;
+
+  if (!spaceId) {
+    throw data({ error: "Space ID is required" }, { status: 400 });
+  }
+
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.view_agent_settings"],
+    agentId,
+  );
+
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+  });
+
+  if (!agent) {
+    throw data({ error: "Agent not found" }, { status: 404 });
+  }
+
+  // Get all users and their space-scoped permission groups
+  const usersPromise = getUserWithAccessToAgent(agentId as string);
+
+  // Get all space-scoped permission groups
+  const permissionGroupsPromise = prisma.permissionGroup.findMany({
+    where: {
+      level: "AGENT",
+      agentId,
+    },
+    include: {
+      userPermissionGroups: {
+        // where: {
+        //   permissionGroup: {
+        //     level: "AGENT",
+        //     agentId,
+        //   },
+        // },
+        include: {
+          user: true,
+        },
+      },
+      permissions: {
+        where: {
+          referenceId: agentId,
+          scope: { startsWith: "agent." },
+        },
+      },
+      _count: {
+        select: {
+          userPermissionGroups: true,
+          permissions: true,
+        },
+      },
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  const [users, permissionGroups] = await Promise.all([
+    usersPromise,
+    permissionGroupsPromise,
+  ]);
+
+  // Get invites for agent-scoped permission groups
+  const invites = await prisma.invitation.findMany({
+    where: {
+      permissionGroupId: {
+        in: permissionGroups.map((pg) => pg.id),
+      },
+    },
+    include: {
+      permissionGroup: true,
+    },
+  });
+
+  // // Filter users to only show those with space-scoped groups
+  // const filteredUsers = users.filter(
+  //   (user) => user.userPermissionGroups.length > 0,
+  // );
+
+  const userScopes = await getUserScopes(user);
+
+  // Get available space permissions
+  const agentPermissions = Object.entries(AVAILABLE_PERMISSIONS)
+    .filter(([key]) => key.startsWith("agent."))
+    .map(([key, value]) => ({
+      key,
+      ...value,
+    }));
+
+  return {
+    user: user as SessionUser,
+    agent,
+    users,
+    permissionGroups,
+    userScopes,
+    agentPermissions,
+    invites,
+  };
+};
+
+const SpacePermissionManagement = () => {
+  const { agent, users, permissionGroups, invites } =
+    useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
+
+  useEffect(() => {
+    if (actionData && "success" in actionData && actionData.success) {
+      toast.success(actionData.message);
+    }
+    if (actionData && "error" in actionData && actionData.error) {
+      toast.error(actionData.error);
+    }
+  }, [actionData]);
+
+  return (
+    <>
+      <Toaster />
+      <div className="py-8 px-4 md:p-8 w-full mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-medium">
+              {agent.name} - Permission Management
+            </h1>
+            <p className="text-muted-foreground">
+              Manage users and permission groups for this agent
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <InviteUserModal
+              permissionGroups={permissionGroups}
+              error={
+                actionData && "error" in actionData
+                  ? actionData.error
+                  : undefined
+              }
+            />
+            <CreatePermissionGroupDialog
+              error={
+                actionData && "error" in actionData
+                  ? actionData.error
+                  : undefined
+              }
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Users Table */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Users ({users.length})
+                </CardTitle>
+                <CardDescription>
+                  Users with access to this agent
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {users.length === 0 ? (
+                  <NoDataCard
+                    headline="No users"
+                    description="No users have been assigned to this space yet."
+                  >
+                    <InviteUserModal
+                      permissionGroups={permissionGroups}
+                      error={
+                        actionData && "error" in actionData
+                          ? actionData.error
+                          : undefined
+                      }
+                    />
+                  </NoDataCard>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead>Groups</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{user.name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {user.email}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {user.userPermissionGroups.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {user.userPermissionGroups.map((upg) => {
+                                    const isDirect =
+                                      upg.permissionGroup.level === "AGENT" &&
+                                      upg.permissionGroup.agentId === agent.id;
+                                    return (
+                                      <Badge
+                                        key={upg.id}
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {!isDirect && (
+                                          <span className="text-xs text-muted-foreground flex items-center gap-1 pr-2">
+                                            <span
+                                              className="relative group cursor-pointer"
+                                              tabIndex={0}
+                                            >
+                                              <Link2 className="h-3 w-3 text-muted-foreground" />
+                                              <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 rounded bg-black text-white text-xs opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity pointer-events-none z-10 w-[100px]">
+                                                This group is inherited from a
+                                                higher level
+                                              </span>
+                                            </span>
+                                          </span>
+                                        )}
+                                        {upg.permissionGroup.name}
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">
+                                  None
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <ManageUserPermissionGroupsDialog
+                                user={user}
+                                permissionGroups={permissionGroups}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Permission Groups Table */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Permission Groups ({permissionGroups.length})
+                </CardTitle>
+                <CardDescription>
+                  Permission groups for this agent
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {permissionGroups.length === 0 ? (
+                  <NoDataCard
+                    headline="No permission groups"
+                    description="Create your first permission group to start managing permissions."
+                  >
+                    <CreatePermissionGroupDialog
+                      error={
+                        actionData && "error" in actionData
+                          ? actionData.error
+                          : undefined
+                      }
+                    />
+                  </NoDataCard>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Group</TableHead>
+                          <TableHead>Users</TableHead>
+                          <TableHead>Permissions</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {permissionGroups.map((group) => (
+                          <TableRow key={group.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{group.name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {group.description}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {group._count.userPermissionGroups}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {group._count.permissions}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Link
+                                to={`/space/${agent.spaceId}/agent/${agent.id}/permissions/group/${group.id}`}
+                              >
+                                <Button variant="outline" size="sm">
+                                  <Settings className="h-4 w-4 mr-1" />
+                                  Configure
+                                </Button>
+                              </Link>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Invites Table */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Invites ({invites.length})
+              </CardTitle>
+              <CardDescription>
+                View all active invites for this agent
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {invites.length === 0 ? (
+                <NoDataCard
+                  headline="No invites"
+                  description="No active invites for this agent."
+                />
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Permission Group</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invites.map((invite) => (
+                        <TableRow key={invite.id}>
+                          <TableCell>{invite.email}</TableCell>
+                          <TableCell>{invite.permissionGroup.name}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {dayjs(invite.createdAt).fromNow()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default SpacePermissionManagement;
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: `${data?.agent?.name} - Permission Management | OAK Dashboard` },
+    {
+      name: "description",
+      content: "Manage users and permissions for this space",
+    },
+  ];
+};

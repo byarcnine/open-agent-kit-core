@@ -24,3 +24,8 @@ export type DateTimeToolResult = {
   day: string;
   time: string;
 };
+
+export type DefaultTools = {
+  captureFeedback?: boolean;
+  knowledgeBase?: boolean;
+};

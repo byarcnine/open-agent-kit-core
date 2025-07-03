@@ -1,17 +1,20 @@
-import {
-  type ActionFunctionArgs,
-  data,
-  type LoaderFunctionArgs,
-} from "react-router";
-import {
-  canUserAccessAgent,
-  verifyChatSessionTokenForPublicAgent,
-} from "~/lib/auth/hasAccess.server";
+import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { verifyChatSessionTokenForPublicAgent } from "~/lib/auth/hasAccess.server";
 import { getSession } from "~/lib/auth/auth.server";
 import { streamConversation } from "~/lib/llm/streamConversation.server";
-import { getCorsHeaderForAgent, CORS_ALLOW_HEADERS, CORS_ALLOW_METHODS, CORS_EXPOSE_HEADERS } from "./utils";
+import {
+  getCorsHeaderForAgent,
+  CORS_ALLOW_HEADERS,
+  CORS_ALLOW_METHODS,
+  CORS_EXPOSE_HEADERS,
+} from "./utils";
 import jwt from "jsonwebtoken";
 import { getChatSettings } from "~/lib/llm/chat.server";
+// import { checkPermissionHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+// import { PERMISSION } from "~/lib/permissions/permissions";
+import { prisma } from "@db/db.server";
+import { PERMISSION } from "~/lib/permissions/permissions";
+import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const origin = request.headers.get("Origin") || "";
@@ -46,18 +49,35 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // the meta object can be access by the tool
   const meta = body.meta || {};
   // make sure the agent is public or the user has access to the agent
-  const canAccess = await canUserAccessAgent(session?.user, agentId);
-  const chatSessionAllowed =
-    canAccess || (await verifyChatSessionTokenForPublicAgent(request, agentId));
-
-  if (!canAccess && !chatSessionAllowed) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      {
+  const agent = await prisma.agent.findUnique({
+    where: {
+      id: agentId,
+    },
+  });
+  if (!agent) {
+    return new Response(JSON.stringify({ error: "Agent not found" }), {
+      status: 404,
+      headers: corsHeaders,
+    });
+  }
+  if (userId) {
+    await hasAccessHierarchical(request, PERMISSION["agent.chat"], agentId);
+  } else if (agent.isPublic) {
+    const chatSessionAllowed = await verifyChatSessionTokenForPublicAgent(
+      request,
+      agentId,
+    );
+    if (!chatSessionAllowed) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 403,
         headers: corsHeaders,
-      },
-    );
+      });
+    }
+  } else {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 403,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -74,7 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const maintainConversationSession =
       chatSettings?.embedSettings?.maintainConversationSession;
 
-    let oakConversationToken = session?.user.id
+    const oakConversationToken = session?.user.id
       ? undefined
       : jwt.sign({ conversationId }, process.env.APP_SECRET || ("" as string), {
           expiresIn: (maintainConversationSession || 0) * 60,
@@ -100,12 +120,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ error: "An error occurred" }),
-      {
-        status: 500,
-        headers: corsHeaders,
-      },
-    );
+    return new Response(JSON.stringify({ error: "An error occurred" }), {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 };

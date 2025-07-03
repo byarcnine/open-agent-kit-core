@@ -1,0 +1,437 @@
+import { PermissionGroupLevel, prisma, type Permission } from "@db/db.server";
+import { getAllPermissionsWithInheritance } from "./hierarchical";
+import { redirect } from "react-router";
+import { getSession } from "~/lib/auth/auth.server";
+import type { SessionUser } from "~/types/auth";
+import { AVAILABLE_PERMISSIONS } from "./permissions";
+
+export const getUserScopes = async (user: SessionUser) => {
+  return await getUserGrantedPermissions(user);
+};
+
+export type UserGrantedPermissions = {
+  scope: keyof typeof AVAILABLE_PERMISSIONS;
+  referenceId: string;
+  direct: boolean;
+}[];
+
+export const resolvePermissionReferences = async (
+  permissions: Partial<Permission>[],
+) => {
+  const [allAgents, allSpaces] = await Promise.all([
+    prisma.agent.findMany({
+      select: { id: true, spaceId: true },
+    }),
+    prisma.space.findMany({
+      select: { id: true },
+    }),
+  ]);
+
+  const userGrantedPermissions: UserGrantedPermissions = [];
+  for (const permission of permissions) {
+    const scope = permission.scope as keyof typeof AVAILABLE_PERMISSIONS;
+    if (scope.startsWith("global.")) {
+      // get all inherited permissions for this scope and add an allAllowed true
+      const inherited = getAllPermissionsWithInheritance([scope]);
+      for (const inheritedPermission of inherited) {
+        const inheritedScope =
+          inheritedPermission as keyof typeof AVAILABLE_PERMISSIONS;
+        if (inheritedPermission.startsWith("agent.")) {
+          allAgents
+            .map((agent) => agent.id)
+            .forEach((agentId) => {
+              userGrantedPermissions.push({
+                scope: inheritedScope,
+                referenceId: agentId,
+                direct: inheritedPermission === scope,
+              });
+            });
+        } else if (inheritedPermission.startsWith("space.")) {
+          const spaceIds = allSpaces.map((space) => space.id);
+          spaceIds.forEach((spaceId) => {
+            userGrantedPermissions.push({
+              scope: inheritedScope,
+              referenceId: spaceId,
+              direct: inheritedPermission === scope,
+            });
+          });
+        } else {
+          userGrantedPermissions.push({
+            scope: inheritedScope,
+            referenceId: "global",
+            direct: inheritedPermission === scope,
+          });
+        }
+      }
+    } else if (scope.startsWith("space.")) {
+      // get all inherited permissions for this scope and add an allAllowed true
+      const inherited = getAllPermissionsWithInheritance([scope]);
+      const agentIdsInSpace = allAgents
+        .filter((agent) => agent.spaceId === permission.referenceId)
+        .map((agent) => agent.id);
+      for (const inheritedPermission of inherited) {
+        if (inheritedPermission.startsWith("agent.")) {
+          const inheritedScope =
+            inheritedPermission as keyof typeof AVAILABLE_PERMISSIONS;
+
+          agentIdsInSpace.forEach((agentId) => {
+            userGrantedPermissions.push({
+              scope: inheritedScope,
+              referenceId: agentId,
+              direct: inheritedPermission === scope,
+            });
+          });
+        }
+        if (inheritedPermission.startsWith("space.")) {
+          const inheritedScope =
+            inheritedPermission as keyof typeof AVAILABLE_PERMISSIONS;
+
+          userGrantedPermissions.push({
+            scope: inheritedScope,
+            referenceId: permission.referenceId as string,
+            direct: inheritedPermission === scope,
+          });
+        }
+      }
+    } else if (scope.startsWith("agent.")) {
+      // get all inherited permissions for this scope and add an allAllowed true
+      const inherited = getAllPermissionsWithInheritance([scope]);
+      for (const inheritedPermission of inherited) {
+        const inheritedScope =
+          inheritedPermission as keyof typeof AVAILABLE_PERMISSIONS;
+
+        userGrantedPermissions.push({
+          scope: inheritedScope,
+          referenceId: permission.referenceId as string,
+          direct: inheritedPermission === scope,
+        });
+      }
+    }
+  }
+  return userGrantedPermissions;
+};
+
+export const getUserGrantedPermissions = async (
+  user: SessionUser,
+  groupId?: string, // allows to retrieve permissions that were granted by a specific group
+): Promise<UserGrantedPermissions> => {
+  const permissions = await prisma.permission.findMany({
+    where: {
+      permissionGroup: {
+        ...(groupId && {
+          id: groupId,
+        }),
+        userPermissionGroups: {
+          some: { userId: user.id },
+        },
+      },
+    },
+  });
+  return resolvePermissionReferences(permissions);
+};
+
+export const getGroupGrantedPermissions = async (
+  groupId: string, // allows to retrieve permissions that were granted by a specific group
+): Promise<UserGrantedPermissions> => {
+  const permissions = await prisma.permission.findMany({
+    where: {
+      permissionGroupId: groupId,
+    },
+  });
+
+  return resolvePermissionReferences(permissions);
+};
+
+export const hasAccessHierarchical = async (
+  request: Request,
+  requiredPermission?: keyof typeof AVAILABLE_PERMISSIONS,
+  targetReferenceId?: string,
+) => {
+  const session = await getSession(request);
+  const user = session?.user;
+
+  if (!user) {
+    throw redirect("/auth/login");
+  }
+
+  // no permission required for this route, just a valid user, return user
+  if (!requiredPermission) {
+    return user;
+  }
+
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  if (
+    !targetReferenceId &&
+    userGrantedPermissions.some((p) => p.scope === requiredPermission)
+  ) {
+    return user;
+  }
+  if (
+    targetReferenceId &&
+    userGrantedPermissions.some(
+      (p) =>
+        p.scope === requiredPermission && p.referenceId === targetReferenceId,
+    )
+  ) {
+    return user;
+  }
+  throw new Response("Forbidden", { status: 403 });
+};
+
+export const allowedAgentsToViewForUser = async (user: SessionUser) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  return userGrantedPermissions
+    .filter((p) => p.scope === "agent.chat")
+    .map((p) => p.referenceId);
+};
+
+export const allowedSpacesToViewForUser = async (user: SessionUser) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  const spacesAccess = userGrantedPermissions
+    .filter((p) => p.scope === "space.view_space_settings")
+    .map((p) => p.referenceId);
+  const agentsWhereUserHasAccess = userGrantedPermissions
+    .filter((p) => p.scope === "agent.chat")
+    .map((p) => p.referenceId);
+  const spacesWhereUserHasAccess = await prisma.space.findMany({
+    where: {
+      OR: [
+        {
+          id: { in: spacesAccess },
+        },
+        {
+          agents: { some: { id: { in: agentsWhereUserHasAccess } } },
+        },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
+  return spacesWhereUserHasAccess.map((s) => s.id);
+};
+
+export const updatePermissionGroupPermissions = async (
+  groupId: string,
+  user: SessionUser,
+  permissions: UserGrantedPermissions,
+) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(user);
+  // remove all permission that the current user doesnt have
+  const newPermissions = permissions.filter((p) =>
+    userGrantedPermissions.some(
+      (up) => up.scope === p.scope && up.referenceId === p.referenceId,
+    ),
+  );
+  await prisma.$transaction(async (tx) => {
+    await tx.permission.deleteMany({
+      where: {
+        permissionGroupId: groupId,
+      },
+    });
+    await tx.permission.createMany({
+      data: newPermissions.map((p) => ({
+        scope: p.scope,
+        referenceId: p.referenceId,
+        permissionGroupId: groupId,
+      })),
+    });
+  });
+};
+
+export const setUserPermissionGroups = async (
+  currentUser: SessionUser,
+  userId: string,
+  permissionGroupIds: string[],
+  level: PermissionGroupLevel,
+  spaceId?: string,
+  agentId?: string,
+) => {
+  const userGrantedPermissions = await getUserGrantedPermissions(currentUser);
+  const validPermissionGroups: string[] = [];
+  // if one fail throw out the whole update
+  for (const id of permissionGroupIds) {
+    const group = await prisma.permissionGroup.findUnique({
+      where: { id },
+    });
+    if (!group) {
+      throw new Response("Permission group not found", { status: 404 });
+    }
+    if (
+      group.level !== level ||
+      (spaceId && group.spaceId !== spaceId) ||
+      (agentId && group.agentId !== agentId)
+    ) {
+      continue;
+    }
+    if (group.level === "SPACE") {
+      // make sure the user has access to the space
+      const hasAccess = userGrantedPermissions.some(
+        (p) =>
+          p.scope === "space.edit_users" && p.referenceId === group.spaceId,
+      );
+      if (!hasAccess) {
+        throw new Response("Forbidden - no access to space", { status: 403 });
+      }
+    } else if (group.level === "AGENT") {
+      // make sure the user has access to the agent
+      const hasAccess = userGrantedPermissions.some(
+        (p) =>
+          p.scope === "agent.edit_agent" && p.referenceId === group.agentId,
+      );
+      if (!hasAccess) {
+        throw new Response("Forbidden - no access to agent", { status: 403 });
+      }
+    } else {
+      const hasAccess = userGrantedPermissions.some(
+        (p) => p.scope === "global.edit_global_users",
+      );
+      if (!hasAccess) {
+        throw new Response("Forbidden - no access to global", { status: 403 });
+      }
+    }
+    validPermissionGroups.push(id);
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.userPermissionGroup.deleteMany({
+      where: {
+        userId: userId,
+        permissionGroup: {
+          level,
+          spaceId,
+          agentId,
+        },
+      },
+    });
+    await tx.userPermissionGroup.createMany({
+      data: validPermissionGroups.map((id) => ({
+        userId: userId,
+        permissionGroupId: id,
+      })),
+    });
+  });
+};
+
+export const getUserWithAccessToSpace = async (spaceId: string) => {
+  const allAgentsInSpace = await prisma.agent.findMany({
+    where: {
+      spaceId,
+    },
+    select: {
+      id: true,
+    },
+  });
+  const allAgentsIds = allAgentsInSpace.map((a) => a.id);
+  return prisma.user.findMany({
+    include: {
+      userPermissionGroups: {
+        // where: {
+        //   permissionGroup: {
+        //     level: "SPACE",
+        //     spaceId,
+        //   },
+        // },
+        include: {
+          permissionGroup: true,
+        },
+      },
+    },
+    where: {
+      userPermissionGroups: {
+        some: {
+          permissionGroup: {
+            permissions: {
+              some: {
+                OR: [
+                  {
+                    // global permissions
+                    scope: {
+                      startsWith: "global.",
+                    },
+                  },
+                  // space permissions
+                  {
+                    scope: {
+                      startsWith: "space.",
+                    },
+                    referenceId: spaceId,
+                  },
+                  {
+                    scope: {
+                      startsWith: "agent.",
+                    },
+                    referenceId: {
+                      in: allAgentsIds,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const getUserWithAccessToAgent = async (agentId: string) => {
+  const space = await prisma.agent.findUnique({
+    where: {
+      id: agentId,
+    },
+    select: {
+      spaceId: true,
+    },
+  });
+  if (!space) {
+    return [];
+  }
+  return prisma.user.findMany({
+    include: {
+      userPermissionGroups: {
+        // where: {
+        //   permissionGroup: {
+        //     level: "AGENT",
+        //     agentId,
+        //   },
+        // },
+        include: {
+          permissionGroup: true,
+        },
+      },
+    },
+    where: {
+      userPermissionGroups: {
+        some: {
+          permissionGroup: {
+            permissions: {
+              some: {
+                OR: [
+                  {
+                    // global permissions
+                    scope: {
+                      startsWith: "global.",
+                    },
+                  },
+                  // space permissions
+                  {
+                    scope: {
+                      startsWith: "space.",
+                    },
+                    referenceId: space.spaceId,
+                  },
+                  {
+                    scope: {
+                      startsWith: "agent.",
+                    },
+                    referenceId: agentId,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+};

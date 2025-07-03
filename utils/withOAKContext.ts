@@ -20,9 +20,14 @@ export type OAKLoaderOrActionArgs = Omit<LoaderOrActionArgs, "context"> & {
 export const withOAKContext = serverOnly$(
   <T extends (args: OAKLoaderOrActionArgs) => Promise<any>>(fn: T) => {
     return (async (args: LoaderOrActionArgs) => {
-      const path = args.request.url.split("/");
+      const path = new URL(args.request.url).pathname
+        .split("/")
+        .filter((p) => !!p);
       const indexOfPlugin = path.indexOf("plugins");
-      const pluginSlug = path[indexOfPlugin + 1];
+      // UI routes are prefix with /plugins/[pluginSlug|
+      // global routes are prefix with the plugin identifier only
+      const pluginSlug =
+        indexOfPlugin !== -1 ? path[indexOfPlugin + 1] : path[0];
       const pluginSlugWithoutParams = pluginSlug.split("?")[0];
       const pluginName = getPluginNameForSlug(
         pluginSlugWithoutParams,

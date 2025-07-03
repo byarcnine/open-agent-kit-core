@@ -1,11 +1,19 @@
 import React, { useContext, useState } from "react";
 import { type Message as MessageType } from "ai";
 import { Avatar } from "./avatar";
-import { toolComponents } from "~/lib/tools/toolComponents";
-import { FileText, Copy, Check, Terminal } from "react-feather";
-import { openBase64Pdf } from "~/lib/utils";
+import { toolComponents } from "../../lib/tools/toolComponents";
+import { openBase64Pdf } from "../../lib/utils";
+import {
+  FileText,
+  Copy,
+  Check,
+  Terminal,
+  ThumbsUp,
+  ThumbsDown,
+} from "react-feather";
 import { ChatContext } from "./chat.client";
 import MarkdownViewer from "./markdownViewer";
+import { getApiUrl } from "./utils";
 
 const formatValue = (value: any) => {
   switch (typeof value) {
@@ -46,13 +54,49 @@ interface MessageProps {
 const Message: React.FC<MessageProps> = React.memo(
   ({ message, toolNames, avatarURL, requiresScrollPadding, scrollPadding }) => {
     const [copied, setCopied] = useState(false);
-    const { chatSettings } = useContext(ChatContext);
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+    const { chatSettings, agentSettings, conversationId, isEmbed, apiUrl } =
+      useContext(ChatContext);
+
+    const { captureFeedback } = agentSettings || {};
+
     const handleCopy = (text: string) => {
       navigator.clipboard.writeText(text).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 1000);
       });
     };
+
+    const handleCaptureFeedback = (isNegative: boolean, feedback: string) => {
+      if (!captureFeedback || feedbackSubmitted || !conversationId) return;
+      const body = {
+        feedback,
+        feedbackType: "user_feedback",
+        sentiment: isNegative ? "negative" : "positive",
+        conversationId,
+      };
+
+      const route = `${getApiUrl(isEmbed, apiUrl)}/api/feedback`;
+
+      fetch(route, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to submit feedback");
+          }
+          setFeedbackSubmitted(true);
+          return response.json();
+        })
+        .catch((error) => {
+          console.error("Error submitting feedback:", error);
+        });
+    };
+
     const isUserMessage = message.role === "user";
 
     return (
@@ -192,12 +236,45 @@ const Message: React.FC<MessageProps> = React.memo(
                   )}
                   {chatSettings?.showMessageToolBar &&
                     message.role === "assistant" && (
-                      <button
-                        onClick={() => handleCopy(part.text)}
-                        className="oak-chat__message-content--copy-button"
-                      >
-                        {copied ? <Check size={16} /> : <Copy size={16} />}
-                      </button>
+                      <div className="oak-chat__message-content-actions-container">
+                        <button
+                          onClick={() => handleCopy(part.text)}
+                          className="oak-chat__message-content--copy-button"
+                        >
+                          {copied ? <Check size={16} /> : <Copy size={16} />}
+                        </button>
+                        {captureFeedback && (
+                          <div className="oak-chat__message-content--reaction-buttons">
+                            <div
+                              className={`oak-chat__message-content--feedback-submitted ${
+                                feedbackSubmitted ? "active" : ""
+                              }`}
+                            >
+                              Thank you for your feedback!
+                            </div>
+
+                            <button
+                              disabled={feedbackSubmitted}
+                              onClick={() =>
+                                handleCaptureFeedback(false, part.text)
+                              }
+                              className="oak-chat__message-content--copy-button"
+                            >
+                              <ThumbsUp size={16} />
+                            </button>
+
+                            <button
+                              disabled={feedbackSubmitted}
+                              onClick={() =>
+                                handleCaptureFeedback(true, part.text)
+                              }
+                              className="oak-chat__message-content--copy-button"
+                            >
+                              <ThumbsDown size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                 </div>
               );

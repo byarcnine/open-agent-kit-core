@@ -1,11 +1,6 @@
-import {
-  GlobalUserRole,
-  InvitationType,
-  prisma,
-  AgentUserRole,
-} from "@db/db.server";
+import { prisma } from "@db/db.server";
 import type { SessionUser } from "~/types/auth";
-import { sendAgentAddedConfirmation } from "../email/sendAgentAddedConfirmation.server";
+// import { sendAgentAddedConfirmation } from "../email/sendAgentAddedConfirmation.server";
 import { sendInvitationEmail } from "../email/sendInvitationEmail.server";
 import { APP_URL } from "../config/config";
 
@@ -18,23 +13,19 @@ export const handleInvite = async (user: SessionUser, invitationId: string) => {
   if (!invite) {
     return;
   }
-  if (invite.type === InvitationType.AGENT && invite.agentId) {
-    await prisma.agentUser.create({
-      data: {
+  await prisma.userPermissionGroup.upsert({
+    where: {
+      userId_permissionGroupId: {
         userId: user.id,
-        agentId: invite.agentId,
-        role: invite.agentRole ?? AgentUserRole.VIEWER,
+        permissionGroupId: invite.permissionGroupId,
       },
-    });
-  }
-  if (invite.type === InvitationType.GLOBAL) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        role: invite.globalRole ?? GlobalUserRole.VIEW_EDIT_ASSIGNED_AGENTS,
-      },
-    });
-  }
+    },
+    create: {
+      userId: user.id,
+      permissionGroupId: invite.permissionGroupId,
+    },
+    update: {},
+  });
   await prisma.invitation.delete({
     where: {
       id: invite.id,
@@ -44,49 +35,45 @@ export const handleInvite = async (user: SessionUser, invitationId: string) => {
 
 export const createInvitation = async (
   email: string,
-  agentId: string,
-  agentRole: AgentUserRole
+  permissionGroupIds: string[],
 ) => {
   // check if user exists
   const user = await prisma.user.findUnique({ where: { email } });
-  const agent = await prisma.agent.findUnique({ where: { id: agentId } });
-  if (!agent) {
-    return { error: "Agent not found", success: false };
+  const permissionGroups = await prisma.permissionGroup.findMany({
+    where: { id: { in: permissionGroupIds } },
+  });
+  if (permissionGroups.length !== permissionGroupIds.length) {
+    return { error: "Permission group not found", success: false };
   }
   if (user) {
-    // Check if user is already in agent
-    const existingAgentUser = await prisma.agentUser.findUnique({
-      where: { userId_agentId: { userId: user.id, agentId } },
+    await prisma.userPermissionGroup.createMany({
+      data: permissionGroups.map((group) => ({
+        userId: user.id,
+        permissionGroupId: group.id,
+      })),
+      skipDuplicates: true,
     });
-
-    if (existingAgentUser) {
-      return {
-        error: "User is already a member of this agent",
-        success: false,
-      };
-    }
-
-    await prisma.agentUser.create({
-      data: { userId: user.id, agentId, role: agentRole },
-    });
-    await sendAgentAddedConfirmation(user.email, agent?.name, agentId);
   } else {
-    // Check if invitation already exists
-    const existingInvitation = await prisma.invitation.findFirst({
-      where: { email, agentId },
-    });
-
-    if (existingInvitation) {
-      return {
-        error: "An invitation has already been sent to this email",
-        success: false,
-      };
+    const invitation = await Promise.all(
+      permissionGroups.map(
+        async (permissionGroup) =>
+          await prisma.invitation.upsert({
+            where: {
+              email_permissionGroupId: {
+                email,
+                permissionGroupId: permissionGroup.id,
+              },
+            },
+            create: { email, permissionGroupId: permissionGroup.id },
+            update: {},
+          }),
+      ),
+    );
+    const inviteLink = `${APP_URL()}/invite/${invitation[0].id}`;
+    try {
+      await sendInvitationEmail(email, inviteLink);
+    } catch (error) {
+      console.error(error);
     }
-
-    const invitation = await prisma.invitation.create({
-      data: { email, agentId, agentRole },
-    });
-    const inviteLink = `${APP_URL()}/invite/${invitation.id}`;
-    await sendInvitationEmail(email, inviteLink);
   }
 };

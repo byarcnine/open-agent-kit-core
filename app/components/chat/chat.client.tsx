@@ -1,49 +1,48 @@
 import "./chat.scss";
-import React, { useEffect, useMemo, useImperativeHandle, forwardRef } from "react";
-import { type Message } from "@ai-sdk/react";
+import React, {
+  useEffect,
+  useMemo,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import AdviceCards from "./adviceCards";
 import Messages from "./messages";
-import { type ChatSettings } from "~/types/chat";
-import useOakChat from "~/hooks/useOakChat";
+import { type ChatProps, type ChatSettings } from "../../types/chat";
+import useOakChat from "../../hooks/useOakChat";
 import ChatInput from "./chatInput";
-import { initialChatSettings } from "~/constants/chat";
+import { initialChatSettings } from "../../constants/chat";
+import type { AgentSettings } from "~/types/agentSetting";
+import { initialAgentSettings } from "~/constants/agentSettings";
+import { renderTextWithSecureLinks } from "./utils";
 
 interface ChatContextType {
   isEmbed: boolean;
+  conversationId?: string;
+  apiUrl?: string;
+  agentSettings: AgentSettings;
   chatSettings: ChatSettings;
 }
 
 export const ChatContext = React.createContext<ChatContextType>({
   isEmbed: false,
+  conversationId: undefined,
+  apiUrl: undefined,
   chatSettings: initialChatSettings,
+  agentSettings: initialAgentSettings,
 });
 
 export interface ChatRef {
-  setInput: (input: string) => void;
-}
-
-interface ChatProps {
-  onConversationStart?: (conversationId: string) => void;
-  onMessage?: (messages: Message[]) => void;
-  initialMessages?: Message[];
-  initialConversationId?: string;
-  disableInput?: boolean;
-  agentId: string;
-  apiUrl?: string;
-  meta?: object;
-  isEmbed?: boolean;
-  agentChatSettings?: ChatSettings | null;
-  toolNamesList?: Record<string, string>;
-  avatarImageURL?: string;
-  anchorToBottom?: boolean;
-  onEmbedInit?: (chatSettings: ChatSettings) => void;
+  setInput?: (input: string) => void;
+  resetConversation?: () => void;
 }
 
 const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
   const {
     avatar,
     conversationId,
+    apiUrl,
     chatSettings,
+    agentSettings,
     toolNames,
     chatInitialized,
     sessionTokenIsRefreshing,
@@ -65,16 +64,27 @@ const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
     textareaRef,
     fileInputRef,
     setInput,
+    resetConversation,
   } = useOakChat(props);
 
-  // Expose setInput function through ref
-  useImperativeHandle(ref, () => ({
-    setInput: (input: string) => setInput(input),
-  }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      setInput: (input: string) => setInput(input),
+      resetConversation: () => resetConversation(),
+    }),
+    [],
+  );
 
   const chatContext = useMemo(
-    () => ({ isEmbed: !!props.isEmbed, chatSettings }),
-    [props.isEmbed, chatSettings],
+    () => ({
+      isEmbed: !!props.isEmbed,
+      chatSettings,
+      agentSettings,
+      conversationId,
+      apiUrl,
+    }),
+    [props.isEmbed, chatSettings, agentSettings, conversationId, apiUrl],
   );
 
   useEffect(() => {
@@ -93,7 +103,6 @@ const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
       </div>
     );
   }
-
   const suggestedQuestions = chatSettings?.suggestedQuestions ?? [];
 
   return (
@@ -154,7 +163,7 @@ const Chat = forwardRef<ChatRef, ChatProps>((props, ref) => {
             />
             {chatSettings?.footerNote && (
               <p className="oak-chat__footer-note">
-                {chatSettings?.footerNote}
+                {renderTextWithSecureLinks(chatSettings.footerNote)}
               </p>
             )}
           </>
