@@ -546,7 +546,7 @@ const InventAgent: React.FC = () => {
                 <h3 className="text-2xl font-medium mb-4">System Prompt</h3>
                 <div className="">
                   <ClientOnlyComponent>
-                    {MarkdownEdit && (
+                    {!!MarkdownEdit && (
                       <MarkdownEdit
                         key={agentData.systemPrompt}
                         prompt={agentData.systemPrompt || ""}
