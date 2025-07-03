@@ -154,7 +154,8 @@ const InventAgent: React.FC = () => {
   const [inventorRunning, setInventorRunning] = useState(false);
 
   const [searchParams] = useSearchParams();
-  const starterPrompt = searchParams.get("prompt") || 'Help me invent an agent.';
+  const starterPrompt =
+    searchParams.get("prompt") || "Help me invent an agent.";
 
   const navigate = useNavigate();
   const fetch = useFetcher();
@@ -244,7 +245,7 @@ const InventAgent: React.FC = () => {
   );
 
   const goToNextStep = async () => {
-    if (step < stepItems.length - 1) {
+    if (step !== StepTypes.REVIEW_CREATE) {
       setStep((prev) => prev + 1);
     } else {
       if (!agentInventorResult) return;
@@ -324,30 +325,32 @@ const InventAgent: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col h-full overflow-hidden pt-8 px-4 md:px-8">
-     
-        <>
-          <div className="sticky top-0 shrink-0">
-            <div className="flex flex-col pb-8 gap-4">
-              <h1 className="text-3xl font-medium">Agent Invention Center</h1>
-            </div>
-
-            <Steps step={stepItems} currentStep={step} />
-            <div className="pt-4 mb-8 flex flex-col gap-2">
-              <h2 className="font-medium text-2xl">
-                {step + 1}. {stepItems[step].title}
-              </h2>
-              <span className="text-sm text-muted-foreground mb-4 max-w-3xl">
-                {stepItems[step].description}
-              </span>
-            </div>
+      <>
+        <div className="sticky top-0 shrink-0">
+          <div className="flex flex-col pb-8 gap-4">
+            <h1 className="text-3xl font-medium">Agent Invention Center</h1>
           </div>
-        </>
-      
+
+          <Steps step={stepItems} currentStep={step} />
+          <div className="pt-4 mb-8 flex flex-col gap-2">
+            <h2 className="font-medium text-2xl">
+              {step + 1}. {stepItems[step].title}
+            </h2>
+            <span className="text-sm text-muted-foreground mb-4 max-w-3xl">
+              {stepItems[step].description}
+            </span>
+          </div>
+        </div>
+      </>
+
       <div className="relative flex flex-col flex-1 shrink-1 overflow-hidden">
         <div
-          className={cn("relative grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 overflow-hidden", {
-            hidden: step !== StepTypes.INSTRUCT_AGENT,
-          })}
+          className={cn(
+            "relative grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 overflow-hidden",
+            {
+              hidden: step !== StepTypes.INSTRUCT_AGENT,
+            },
+          )}
         >
           <Card className="overflow-auto flex-1/2 p-0">
             <ClientOnlyComponent>
@@ -614,7 +617,7 @@ const InventAgent: React.FC = () => {
         )}
         {step === StepTypes.CREATE && (
           <Card className="max-w-xl">
-          <AgentAssemblyAnimation onComplete={handleAnimationComplete} />
+            <AgentAssemblyAnimation onComplete={handleAnimationComplete} />
           </Card>
         )}
       </div>

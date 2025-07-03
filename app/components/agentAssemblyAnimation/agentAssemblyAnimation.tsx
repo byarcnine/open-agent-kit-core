@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Terminal, Tool, Cpu, CheckCircle, Zap, Settings } from "react-feather";
+import { Terminal, Tool, Cpu, CheckCircle, Settings } from "react-feather";
 import { Button } from "../ui/button";
 
 interface AgentAssemblyAnimationProps {
@@ -15,27 +15,27 @@ const AgentAssemblyAnimation: React.FC<AgentAssemblyAnimationProps> = ({
   const steps = [
     {
       text: "Launching agent builder...",
-      duration: 2000,
+      duration: 1500,
       icon: Terminal,
     },
     {
       text: "Activating tools & capabilities...",
-      duration: 1500,
+      duration: 1000,
       icon: Tool,
     },
     {
       text: "Enabling plugins and integrations...",
-      duration: 1500,
+      duration: 1000,
       icon: Settings,
     },
     {
       text: "Calibrating intelligence...",
-      duration: 2000,
+      duration: 1500,
       icon: Cpu,
     },
     {
       text: "Finalizing assembly...",
-      duration: 500,
+      duration: 250,
       icon: CheckCircle,
     },
   ];
@@ -61,7 +61,7 @@ const AgentAssemblyAnimation: React.FC<AgentAssemblyAnimationProps> = ({
   }, []);
 
   return (
-        <div className="w-full">
+    <div className="w-full">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">
         One moment while we assemble your agent...
       </h2>
@@ -108,10 +108,7 @@ const AgentAssemblyAnimation: React.FC<AgentAssemblyAnimationProps> = ({
 
       {isComplete && (
         <div className="mt-6 flex flex-col">
-          <Button
-              variant="default"
-            onClick={onComplete}
-          >
+          <Button variant="default" onClick={onComplete}>
             Launch Agent
           </Button>
         </div>
