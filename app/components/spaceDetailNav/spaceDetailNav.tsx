@@ -21,9 +21,9 @@ export const SpaceDetailNav = ({
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2 transition-all truncate ",
             {
-              "bg-white text-primary": location.pathname.includes(
-                `/space/${space.id}`,
-              ) && !location.pathname.includes('invent-agent'),
+              "bg-white text-primary":
+                location.pathname.includes(`/space/${space.id}`) &&
+                !location.pathname.includes("invent-agent"),
             },
             {
               "hover:bg-white/50": location.pathname !== `/space/${space.id}`,
@@ -44,14 +44,16 @@ export const SpaceDetailNav = ({
               ),
             },
             {
-              "hover:bg-white/50": !location.pathname.includes(`/space/${space.id}/invent-agent`),
+              "hover:bg-white/50": !location.pathname.includes(
+                `/space/${space.id}/invent-agent`,
+              ),
             },
           )}
         >
           <Cpu className="h-4 w-4" />
           Agent Inventor
         </Link>
-        
+
         {userScopes.some(
           (p) => p.scope === "space.edit_users" && p.referenceId === space.id,
         ) && (
