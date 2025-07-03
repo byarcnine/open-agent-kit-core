@@ -27,23 +27,16 @@ import {
   getUserScopes,
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
-import { PERMISSION } from "~/lib/permissions/permissions";
 import type { SessionUser } from "~/types/auth";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await hasAccessHierarchical(
-    request,
-    PERMISSION["global.edit_global_users"],
-  );
+  const user = await hasAccessHierarchical(request);
   const userScopes = await getUserScopes(user);
   return data({ user: user as SessionUser, userScopes });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await hasAccessHierarchical(
-    request,
-    PERMISSION["global.edit_global_users"],
-  );
+  const user = await hasAccessHierarchical(request);
 
   const formData = await request.formData();
   const intent = formData.get("intent");
