@@ -8,6 +8,7 @@ import {
   useActionData,
 } from "react-router";
 import { type Agent, prisma } from "@db/db.server";
+import { sessionStorage } from "~/lib/sessions.server";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
@@ -54,7 +55,10 @@ import type { ModelSettings } from "~/types/llm";
 import CustomCodeEditor from "~/components/codeEditor/codeEditor";
 import css from "css";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { hasAccessHierarchical } from "~/lib/permissions/enhancedHasAccess.server";
+import {
+  getUserScopes,
+  hasAccessHierarchical,
+} from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
 import { cn } from "~/lib/utils";
 import type { AgentSettings } from "~/types/agentSetting";
@@ -130,6 +134,7 @@ enum Intent {
   UPDATE_AGENT_SETTINGS = "updateAgentSettings",
   UPDATE_CHAT_SETTINGS = "updateChatSettings",
   UPDATE_EMBED_SETTINGS = "updateEmbedSettings",
+  MOVE_AGENT = "moveAgent",
   DELETE_AGENT = "deleteAgent",
 }
 
@@ -148,11 +153,47 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
   const availableModels = await getConfiguredModelIds(getConfig());
 
-  const canDeleteAgent = true; // TODO: add specific permission to delete agent
+  const userScopes = await getUserScopes(user);
 
+  const spacesUserHasEditAccessTo = userScopes
+    .filter(
+      (p) => p.scope === "space.edit_space" && p.referenceId !== agent.spaceId,
+    )
+    .map((p) => p.referenceId);
+
+  const spacesUserCanMoveTo = await prisma.space.findMany({
+    where: {
+      id: {
+        in: spacesUserHasEditAccessTo,
+      },
+    },
+  });
+  const canDeleteAgent = userScopes.some(
+    (p) => p.scope === "agent.edit_agent" && p.referenceId === agentId,
+  );
   const appUrl = APP_URL() as string;
 
-  return { agent, user, canDeleteAgent, appUrl, availableModels };
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie"),
+  );
+  const message = session.get("message");
+
+  return data(
+    {
+      agent,
+      user,
+      canDeleteAgent,
+      appUrl,
+      availableModels,
+      spacesUserCanMoveTo,
+      message,
+    },
+    {
+      headers: {
+        "Set-Cookie": await sessionStorage.commitSession(session),
+      },
+    },
+  );
 };
 
 const CardContentSection = ({
@@ -173,7 +214,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const agentId = params.agentId as string;
   const intent = formData.get("intent");
-  await hasAccessHierarchical(request, PERMISSION["agent.edit_agent"], agentId);
+  const user = await hasAccessHierarchical(
+    request,
+    PERMISSION["agent.edit_agent"],
+    agentId,
+  );
+  const scopes = await getUserScopes(user);
 
   // Fetch current agent data to access modelSettings
   const currentAgent = await prisma.agent.findUnique({
@@ -184,11 +230,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // Handle delete action
   if (intent === Intent.DELETE_AGENT) {
     // required extra permission to delete the agent
-    await hasAccessHierarchical(
-      request,
-      PERMISSION["agent.edit_agent"],
-      agentId,
-    );
     await prisma.agent.delete({
       where: { id: agentId },
     });
@@ -303,7 +344,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         formData.get("textAreaInitialRows") as string,
         10,
       ),
-      chatInputPlaceholder: formData.get("chatInputPlaceholder")?.toString() || "",
+      chatInputPlaceholder:
+        formData.get("chatInputPlaceholder")?.toString() || "",
       footerNote: formData.get("footerNote")?.toString() || "",
       showMessageToolBar: !!formData.get("showMessageToolBar"),
       showDefaultToolsDebugMessages: !!formData.get(
@@ -363,12 +405,73 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       }
     }
   }
+
+  if (intent === Intent.MOVE_AGENT) {
+    const targetSpaceId = formData.get("targetSpaceId")?.toString();
+    const session = await sessionStorage.getSession(
+      request.headers.get("Cookie"),
+    );
+
+    if (!targetSpaceId) {
+      return data(
+        { errors: { targetSpaceId: ["Target space is required"] } },
+        { status: 400 },
+      );
+    }
+    // make sure that the user has edit access to the target space
+    const hasEditAccessToTargetSpace = scopes.some(
+      (p) => p.scope === "space.edit_space" && p.referenceId === targetSpaceId,
+    );
+    if (!hasEditAccessToTargetSpace) {
+      return data(
+        {
+          errors: {
+            targetSpaceId: ["User does not have edit access to target space"],
+          },
+        },
+        { status: 400 },
+      );
+    }
+    try {
+      await prisma.agent.update({
+        where: { id: agentId },
+        data: {
+          spaceId: targetSpaceId,
+        },
+      });
+
+      // Set flash message for success
+      session.flash("message", {
+        heading: "Agent moved successfully to the new space!",
+        type: "success",
+      });
+
+      // Redirect to the new space
+      return redirect(`/space/${targetSpaceId}/agent/${agentId}/settings`, {
+        headers: {
+          "Set-Cookie": await sessionStorage.commitSession(session),
+        },
+      });
+    } catch (error) {
+      console.error("Error moving agent:", error);
+      return data(
+        { errors: { general: ["Failed to move agent"] } },
+        { status: 500 },
+      );
+    }
+  }
   return data({ success: false, errors: null }, { status: 400 });
 };
 
 const AgentSettings = () => {
-  const { agent, canDeleteAgent, appUrl, availableModels } =
-    useLoaderData<typeof loader>();
+  const {
+    agent,
+    canDeleteAgent,
+    appUrl,
+    availableModels,
+    spacesUserCanMoveTo,
+    message,
+  } = useLoaderData<typeof loader>();
   const chatSettings: ChatSettings = agent.chatSettings
     ? { ...initialChatSettings, ...JSON.parse(agent.chatSettings as string) }
     : initialChatSettings;
@@ -405,6 +508,17 @@ const AgentSettings = () => {
       toast.success("Agent settings updated successfully");
     }
   }, [actionData]);
+
+  // Show flash message if present
+  useEffect(() => {
+    if (message) {
+      if (message.type === "success") {
+        toast.success(message.heading);
+      } else if (message.type === "error") {
+        toast.error(message.heading);
+      }
+    }
+  }, [message]);
 
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (
@@ -854,10 +968,12 @@ const AgentSettings = () => {
                     />
                     <p className="text-sm text-muted-foreground">
                       Enter a note that will be displayed below the chat input.
-                      You can use markdown-style links: [text](url) or plain URLs.
+                      You can use markdown-style links: [text](url) or plain
+                      URLs.
                       <br />
                       <span className="text-xs">
-                        Examples: "Visit [OAK](https://open-agent-kit.com/)" or "Go to https://open-agent-kit.com/"
+                        Examples: "Visit [OAK](https://open-agent-kit.com/)" or
+                        "Go to https://open-agent-kit.com/"
                       </span>
                     </p>
                   </div>
@@ -1099,6 +1215,49 @@ const AgentSettings = () => {
         </TabsContent>
         {canDeleteAgent && (
           <TabsContent value="danger">
+            {/* Move Agent Section */}
+            {spacesUserCanMoveTo.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Move Agent</CardTitle>
+                  <CardDescription>
+                    Move this agent to another space where you have edit
+                    permissions.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form method="post" className="space-y-4">
+                    <input
+                      type="hidden"
+                      name="intent"
+                      value={Intent.MOVE_AGENT}
+                    />
+                    <div className="flex flex-col space-y-2">
+                      <Label htmlFor="targetSpaceId">Target Space</Label>
+                      <Select key={agent.spaceId} name="targetSpaceId" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a space to move the agent to" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {spacesUserCanMoveTo.map((space) => (
+                            <SelectItem key={space.id} value={space.id}>
+                              {space.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">
+                        Select the space where you want to move this agent. The
+                        agent will be moved immediately.
+                      </p>
+                    </div>
+                    <Button type="submit" variant="outline">
+                      Move Agent
+                    </Button>
+                  </Form>
+                </CardContent>
+              </Card>
+            )}
             <Card className="border-destructive">
               <CardHeader>
                 <CardTitle className="text-destructive">Danger Zone</CardTitle>

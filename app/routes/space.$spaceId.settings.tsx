@@ -12,7 +12,6 @@ import { prisma } from "@db/db.server";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { z } from "zod";
-import Layout from "~/components/layout/layout";
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
 import { useEffect } from "react";
@@ -28,8 +27,6 @@ import {
   hasAccessHierarchical,
 } from "~/lib/permissions/enhancedHasAccess.server";
 import { PERMISSION } from "~/lib/permissions/permissions";
-import type { SessionUser } from "~/types/auth";
-import { SpaceDetailNav } from "~/components/spaceDetailNav/spaceDetailNav";
 import { toast, Toaster } from "sonner";
 
 const SpaceUpdateSchema = z.object({
@@ -71,11 +68,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
   }
 
-  const user = await hasAccessHierarchical(
-    request,
-    PERMISSION["space.edit_space"],
-    spaceId,
-  );
+  await hasAccessHierarchical(request, PERMISSION["space.edit_space"], spaceId);
 
   const formData = await request.formData();
   const intent = formData.get("intent");
